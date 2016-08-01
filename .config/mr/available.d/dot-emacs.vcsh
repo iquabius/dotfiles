@@ -1,0 +1,2 @@
+[$HOME/.config/vcsh/repo.d/dot-emacs.git]
+checkout = vcsh clone git@github.com:iquabius/dot-emacs.git dot-emacs
