@@ -11,6 +11,8 @@
 !/.config/mr/config.d/dotfiles.vcsh
 !/.config/mr/config.d/dot-fish.vcsh
 !/.config/mr/config.d/unemat.mr
+!/.gitconfig
+!/.gitignore
 !/.gitignore.d
 !/.gitignore.d/dotfiles
 !/.mrconfig

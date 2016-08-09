@@ -1,0 +1,33 @@
+[core]
+	editor = emacs -nw
+	excludesfile = ~/.gitignore
+
+[user]
+	name = Josias Duarte Busiquia
+	email = iquabius@gmail.com
+
+[github]
+	user = iquabius
+
+[color "status"]
+	added = green
+	changed = red bold
+	untracked = magenta bold
+
+[color "branch"]
+	remote = yellow
+
+[alias]
+	br = branch
+	ci = commit
+	co = checkout
+	st = status
+	lg = log --oneline --reverse
+
+[log]
+	abbrevCommit = true
+
+[status]
+	short = true
+
+[difftool "latexdiff"]
