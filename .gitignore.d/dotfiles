@@ -5,10 +5,12 @@
 !/.config/mr/available.d/dot-emacs.vcsh
 !/.config/mr/available.d/dotfiles.vcsh
 !/.config/mr/available.d/dot-fish.vcsh
+!/.config/mr/available.d/unemat.mr
 !/.config/mr/config.d
 !/.config/mr/config.d/dot-emacs.vcsh
 !/.config/mr/config.d/dotfiles.vcsh
 !/.config/mr/config.d/dot-fish.vcsh
+!/.config/mr/config.d/unemat.mr
 !/.gitignore.d
 !/.gitignore.d/dotfiles
 !/.mrconfig
