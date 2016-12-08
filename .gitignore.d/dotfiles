@@ -17,4 +17,5 @@
 !/.gitignore
 !/.gitignore.d
 !/.gitignore.d/dotfiles
+!/.latexmkrc
 !/.mrconfig
