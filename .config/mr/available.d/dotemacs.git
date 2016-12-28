@@ -1,0 +1,2 @@
+[$HOME/.emacs.d]
+checkout = git clone git@github.com:iquabius/dotemacs.git .emacs.d
