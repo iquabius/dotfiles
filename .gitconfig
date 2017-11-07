@@ -1,9 +1,9 @@
 [core]
-	editor = emacs -nw
+	editor = emacsclient -t
 	excludesfile = ~/.gitignore
 
 [user]
-	name = Josias Duarte Busiquia
+	name = Josias Iquabius
 	email = iquabius@gmail.com
 
 [github]
