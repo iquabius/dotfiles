@@ -1,2 +1,0 @@
-[$HOME/.config/vcsh/repo.d/dot-fish.git]
-checkout = vcsh clone https://github.com/iquabius/dot-fish.git dot-fish
