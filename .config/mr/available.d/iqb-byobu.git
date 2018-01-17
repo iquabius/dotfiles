@@ -1,2 +1,2 @@
 [$HOME/.byobu]
-checkout = git clone git@github.com:iquabius/iqb-byobu.git .byobu
+checkout = git clone https://github.com/iquabius/iqb-byobu.git .byobu
