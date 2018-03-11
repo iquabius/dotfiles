@@ -1,4 +1,4 @@
-[code/elisp/magit-vcsh]
+[Code/elisp/magit-vcsh]
 checkout =
          git clone 'https://github.com/iquabius/magit-vcsh.git' magit-vcsh
          cd magit-vcsh
