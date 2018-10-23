@@ -1,11 +1,12 @@
 *
+!/bin
+!/bin/start-emacs-deamon.fish
 !/.config
 !/.config/mr
 !/.config/mr/available.d
 !/.config/mr/available.d/dotemacs.git
 !/.config/mr/available.d/dotfiles.vcsh
 !/.config/mr/available.d/dotfish.git
-!/.config/mr/available.d/dot-fish.vcsh
 !/.config/mr/available.d/iqb-byobu.git
 !/.config/mr/available.d/open-source.mr
 !/.config/mr/available.d/unemat.mr
@@ -13,7 +14,6 @@
 !/.config/mr/config.d/dotemacs.git
 !/.config/mr/config.d/dotfiles.vcsh
 !/.config/mr/config.d/dotfish.git
-!/.config/mr/config.d/dot-fish.vcsh
 !/.config/mr/config.d/iqb-byobu.git
 !/.config/mr/config.d/open-source.mr
 !/.config/mr/config.d/unemat.mr
