@@ -17,6 +17,8 @@
 !/.config/mr/config.d/iqb-byobu.git
 !/.config/mr/config.d/open-source.mr
 !/.config/mr/config.d/unemat.mr
+!/.config/redshift
+!/.config/redshift/redshift.conf
 !/.gitconfig
 !/.gitignore
 !/.gitignore.d
