@@ -2,6 +2,8 @@
 !/bin
 !/bin/start-emacs-deamon.fish
 !/.config
+!/.config/autostart
+!/.config/autostart/redshift.desktop
 !/.config/mr
 !/.config/mr/available.d
 !/.config/mr/available.d/dotemacs.git
