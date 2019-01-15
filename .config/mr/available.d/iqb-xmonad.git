@@ -1,0 +1,2 @@
+[$HOME/.xmonad]
+checkout = git clone git@github.com:iquabius/iqb-xmonad.git .xmonad
