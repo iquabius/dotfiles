@@ -29,5 +29,3 @@
 !/.gitignore.d/dotfiles
 !/.latexmkrc
 !/.mrconfig
-!/.xinitrc
-!/.Xmodmap
