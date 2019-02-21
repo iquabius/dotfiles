@@ -1,2 +1,2 @@
 [$HOME/.config/Code]
-checkout = git clone git@github.com:iquabius/iqb-vscode.git .config/Code
+checkout = git clone git@github.com:iquabius/iqb-vscode.git Code
