@@ -10,6 +10,7 @@
 !/.config/mr/available.d/dotfiles.vcsh
 !/.config/mr/available.d/dotfish.git
 !/.config/mr/available.d/iqb-byobu.git
+!/.config/mr/available.d/iqb-vscode.git
 !/.config/mr/available.d/iqb-xmonad.git
 !/.config/mr/available.d/open-source.mr
 !/.config/mr/available.d/unemat.mr
@@ -18,6 +19,7 @@
 !/.config/mr/config.d/dotfiles.vcsh
 !/.config/mr/config.d/dotfish.git
 !/.config/mr/config.d/iqb-byobu.git
+!/.config/mr/config.d/iqb-vscode.git
 !/.config/mr/config.d/iqb-xmonad.git
 !/.config/mr/config.d/open-source.mr
 !/.config/mr/config.d/unemat.mr
