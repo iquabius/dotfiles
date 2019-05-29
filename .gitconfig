@@ -23,6 +23,8 @@
 	co = checkout
 	st = status
 	lg = log --oneline --reverse
+	# https://stackoverflow.com/a/34969726/1787829
+	prune-branches = !git remote prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -D
 
 [log]
 	abbrevCommit = true
