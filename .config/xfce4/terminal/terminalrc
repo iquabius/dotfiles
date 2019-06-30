@@ -24,4 +24,5 @@ MiscRewrapOnResize=TRUE
 MiscUseShiftArrowsToScroll=FALSE
 MiscSlimTabs=FALSE
 MiscNewTabAdjacent=FALSE
+ScrollingBar=TERMINAL_SCROLLBAR_NONE
 
