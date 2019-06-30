@@ -25,6 +25,10 @@
 !/.config/mr/config.d/unemat.mr
 !/.config/redshift
 !/.config/redshift/redshift.conf
+!/.config/xfce4
+!/.config/xfce4/terminal
+!/.config/xfce4/terminal/accels.scm
+!/.config/xfce4/terminal/terminalrc
 !/.gitconfig
 !/.gitignore
 !/.gitignore.d
