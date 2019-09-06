@@ -23,6 +23,8 @@
 !/.config/mr/config.d/iqb-xmonad.git
 !/.config/mr/config.d/open-source.mr
 !/.config/mr/config.d/unemat.mr
+!/.config/pip
+!/.config/pip/pip.conf
 !/.config/redshift
 !/.config/redshift/redshift.conf
 !/.config/xfce4
