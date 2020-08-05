@@ -25,8 +25,7 @@
 !/.config/mr/config.d/unemat.mr
 !/.config/pip
 !/.config/pip/pip.conf
-!/.config/redshift
-!/.config/redshift/redshift.conf
+!/.config/redshift.conf
 !/.config/xfce4
 !/.config/xfce4/terminal
 !/.config/xfce4/terminal/accels.scm
