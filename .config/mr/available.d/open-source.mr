@@ -1,5 +1,2 @@
 [Code/elisp/magit-vcsh]
-checkout =
-         git clone 'https://github.com/iquabius/magit-vcsh.git' magit-vcsh
-         cd magit-vcsh
-         git checkout add-completion
+checkout = git clone git@github.com:iquabius/magit-vcsh.git magit-vcsh
