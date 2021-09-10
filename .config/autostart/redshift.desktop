@@ -4,4 +4,4 @@ Name[en_US]=Redshift
 Comment[en_US]=Redshift adjusts the color temperature of your screen according to your surroundings.
 Exec=redshift
 Icon=application-default-icon
-X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-enabled=false
