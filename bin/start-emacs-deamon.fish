@@ -9,3 +9,4 @@ notify-send -i emacs "GNU Emacs daemon started!"
 # ⌘ + D          ~/bin/start-emacs-deamon.fish
 # ⌘ + E          emacsclient -c
 
+# Idea: https://stackoverflow.com/questions/5570451/how-to-start-emacs-server-only-if-it-is-not-started
