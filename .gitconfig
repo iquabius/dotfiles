@@ -33,3 +33,5 @@
 	short = true
 
 [difftool "latexdiff"]
+[init]
+	defaultBranch = main
