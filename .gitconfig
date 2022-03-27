@@ -1,6 +1,6 @@
 [core]
-	# editor = code --wait
-	editor = emacsclient -c
+	editor = code --wait
+	# editor = emacsclient -c
 	excludesfile = ~/.gitignore
 
 [user]
@@ -32,6 +32,11 @@
 
 [status]
 	short = true
+
+[diff]
+    tool = default-difftool
+[difftool "default-difftool"]
+    cmd = code --wait --diff $LOCAL $REMOTE
 
 [difftool "latexdiff"]
 [init]
