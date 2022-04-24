@@ -1,0 +1,6 @@
+#+TITLE: Fish Shell Setup
+
+This is my setup for the [[https://fishshell.com/][Fish Shell]].
+
+These files are managed from my [[https://github.com/iquabius/dotfiles/blob/c3774c/.config/mr/available.d/dotfish.git][main dotfiles repo.]]
+
