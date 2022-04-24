@@ -73,6 +73,8 @@ alias current-network-adapter 'lspci -nnk | grep 0280 -A3'
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 
+alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/.git/ --work-tree=$HOME'
+
 # Speed up Git workflow with keybindings: https://github.com/joseluisq/gitnow
 abbr -a gaa git add -A
 abbr -a gan git add .
