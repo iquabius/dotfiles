@@ -10,10 +10,14 @@ if test -d "$HOME/.local/bin"
   set PATH "$HOME/.local/bin" $PATH
 end
 
-eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+if test -e "/home/linuxbrew/.linuxbrew/bin/brew"
+  eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+end
 
 # https://github.com/ajeetdsouza/zoxide#fish
-zoxide init fish | source
+if type -q zoxide
+  zoxide init fish | source
+end
 
 # https://github.com/starship/starship
 # brew install starship
