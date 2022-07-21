@@ -1,4 +1,5 @@
-status --is-login; and status --is-interactive; and exec byobu-launcher
+# This throws errors in Archcraft because Byobu is not installed.
+# status --is-login; and status --is-interactive; and exec byobu-launcher
 
 # set PATH "$HOME/.dropbox-bin" $PATH
 
@@ -21,7 +22,9 @@ end
 
 # https://github.com/starship/starship
 # brew install starship
-starship init fish | source
+if type -q starship
+  starship init fish | source
+end
 
 # https://github.com/axetroy/dvm
 if test -d "$HOME/.deno/bin"
