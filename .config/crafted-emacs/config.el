@@ -13,8 +13,8 @@
 
 ;; Archcraft pre-installed:
 ;; "JetBrains Mono", "FiraCode Nerd Font", "DejaVu Sans Mono", "Source Code Pro"
-(custom-set-variables '(crafted-ui-default-font'(:font "FiraCode Nerd Font Light 12" :height 230)))
-(set-face-attribute 'variable-pitch nil :font "Iosevka" :weight 'light)
+(custom-set-variables '(crafted-ui-default-font'(:font "Input Mono Normal 12" :height 130)))
+;;(set-face-attribute 'variable-pitch nil :font "Iosevka" :weight 'light)
 ;; (eval-after-load "projectile")??
 (variable-pitch-mode 1)
 
