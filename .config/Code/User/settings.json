@@ -1,200 +1,197 @@
 {
-  // https://github.com/este/este/wiki/Recommended-VSCode-Settings
-  "explorer.confirmDelete": false,
-  "explorer.confirmDragAndDrop": false,
-  "explorer.openEditors.visible": 0,
-  "explorer.fileNesting.enabled": true,
-  "explorer.fileNesting.patterns": {
-    "*": "${basename}.*.${extname}"
-  },
-  "editor.minimap.enabled": false,
-  "window.restoreFullscreen": true,
-  "window.titleBarStyle": "native",
-  "editor.suggestSelection": "first",
-  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
-  // Code formatting
-  //*
-  "prettier.useTabs": true,
-  "editor.tabSize": 2,
-  "prettier.semi": false,
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "[markdown]": {
-    "editor.wordWrap": "bounded"
-  },
-  "[org]": {
-    // Not detecting indentation when opening file :/
-    "editor.detectIndentation": true,
-    "editor.wordWrap": "bounded",
-    "editor.wordWrapColumn": 80,
-    "editor.wrappingIndent": "none"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  /**/
-  // "liveshare.featureSet": "insiders",
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "workbench.iconTheme": "vscode-icons",
-  "editor.renderWhitespace": "selection",
-  "editor.fontFamily": "'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
-  // "editor.fontSize": 14,
-  "editor.padding.top": 24,
-  "editor.rulers": [
-    { "column": 80, "color": "#ff00ff" },
-    { "column": 100, "color": "#ff0000" }
-  ],
-  // "editor.wordWrap": "bounded",
-  "window.enableMenuBarMnemonics": false,
-  "diffEditor.ignoreTrimWhitespace": false,
-  "todo-tree.tree.showScanModeButton": false,
-  "workbench.colorTheme": "GitHub Light",
-  "workbench.productIconTheme": "icons-carbon",
-  "githubPullRequests.fileListLayout": "tree",
-  "spellright.language": ["en_US"],
-  "spellright.documentTypes": ["markdown", "plaintext"],
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "todo-tree.general.tags": [
-    "BUG",
-    "HACK",
-    "FIXME",
-    "TODO",
-    "XXX",
-    "[ ]",
-    "[x]"
-  ],
-  "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
-  //* Recommended settings from Modern Purple Theme
-  "editor.cursorBlinking": "smooth",
-  "editor.cursorStyle": "line",
-  "editor.cursorWidth": 2,
-  // "editor.fontFamily": "Cascadia Code",
-  "editor.fontLigatures": true,
-  "editor.fontSize": 13,
-  "editor.fontWeight": "450",
-  "editor.letterSpacing": 0.7,
-  "editor.lineHeight": 22,
-  "files.trimTrailingWhitespace": true,
-  "files.exclude": {
-    "**/.classpath": true,
-    "**/.project": true,
-    "**/.settings": true,
-    "**/.factorypath": true
-  },
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "workbench.editor.tabSizing": "shrink",
-  "editor.suggest.preview": true,
-  "workbench.colorCustomizations": {
-    "editor.lineHighlightBackground": "#1073cf2d",
-    "editor.lineHighlightBorder": "#9fced11f"
-  },
-  "editor.wordWrap": "off",
-  "diffEditor.wordWrap": "off",
-  "editor.guides.indentation": false,
-  "editor.guides.bracketPairs": true,
-  "editor.inlayHints.enabled": "onUnlessPressed",
-  // smooth-scroll-margin in Emacs with smooth-scrolling package
-  "editor.cursorSurroundingLines": 9,
-  /**/
-  "auto-close-tag.excludedTags": [
-    "area",
-    "base",
-    "br",
-    "col",
-    "command",
-    "embed",
-    "hr",
-    "img",
-    "input",
-    "keygen",
-    "link",
-    "meta",
-    "param",
-    "source",
-    "track",
-    "wbr",
-    "cfabort",
-    "cfapplication",
-    "cfargument",
-    "cfassociate",
-    "cfbreak",
-    "cfchartdata",
-    "cfcollection",
-    "cfcontent",
-    "cfcontinue",
-    "cfcookie",
-    "cfdirectory",
-    "cfdump",
-    "cfelse",
-    "cfelseif",
-    "cferror",
-    "cfexecute",
-    "cfexit",
-    "cffile",
-    "cfflush",
-    "cfheader",
-    "cfhttpparam",
-    "cfimage",
-    "cfimport",
-    "cfinclude",
-    "cfindex",
-    "cfinput",
-    "cfinvokeargument",
-    "cflocation",
-    "cflog",
-    "cfloginuser",
-    "cflogout",
-    "cfmailparam",
-    "cfobject",
-    "cfobjectcache",
-    "cfparam",
-    "cfpop",
-    "cfprocessingdirective",
-    "cfprocparam",
-    "cfprocresult",
-    "cfproperty",
-    "cfqueryparam",
-    "cfregistry",
-    "cfreportparam",
-    "cfrethrow",
-    "cfreturn",
-    "cfschedule",
-    "cfsearch",
-    "cfset",
-    "cfsetting",
-    "cfthrow",
-    "cfwddx",
-    "cfspreadsheet"
-  ],
-  "json.schemas": [
-    {
-      "name": "vscode-expo-manifest",
-      "url": "file:///home/iqb/.config/Code/User/globalStorage/bycedric.vscode-expo/manifest-45.0.0.json",
-      "fileMatch": [
-        "app.json",
-        "app.config.json"
-      ]
-    }
-  ],
-  "gitlens.mode.active": "zen",
-  "window.zoomLevel": 1
+	// https://github.com/este/este/wiki/Recommended-VSCode-Settings
+	"explorer.confirmDelete": false,
+	"explorer.confirmDragAndDrop": false,
+	"explorer.openEditors.visible": 0,
+	"explorer.fileNesting.enabled": true,
+	"explorer.fileNesting.patterns": {
+		"*": "${basename}.*.${extname}"
+	},
+	"editor.minimap.enabled": false,
+	"window.restoreFullscreen": true,
+	"window.titleBarStyle": "native",
+	"editor.suggestSelection": "first",
+	"vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+	// Code formatting
+	//*
+	"prettier.useTabs": true,
+	"editor.tabSize": 2,
+	"prettier.semi": false,
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[markdown]": {
+		"editor.wordWrap": "bounded"
+	},
+	"[org]": {
+		// Not detecting indentation when opening file :/
+		"editor.detectIndentation": true,
+		"editor.wordWrap": "bounded",
+		"editor.wordWrapColumn": 80,
+		"editor.wrappingIndent": "none"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	/**/
+	// "liveshare.featureSet": "insiders",
+	"javascript.updateImportsOnFileMove.enabled": "always",
+	"workbench.iconTheme": "vscode-icons",
+	"editor.renderWhitespace": "selection",
+	"editor.fontFamily": "'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
+	// "editor.fontSize": 14,
+	"editor.padding.top": 24,
+	"editor.rulers": [
+		{ "column": 80, "color": "#ff00ff" },
+		{ "column": 100, "color": "#ff0000" }
+	],
+	// "editor.wordWrap": "bounded",
+	"window.enableMenuBarMnemonics": false,
+	"diffEditor.ignoreTrimWhitespace": false,
+	"todo-tree.tree.showScanModeButton": false,
+	"workbench.colorTheme": "Default Light+",
+	"workbench.productIconTheme": "icons-carbon",
+	"githubPullRequests.fileListLayout": "tree",
+	"spellright.language": ["en_US"],
+	"spellright.documentTypes": ["markdown", "plaintext"],
+	"[jsonc]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"todo-tree.general.tags": [
+		"BUG",
+		"HACK",
+		"FIXME",
+		"TODO",
+		"XXX",
+		"[ ]",
+		"[x]"
+	],
+	"todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+	//* Recommended settings from Modern Purple Theme
+	"editor.cursorBlinking": "smooth",
+	"editor.cursorStyle": "line",
+	"editor.cursorWidth": 2,
+	// "editor.fontFamily": "Cascadia Code",
+	"editor.fontLigatures": true,
+	"editor.fontSize": 13,
+	"editor.fontWeight": "450",
+	"editor.letterSpacing": 0.7,
+	"editor.lineHeight": 22,
+	"files.trimTrailingWhitespace": true,
+	"files.exclude": {
+		"**/.classpath": true,
+		"**/.project": true,
+		"**/.settings": true,
+		"**/.factorypath": true
+	},
+	"typescript.updateImportsOnFileMove.enabled": "always",
+	"[html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"workbench.editor.tabSizing": "shrink",
+	"editor.suggest.preview": true,
+	"workbench.colorCustomizations": {
+		"editor.lineHighlightBackground": "#1073cf2d",
+		"editor.lineHighlightBorder": "#9fced11f"
+	},
+	"editor.wordWrap": "off",
+	"diffEditor.wordWrap": "off",
+	"editor.guides.indentation": false,
+	"editor.guides.bracketPairs": true,
+	"editor.inlayHints.enabled": "onUnlessPressed",
+	// smooth-scroll-margin in Emacs with smooth-scrolling package
+	"editor.cursorSurroundingLines": 9,
+	/**/
+	"auto-close-tag.excludedTags": [
+		"area",
+		"base",
+		"br",
+		"col",
+		"command",
+		"embed",
+		"hr",
+		"img",
+		"input",
+		"keygen",
+		"link",
+		"meta",
+		"param",
+		"source",
+		"track",
+		"wbr",
+		"cfabort",
+		"cfapplication",
+		"cfargument",
+		"cfassociate",
+		"cfbreak",
+		"cfchartdata",
+		"cfcollection",
+		"cfcontent",
+		"cfcontinue",
+		"cfcookie",
+		"cfdirectory",
+		"cfdump",
+		"cfelse",
+		"cfelseif",
+		"cferror",
+		"cfexecute",
+		"cfexit",
+		"cffile",
+		"cfflush",
+		"cfheader",
+		"cfhttpparam",
+		"cfimage",
+		"cfimport",
+		"cfinclude",
+		"cfindex",
+		"cfinput",
+		"cfinvokeargument",
+		"cflocation",
+		"cflog",
+		"cfloginuser",
+		"cflogout",
+		"cfmailparam",
+		"cfobject",
+		"cfobjectcache",
+		"cfparam",
+		"cfpop",
+		"cfprocessingdirective",
+		"cfprocparam",
+		"cfprocresult",
+		"cfproperty",
+		"cfqueryparam",
+		"cfregistry",
+		"cfreportparam",
+		"cfrethrow",
+		"cfreturn",
+		"cfschedule",
+		"cfsearch",
+		"cfset",
+		"cfsetting",
+		"cfthrow",
+		"cfwddx",
+		"cfspreadsheet"
+	],
+	"json.schemas": [
+		{
+			"name": "vscode-expo-manifest",
+			"url": "file:///home/iqb/.config/Code/User/globalStorage/bycedric.vscode-expo/manifest-45.0.0.json",
+			"fileMatch": ["app.json", "app.config.json"]
+		}
+	],
+	"gitlens.mode.active": "zen",
+	"window.zoomLevel": 1
 }
