@@ -1,7 +1,8 @@
 ;;; config.el --- Personal Crafted Emacs Config     -*- lexical-binding: t; -*-
 
 ;;; Code:
-(toggle-frame-fullscreen)
+(if (daemonp)
+    (add-to-list 'default-frame-alist '(fullscreen . fullboth)))
 
 (crafted-ensure-package 'ergoemacs-mode)
 (require 'ergoemacs-mode)
