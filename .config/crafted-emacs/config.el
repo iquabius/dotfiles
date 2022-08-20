@@ -48,10 +48,9 @@
   (require 'org-tempo))
 
 (setq org-startup-folded t)
-;; Didn`t work
-;; (setq org-startup-truncated nil)
-;; Try
-(toggle-truncate-lines)
+;; Soft-wrapping
+(global-visual-line-mode)
+(diminish 'visual-line-mode)
 
 ;; To not load `custom.el' after `config.el', uncomment this line.
 ;; (setq crafted-load-custom-file nil)

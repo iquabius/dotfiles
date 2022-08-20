@@ -111,10 +111,9 @@ https://github.com/syl20bnr/spacemacs/issues/11798#issuecomment-454941024
 
 #+begin_src emacs-lisp
   (setq org-startup-folded t)
-  ;; Didn`t work
-  ;; (setq org-startup-truncated nil)
-  ;; Try
-  (toggle-truncate-lines)
+  ;; Soft-wrapping
+  (global-visual-line-mode)
+  (diminish 'visual-line-mode)
 #+end_src
 
 * Custom.el
