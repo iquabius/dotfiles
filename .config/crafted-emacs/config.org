@@ -116,6 +116,12 @@ https://github.com/syl20bnr/spacemacs/issues/11798#issuecomment-454941024
   (diminish 'visual-line-mode)
 #+end_src
 
+I like indenting text to the same level has their headings:
+
+#+begin_src emacs-lisp
+  (setq org-adapt-indentation t)
+#+end_src
+
 * Custom.el
 By default, Crafted Emacs keeps your config file clean. All the customization
 settings that Emacs normally automatically adds to your config.el go into
