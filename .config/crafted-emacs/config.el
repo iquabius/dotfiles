@@ -19,7 +19,7 @@
 (require 'crafted-completion)  ; selection framework based on `vertico`
 (require 'crafted-ui)          ; Better UI experience (modeline etc.)
 ;(require 'crafted-windows)     ; Window management configuration
-;(require 'crafted-editing)     ; Whitspace trimming, auto parens etc.
+(require 'crafted-editing)     ; Whitspace trimming, auto parens etc.
 ;(require 'crafted-evil)        ; An `evil-mode` configuration
 (require 'crafted-org)         ; org-appear, clickable hyperlinks etc.
 ;(require 'crafted-project)     ; built-in alternative to projectile
@@ -65,6 +65,12 @@
 (diminish 'visual-line-mode)
 
 (setq org-adapt-indentation t)
+
+(crafted-ensure-package 'org-roam)
+(setq-default org-roam-directory (file-truename "~/Notes"))
+(require 'org-roam)
+(with-eval-after-load 'org-roam
+  (org-roam-db-autosync-mode))
 
 ;; To not load `custom.el' after `config.el', uncomment this line.
 ;; (setq crafted-load-custom-file nil)

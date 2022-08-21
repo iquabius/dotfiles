@@ -41,7 +41,7 @@ in the line about =crafted-evil= below.
   (require 'crafted-completion)  ; selection framework based on `vertico`
   (require 'crafted-ui)          ; Better UI experience (modeline etc.)
   ;(require 'crafted-windows)     ; Window management configuration
-  ;(require 'crafted-editing)     ; Whitspace trimming, auto parens etc.
+  (require 'crafted-editing)     ; Whitspace trimming, auto parens etc.
   ;(require 'crafted-evil)        ; An `evil-mode` configuration
   (require 'crafted-org)         ; org-appear, clickable hyperlinks etc.
   ;(require 'crafted-project)     ; built-in alternative to projectile
@@ -134,6 +134,20 @@ I like indenting text to the same level has their headings:
   (setq org-adapt-indentation t)
 #+end_src
 
+** Org-roam
+
+   #+begin_src emacs-lisp
+     (crafted-ensure-package 'org-roam)
+     (setq-default org-roam-directory (file-truename "~/Notes"))
+     (require 'org-roam)
+     (with-eval-after-load 'org-roam
+       (org-roam-db-autosync-mode))
+   #+end_src
+
+   #+begin_src bash
+     ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
+   #+end_src
+   
 * Custom.el
 By default, Crafted Emacs keeps your config file clean. All the customization
 settings that Emacs normally automatically adds to your config.el go into
