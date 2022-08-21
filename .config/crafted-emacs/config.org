@@ -169,5 +169,6 @@ Just begin the source code block with:
 
 #+begin_src emacs-lisp  
   (if (daemonp)
-      (add-to-list 'default-frame-alist '(fullscreen . fullboth)))
+      (add-to-list 'default-frame-alist '(fullscreen . fullboth))
+    (toggle-frame-fullscreen))
 #+end_src

@@ -76,4 +76,5 @@
 ;; (setq crafted-load-custom-file nil)
 
 (if (daemonp)
-    (add-to-list 'default-frame-alist '(fullscreen . fullboth)))
+    (add-to-list 'default-frame-alist '(fullscreen . fullboth))
+  (toggle-frame-fullscreen))
