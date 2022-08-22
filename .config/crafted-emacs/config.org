@@ -142,6 +142,10 @@ I like indenting text to the same level has their headings:
      (require 'org-roam)
      (with-eval-after-load 'org-roam
        (org-roam-db-autosync-mode))
+
+     (define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
+     (global-set-key (kbd "C-c n c") 'org-roam-capture)
+     (global-set-key (kbd "C-c n f") 'org-roam-node-find)
    #+end_src
 
    #+begin_src bash

@@ -72,6 +72,10 @@
 (with-eval-after-load 'org-roam
   (org-roam-db-autosync-mode))
 
+(define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
+(global-set-key (kbd "C-c n c") 'org-roam-capture)
+(global-set-key (kbd "C-c n f") 'org-roam-node-find)
+
 ;; To not load `custom.el' after `config.el', uncomment this line.
 ;; (setq crafted-load-custom-file nil)
 
