@@ -36,21 +36,23 @@
              `(variable-pitch ((t (:font "Liberation Sans 18")))))))
 
 (crafted-package-install-package 'doom-themes)
-;; first turn off the deeper-blue theme
-(defun switch-theme-dark ()
-  "Switch to dark theme."
-  (progn
-    (disable-theme 'doom-ayu-light)
-    (load-theme 'doom-palenight t)))
-(defun switch-theme-light ()
-  "Switch to light theme."
-  (progn
-    (disable-theme 'doom-palenight)
-    (load-theme 'doom-ayu-light t)))
-;; Switch to light theme at sunrise
-(run-at-time "07:00" nil #'switch-theme-light)
-;; Switch to dark theme at sunset
-(run-at-time "19:00" nil #'switch-theme-dark)
+
+(setq doom-theme '(color-theme-solarized-light))
+
+(defun synchronize-theme ()
+  (let* ((light-theme 'doom-ayu-light)
+         (dark-theme 'doom-palenight)
+         (start-time-light-theme 6)
+         (end-time-light-theme 18)
+         (hour (string-to-number (substring (current-time-string) 11 13)))
+         (next-theme (if (member hour (number-sequence start-time-light-theme end-time-light-theme))
+                         light-theme dark-theme)))
+    (when (not (equal doom-theme next-theme))
+      (disable-theme doom-theme)
+      (setq doom-theme next-theme)
+      (load-theme next-theme))))
+
+(run-with-timer 0 900 'synchronize-theme)
 
 (crafted-ensure-package 'ergoemacs-mode)
 (require 'ergoemacs-mode)
