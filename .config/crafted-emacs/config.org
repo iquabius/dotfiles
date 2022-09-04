@@ -144,6 +144,14 @@ I like indenting text to the same level has their headings:
    #+begin_src emacs-lisp
      (crafted-ensure-package 'org-roam)
      (setq-default org-roam-directory (file-truename "~/Notes"))
+     (setq org-roam-dailies-directory "Journal/")
+
+     (setq org-roam-dailies-capture-templates
+           '(("d" "default" entry
+              "\n* %<%H:%M> %?"
+              :if-new (file+head "%<%Y/%m-%d>.org"
+                                 "#+title: %<%a, %b %d %Y>\n"))))
+
      (require 'org-roam)
      (with-eval-after-load 'org-roam
        (org-roam-db-autosync-mode))
@@ -151,11 +159,27 @@ I like indenting text to the same level has their headings:
      (define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
      (global-set-key (kbd "C-c n c") 'org-roam-capture)
      (global-set-key (kbd "C-c n f") 'org-roam-node-find)
+     (global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)
    #+end_src
+
+   =org-roam-dailies= refs:
+   - https://systemcrafters.net/build-a-second-brain-in-emacs/keep-a-journal/
+
+   Why isn't ="\n"= not working in =org-roam-dailies-capture-templates=?
 
    #+begin_src bash
      ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
    #+end_src
+
+   After setting up  =org-roam-dailies=, I got the following error:
+   "Could not read ‘org-id-values’ from /home/iqb/.config/crafted-emacs/var/org-id-locations, setting it to nil"
+   
+   To fix, I had to run:
+
+   #+begin_src emacs-lisp :tangle no
+     (org-id-update-id-locations (directory-files-recursively org-roam-directory ".org$\\|.org.gpg$"))
+   #+end_src
+   Ref: https://github.com/org-roam/org-roam/issues/1700#issuecomment-889116709
 
    https://github.com/daviwil/dotfiles/blob/0e034ebb688633082a3b0c201b0bc834a9821091/Emacs.org#org-roam
    https://jethrokuan.github.io/org-roam-guide/

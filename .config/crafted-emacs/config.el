@@ -70,6 +70,14 @@
 
 (crafted-ensure-package 'org-roam)
 (setq-default org-roam-directory (file-truename "~/Notes"))
+(setq org-roam-dailies-directory "Journal/")
+
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry
+         "\n* %<%H:%M> %?"
+         :if-new (file+head "%<%Y/%m-%d>.org"
+                            "#+title: %<%a, %b %d %Y>\n"))))
+
 (require 'org-roam)
 (with-eval-after-load 'org-roam
   (org-roam-db-autosync-mode))
@@ -77,6 +85,7 @@
 (define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
 (global-set-key (kbd "C-c n c") 'org-roam-capture)
 (global-set-key (kbd "C-c n f") 'org-roam-node-find)
+(global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)
 
 ;; To not load `custom.el' after `config.el', uncomment this line.
 ;; (setq crafted-load-custom-file nil)
