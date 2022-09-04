@@ -90,6 +90,10 @@
 ;; To not load `custom.el' after `config.el', uncomment this line.
 ;; (setq crafted-load-custom-file nil)
 
+(crafted-ensure-package 'beacon)
+(beacon-mode 1)
+(diminish 'beacon-mode " ⓑ")
+
 (if (daemonp)
     (add-to-list 'default-frame-alist '(fullscreen . fullboth))
   (toggle-frame-fullscreen))

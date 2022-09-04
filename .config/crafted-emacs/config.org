@@ -195,12 +195,36 @@ variable to =nil=:
   ;; (setq crafted-load-custom-file nil)
 #+end_src
 
+* Scrolling
+
+** Cursor Guiding
+
+   "A light that follows your cursor around so you don't lose it!"
+
+   #+begin_src emacs-lisp
+     (crafted-ensure-package 'beacon)
+     (beacon-mode 1)
+     (diminish 'beacon-mode " ⓑ")
+   #+end_src
+   Diminishing alternatives: Ⓑ ⓑ ⒝ ḇ Ḇ ḅ Ḅ ɓ Ƀ ƅ Ƅ ƃ Ƃ Ɓ ß ƀ
+
+   *Guix Packages*
+
+   #+begin_src scheme :noweb-ref packages :nowebsep ""
+     ; "emacs-beacon"
+   #+end_src
+
 * Tangling to early-config.el
 If you need to make settings to =early-config.el=, you can do that from here, too.
 Just begin the source code block with:
 #+begin_src org
   ,#+begin_src emacs-lisp :tangle ./early-config.el
 #+end_src
+
+* TODOs
+
+** TODO Set up *Guix Packages* file tangling
+   https://github.com/daviwil/dotfiles/blob/0e034ebb688633082a3b0c201b0bc834a9821091/Emacs.org
 
 * Windows
 
