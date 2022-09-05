@@ -588,6 +588,26 @@
 	{
 		"key": "shift+alt+[BracketLeft]",
 		"command": "extension.codeBlock"
+	},
+	{
+		"key": "alt+i",
+		"command": "selectPrevCodeAction",
+		"when": "codeActionMenuVisible"
+	},
+	{
+		"key": "ctrl+up",
+		"command": "-selectPrevCodeAction",
+		"when": "codeActionMenuVisible"
+	},
+	{
+		"key": "alt+k",
+		"command": "selectNextCodeAction",
+		"when": "codeActionMenuVisible"
+	},
+	{
+		"key": "ctrl+down",
+		"command": "-selectNextCodeAction",
+		"when": "codeActionMenuVisible"
 	}
 	//*/
 	// Isso caga o recortar com Ctrl+x
