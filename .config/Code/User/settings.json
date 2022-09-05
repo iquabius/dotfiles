@@ -193,5 +193,6 @@
 		}
 	],
 	"gitlens.mode.active": "zen",
-	"window.zoomLevel": 1
+	"window.zoomLevel": 1,
+	"editor.suggest.matchOnWordStartOnly": false
 }
