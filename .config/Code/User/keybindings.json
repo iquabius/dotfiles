@@ -1,605 +1,607 @@
 // Place your key bindings in this file to override the defaultsauto[]
 [
-    {
-        "key": "alt+l",
-        "command": "cursorRight",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "right",
-        "command": "-cursorRight",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+j",
-        "command": "cursorLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "left",
-        "command": "-cursorLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+k",
-        "command": "cursorDown",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "down",
-        "command": "-cursorDown",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+i",
-        "command": "cursorUp",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "up",
-        "command": "-cursorUp",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+o",
-        "command": "cursorWordEndRight",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+right",
-        "command": "-cursorWordEndRight",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+u",
-        "command": "cursorWordStartLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+left",
-        "command": "-cursorWordStartLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+o",
-        "command": "cursorWordEndRightSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+right",
-        "command": "-cursorWordEndRightSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+u",
-        "command": "cursorWordStartLeftSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+left",
-        "command": "-cursorWordStartLeftSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+i",
-        "command": "cursorUpSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+up",
-        "command": "-cursorUpSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+k",
-        "command": "cursorDownSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+down",
-        "command": "-cursorDownSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+j",
-        "command": "cursorLeftSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+left",
-        "command": "-cursorLeftSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+l",
-        "command": "cursorRightSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+right",
-        "command": "-cursorRightSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+i",
-        "command": "selectPrevSuggestion",
-        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
-    },
-    {
-        "key": "up",
-        "command": "-selectPrevSuggestion",
-        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
-    },
-    {
-        "key": "alt+k",
-        "command": "selectNextSuggestion",
-        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
-    },
-    {
-        "key": "down",
-        "command": "-selectNextSuggestion",
-        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
-    },
-    {
-        "key": "alt+e",
-        "command": "cursorEnd",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "end",
-        "command": "-cursorEnd",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+a",
-        "command": "cursorHome",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "home",
-        "command": "-cursorHome",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+a",
-        "command": "cursorHomeSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+home",
-        "command": "-cursorHomeSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+unknown",
-        "command": "cursorEndSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+end",
-        "command": "-cursorEndSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+e",
-        "command": "cursorEndSelect"
-    },
-    {
-        "key": "alt+i",
-        "command": "history.showPrevious",
-        "when": "historyNavigationEnabled && historyNavigationWidget"
-    },
-    {
-        "key": "up",
-        "command": "-history.showPrevious",
-        "when": "historyNavigationEnabled && historyNavigationWidget"
-    },
-    {
-        "key": "alt+k",
-        "command": "history.showNext",
-        "when": "historyNavigationEnabled && historyNavigationWidget"
-    },
-    {
-        "key": "down",
-        "command": "-history.showNext",
-        "when": "historyNavigationEnabled && historyNavigationWidget"
-    },
-    {
-        "key": "ctrl+alt+k",
-        "command": "editor.action.moveLinesDownAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "alt+down",
-        "command": "-editor.action.moveLinesDownAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "ctrl+alt+i",
-        "command": "editor.action.moveLinesUpAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "alt+up",
-        "command": "-editor.action.moveLinesUpAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    //* LIST NAVIGATION ########################################################
-    {   // There's no need to unset 'up' and 'down' keys. Leave them both.
-        "key": "alt+i",
-        "command": "list.focusUp",
-        "when": "listFocus && !inputFocus"
-    },
-    {
-        "key": "alt+k",
-        "command": "list.focusDown",
-        "when": "listFocus && !inputFocus"
-    },
-    {   // There's no need to unset 'home' and 'end' keys. Leave them both.
-        "key": "shift+alt+,",
-        "command": "list.focusFirst",
-        "when": "listFocus && !inputFocus"
-    },
-    {
-        "key": "shift+alt+.",
-        "command": "list.focusLast",
-        "when": "listFocus && !inputFocus"
-    },
-    {
-        "key": "shift+alt+i",
-        "command": "list.expandSelectionUp",
-        "when": "listFocus && listSupportsMultiselect && !inputFocus"
-    },
-    {
-        "key": "shift+alt+k",
-        "command": "list.expandSelectionDown",
-        "when": "listFocus && listSupportsMultiselect && !inputFocus"
-    },
-    //*/
-    //* EDITOR/TAB NAVIGATION ##################################################
-    {
-        "key": "ctrl+o",
-        "command": "workbench.action.nextEditor"
-    },
-    {
-        "key": "ctrl+u",
-        "command": "workbench.action.previousEditor"
-    },
-    {
-        "key": "ctrl+alt+u",
-        "command": "workbench.action.moveEditorLeftInGroup"
-    },
-    {
-        "key": "ctrl+alt+o",
-        "command": "workbench.action.moveEditorRightInGroup"
-    },
-    {
-        //? Could ctrl+tab be better for this?
-        // Elementary uses
-        //   - super+tab to switch workspaces.
-        //   - alt+tab to switch windows.
-        // ctrl+tab is already used for
-        // "command": "workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup"
-        //? Why doesn't it work with CapsLock as tab?
-        "key": "alt+s",
-        "command": "workbench.action.navigateEditorGroups"
-    },
-    {
-        "key": "alt+4",
-        "command": "workbench.action.splitEditor"
-    },
-    {
-        "key": "shift+alt+4",
-        "command": "workbench.action.splitEditorOrthogonal"
-    },
-    //*/
-    {
-        "key": "ctrl+shift+alt+i",
-        "command": "editor.action.copyLinesUpAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "ctrl+shift+alt+up",
-        "command": "-editor.action.copyLinesUpAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "ctrl+shift+alt+k",
-        "command": "editor.action.copyLinesDownAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "ctrl+shift+alt+down",
-        "command": "-editor.action.copyLinesDownAction",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "ctrl+shift+i",
-        "command": "editor.action.sourceAction",
-        "args": {
-            "kind": "source.addMissingImports",
-            "apply": "first"
-        }
-    },
-    {
-        "key": "alt+i",
-        "command": "showPrevParameterHint",
-        "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
-    },
-    {
-        "key": "alt+up",
-        "command": "-showPrevParameterHint",
-        "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
-    },
-    {
-        "key": "alt+k",
-        "command": "showNextParameterHint",
-        "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
-    },
-    {
-        "key": "alt+down",
-        "command": "-showNextParameterHint",
-        "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
-    },
-    {
-        "key": "shift+alt+,",
-        "command": "cursorTop",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+home",
-        "command": "-cursorTop",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+alt+,",
-        "command": "cursorTopSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+home",
-        "command": "-cursorTopSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "shift+alt+.",
-        "command": "cursorBottom",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+end",
-        "command": "-cursorBottom",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+alt+.",
-        "command": "cursorBottomSelect",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+shift+end",
-        "command": "-cursorBottomSelect",
-        "when": "textInputFocus"
-    },
-    // Emacs command: er/expand-region (M-P)
-    {
-        "key": "shift+alt+p",
-        "command": "editor.action.smartSelect.expand",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "shift+alt+right",
-        "command": "-editor.action.smartSelect.expand",
-        "when": "editorTextFocus"
-    },
-    // Emacs command: er/contract-region (M-Y)
-    {
-        "key": "shift+alt+y",
-        "command": "editor.action.smartSelect.shrink",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "shift+alt+left",
-        "command": "-editor.action.smartSelect.shrink",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "alt+u",
-        "command": "cursorWordLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+left",
-        "command": "-cursorWordLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "ctrl+\\",
-        "command": "-workbench.action.splitEditor"
-    },
-    {
-        "key": "ctrl+\\",
-        "command": "workbench.action.toggleSidebarVisibility"
-    },
-    {
-        "key": "ctrl+b",
-        "command": "-workbench.action.toggleSidebarVisibility"
-    },
-    {
-        "command": "sqltools.executeCurrentQuery",
-        "key": "ctrl+enter",
-        "when": "editorLangId == sql || editorLangId == markdown && editorTextFocus",
-        // "when": "editorTextFocus && !editorReadonly && editorLangId == markdown && !isMac"
-        // https://github.com/yzhang-gh/vscode-markdown/blob/3ec7e0/package.json#L125
-    },
-    //* VERSION CONTROL ########################################################
-    // Alternative 1: edamagit extension
-    // Alternative 2: https://vspacecode.github.io/
-    {
-        // Inspired by "C-x g" from magit-status and "C-c v g" from doom-emacs.
-        //? Use "M-v" prefix instead? It's closer to "Alt" and not far from "g".
-        "key": "alt+g g",
-        "command": "workbench.scm.focus"
-    },
-    {
-        "key": "alt+g n",
-        "command": "workbench.action.editor.nextChange",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "alt+f5",
-        "command": "-workbench.action.editor.nextChange",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "alt+g n",
-        "command": "workbench.action.compareEditor.nextChange",
-        "when": "textCompareEditorVisible"
-    },
-    {
-        "key": "alt+f5",
-        "command": "-workbench.action.compareEditor.nextChange",
-        "when": "textCompareEditorVisible"
-    },
-    {
-        "key": "alt+g p",
-        "command": "workbench.action.editor.previousChange",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "shift+alt+f5",
-        "command": "-workbench.action.editor.previousChange",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "alt+g p",
-        "command": "workbench.action.compareEditor.previousChange",
-        "when": "textCompareEditorVisible"
-    },
-    {
-        "key": "shift+alt+f5",
-        "command": "-workbench.action.compareEditor.previousChange",
-        "when": "textCompareEditorVisible"
-    },
-    {
-        "when": "workbench.scm.active",
-        // In case we want to stage the whole file from within the editor pane:
-        // "when": "!editorHasSelection && workbench.scm.active || editorTextFocus || isInDiffEditor",
-        "key": "alt+g s",
-        "command": "git.stage"
-    },
-    {
-        "when": "workbench.scm.active",
-        "key": "alt+g u",
-        "command": "git.unstage"
-    },
-    {
-        "key": "alt+g s",
-        "command": "git.stageSelectedRanges",
-        "when": "isInDiffEditor || editorTextFocus && editorHasSelection"
-    },
-    {
-        "key": "ctrl+k ctrl+alt+s",
-        "command": "-git.stageSelectedRanges",
-        "when": "isInDiffEditor"
-    },
-    {
-        "when": "workbench.scm.active",
-        "key": "alt+g k",
-        "command": "git.clean"
-    },
-    {
-        "key": "alt+g k",
-        "command": "git.revertSelectedRanges",
-        "when": "isInDiffEditor || editorTextFocus"
-    },
-    {
-        "key": "ctrl+k ctrl+r",
-        "command": "-git.revertSelectedRanges",
-        "when": "isInDiffEditor"
-    },
-    {
-        "key": "alt+g u",
-        "command": "git.unstageSelectedRanges",
-        "when": "isInDiffEditor || editorTextFocus && editorHasSelection"
-    },
-    {
-        "key": "ctrl+k ctrl+n",
-        "command": "-git.unstageSelectedRanges",
-        "when": "isInDiffEditor"
-    },
-    {
-        "when": "isInDiffEditor",
-        "key": "ctrl+enter",
-        "command": "git.openFile"
-    },
-    {
-        "key": "alt+v l",
-        "command": "git-graph.view"
-    },
-    //*/
-    {
-        "key": "alt+f f",
-        "command": "workbench.files.action.focusFilesExplorer"
-    },
-    //* Emac's command describe-key usues `C-h k`
-    {
-        "key": "ctrl+h k",
-        "command": "keybindings.editor.recordSearchKeys",
-        "when": "inKeybindings && inKeybindingsSearch"
-    },
-    {
-        "key": "alt+k",
-        "command": "-keybindings.editor.recordSearchKeys",
-        "when": "inKeybindings && inKeybindingsSearch"
-    },
-    // https://code.visualstudio.com/docs/editor/editingevolved
-    {
-        "key": "alt+k",
-        "command": "workbench.action.quickOpenNavigateNext",
-        "when": "inFilesPicker || inQuickOpen"
-    },
-    {
-        "key": "alt+i",
-        "command": "workbench.action.quickOpenNavigatePrevious",
-        "when": "inFilesPicker || inQuickOpen"
-    },
-    {
-        "key": "ctrl+h h",
-        "command": "editor.action.showHover",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "ctrl+h d",
-        "command": "editor.action.showDefinitionPreviewHover"
-    },
-    {
-        "key": "alt+c f",
-        "command": "sqltools.formatSql",
-        "when": "editorTextFocus && !editorReadonly"
-    },
-    {
-        "key": "alt+c f",
-        "command": "sqltools.formatSql",
-        "when": "notebookEditorFocused && !inputFocus && activeEditor == 'workbench.editor.notebook' && notebookCellType == 'code'"
-    },
-    {
-        "key": "shift+alt+[BracketLeft]",
-        "command": "extension.codeBlock"
-    },
-    //*/
-    // Isso caga o recortar com Ctrl+x
-    // Posso tentar:
-    // - https://marketplace.visualstudio.com/items?itemName=tuttieee.emacs-mcx
-    // - https://marketplace.visualstudio.com/items?itemName=ayrtonmassey.emacs-region
-    // {
-    //     "key": "ctrl+x g",
-    //     "command": "workbench.view.scm",
-    //     "when": "gitlens:enabled && config.gitlens.keymap == 'chorded'"
-    // },
-    // {
-    //     "key": "ctrl+shift+g g",
-    //     "command": "-workbench.view.scm",
-    //     "when": "gitlens:enabled && config.gitlens.keymap == 'chorded'"
-    // }
+	{
+		"key": "alt+l",
+		"command": "cursorRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "right",
+		"command": "-cursorRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+j",
+		"command": "cursorLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "left",
+		"command": "-cursorLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+k",
+		"command": "cursorDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "down",
+		"command": "-cursorDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+i",
+		"command": "cursorUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "up",
+		"command": "-cursorUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+o",
+		"command": "cursorWordEndRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+right",
+		"command": "-cursorWordEndRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+u",
+		"command": "cursorWordStartLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+left",
+		"command": "-cursorWordStartLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+o",
+		"command": "cursorWordEndRightSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+right",
+		"command": "-cursorWordEndRightSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+u",
+		"command": "cursorWordStartLeftSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+left",
+		"command": "-cursorWordStartLeftSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+i",
+		"command": "cursorUpSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+up",
+		"command": "-cursorUpSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+k",
+		"command": "cursorDownSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+down",
+		"command": "-cursorDownSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+j",
+		"command": "cursorLeftSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+left",
+		"command": "-cursorLeftSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+l",
+		"command": "cursorRightSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+right",
+		"command": "-cursorRightSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+i",
+		"command": "selectPrevSuggestion",
+		"when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+	},
+	{
+		"key": "up",
+		"command": "-selectPrevSuggestion",
+		"when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+	},
+	{
+		"key": "alt+k",
+		"command": "selectNextSuggestion",
+		"when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+	},
+	{
+		"key": "down",
+		"command": "-selectNextSuggestion",
+		"when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+	},
+	{
+		"key": "alt+e",
+		"command": "cursorEnd",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "end",
+		"command": "-cursorEnd",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+a",
+		"command": "cursorHome",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "home",
+		"command": "-cursorHome",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+a",
+		"command": "cursorHomeSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+home",
+		"command": "-cursorHomeSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+unknown",
+		"command": "cursorEndSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+end",
+		"command": "-cursorEndSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+e",
+		"command": "cursorEndSelect"
+	},
+	{
+		"key": "alt+i",
+		"command": "history.showPrevious",
+		"when": "historyNavigationEnabled && historyNavigationWidget"
+	},
+	{
+		"key": "up",
+		"command": "-history.showPrevious",
+		"when": "historyNavigationEnabled && historyNavigationWidget"
+	},
+	{
+		"key": "alt+k",
+		"command": "history.showNext",
+		"when": "historyNavigationEnabled && historyNavigationWidget"
+	},
+	{
+		"key": "down",
+		"command": "-history.showNext",
+		"when": "historyNavigationEnabled && historyNavigationWidget"
+	},
+	{
+		"key": "ctrl+alt+k",
+		"command": "editor.action.moveLinesDownAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "alt+down",
+		"command": "-editor.action.moveLinesDownAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "ctrl+alt+i",
+		"command": "editor.action.moveLinesUpAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "alt+up",
+		"command": "-editor.action.moveLinesUpAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	//* LIST NAVIGATION ########################################################
+	{
+		// There's no need to unset 'up' and 'down' keys. Leave them both.
+		"key": "alt+i",
+		"command": "list.focusUp",
+		"when": "listFocus && !inputFocus"
+	},
+	{
+		"key": "alt+k",
+		"command": "list.focusDown",
+		"when": "listFocus && !inputFocus"
+	},
+	{
+		// There's no need to unset 'home' and 'end' keys. Leave them both.
+		"key": "shift+alt+,",
+		"command": "list.focusFirst",
+		"when": "listFocus && !inputFocus"
+	},
+	{
+		"key": "shift+alt+.",
+		"command": "list.focusLast",
+		"when": "listFocus && !inputFocus"
+	},
+	{
+		"key": "shift+alt+i",
+		"command": "list.expandSelectionUp",
+		"when": "listFocus && listSupportsMultiselect && !inputFocus"
+	},
+	{
+		"key": "shift+alt+k",
+		"command": "list.expandSelectionDown",
+		"when": "listFocus && listSupportsMultiselect && !inputFocus"
+	},
+	//*/
+	//* EDITOR/TAB NAVIGATION ##################################################
+	{
+		"key": "ctrl+o",
+		"command": "workbench.action.nextEditor"
+	},
+	{
+		"key": "ctrl+u",
+		"command": "workbench.action.previousEditor"
+	},
+	{
+		"key": "ctrl+alt+u",
+		"command": "workbench.action.moveEditorLeftInGroup"
+	},
+	{
+		"key": "ctrl+alt+o",
+		"command": "workbench.action.moveEditorRightInGroup"
+	},
+	{
+		//? Could ctrl+tab be better for this?
+		// Elementary uses
+		//   - super+tab to switch workspaces.
+		//   - alt+tab to switch windows.
+		// ctrl+tab is already used for
+		// "command": "workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup"
+		//? Why doesn't it work with CapsLock as tab?
+		"key": "alt+s",
+		"command": "workbench.action.navigateEditorGroups"
+	},
+	{
+		"key": "alt+4",
+		"command": "workbench.action.splitEditor"
+	},
+	{
+		"key": "shift+alt+4",
+		"command": "workbench.action.splitEditorOrthogonal"
+	},
+	//*/
+	{
+		"key": "ctrl+shift+alt+i",
+		"command": "editor.action.copyLinesUpAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "ctrl+shift+alt+up",
+		"command": "-editor.action.copyLinesUpAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "ctrl+shift+alt+k",
+		"command": "editor.action.copyLinesDownAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "ctrl+shift+alt+down",
+		"command": "-editor.action.copyLinesDownAction",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "ctrl+shift+i",
+		"command": "editor.action.sourceAction",
+		"args": {
+			"kind": "source.addMissingImports",
+			"apply": "first"
+		}
+	},
+	{
+		"key": "alt+i",
+		"command": "showPrevParameterHint",
+		"when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
+	},
+	{
+		"key": "alt+up",
+		"command": "-showPrevParameterHint",
+		"when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
+	},
+	{
+		"key": "alt+k",
+		"command": "showNextParameterHint",
+		"when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
+	},
+	{
+		"key": "alt+down",
+		"command": "-showNextParameterHint",
+		"when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
+	},
+	{
+		"key": "shift+alt+,",
+		"command": "cursorTop",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+home",
+		"command": "-cursorTop",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+,",
+		"command": "cursorTopSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+home",
+		"command": "-cursorTopSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+alt+.",
+		"command": "cursorBottom",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+end",
+		"command": "-cursorBottom",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+.",
+		"command": "cursorBottomSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+end",
+		"command": "-cursorBottomSelect",
+		"when": "textInputFocus"
+	},
+	// Emacs command: er/expand-region (M-P)
+	{
+		"key": "shift+alt+p",
+		"command": "editor.action.smartSelect.expand",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "shift+alt+right",
+		"command": "-editor.action.smartSelect.expand",
+		"when": "editorTextFocus"
+	},
+	// Emacs command: er/contract-region (M-Y)
+	{
+		"key": "shift+alt+y",
+		"command": "editor.action.smartSelect.shrink",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "shift+alt+left",
+		"command": "-editor.action.smartSelect.shrink",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "alt+u",
+		"command": "cursorWordLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+left",
+		"command": "-cursorWordLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+\\",
+		"command": "-workbench.action.splitEditor"
+	},
+	{
+		"key": "ctrl+\\",
+		"command": "workbench.action.toggleSidebarVisibility"
+	},
+	{
+		"key": "ctrl+b",
+		"command": "-workbench.action.toggleSidebarVisibility"
+	},
+	{
+		"command": "sqltools.executeCurrentQuery",
+		"key": "ctrl+enter",
+		"when": "editorLangId == sql || editorLangId == markdown && editorTextFocus"
+		// "when": "editorTextFocus && !editorReadonly && editorLangId == markdown && !isMac"
+		// https://github.com/yzhang-gh/vscode-markdown/blob/3ec7e0/package.json#L125
+	},
+	//* VERSION CONTROL ########################################################
+	// Alternative 1: edamagit extension
+	// Alternative 2: https://vspacecode.github.io/
+	{
+		// Inspired by "C-x g" from magit-status and "C-c v g" from doom-emacs.
+		//? Use "M-v" prefix instead? It's closer to "Alt" and not far from "g".
+		"key": "alt+g g",
+		"command": "workbench.scm.focus"
+	},
+	{
+		"key": "alt+g n",
+		"command": "workbench.action.editor.nextChange",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "alt+f5",
+		"command": "-workbench.action.editor.nextChange",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "alt+g n",
+		"command": "workbench.action.compareEditor.nextChange",
+		"when": "textCompareEditorVisible"
+	},
+	{
+		"key": "alt+f5",
+		"command": "-workbench.action.compareEditor.nextChange",
+		"when": "textCompareEditorVisible"
+	},
+	{
+		"key": "alt+g p",
+		"command": "workbench.action.editor.previousChange",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "shift+alt+f5",
+		"command": "-workbench.action.editor.previousChange",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "alt+g p",
+		"command": "workbench.action.compareEditor.previousChange",
+		"when": "textCompareEditorVisible"
+	},
+	{
+		"key": "shift+alt+f5",
+		"command": "-workbench.action.compareEditor.previousChange",
+		"when": "textCompareEditorVisible"
+	},
+	{
+		"when": "workbench.scm.active",
+		// In case we want to stage the whole file from within the editor pane:
+		// "when": "!editorHasSelection && workbench.scm.active || editorTextFocus || isInDiffEditor",
+		"key": "alt+g s",
+		"command": "git.stage"
+	},
+	{
+		"when": "workbench.scm.active",
+		"key": "alt+g u",
+		"command": "git.unstage"
+	},
+	{
+		"key": "alt+g s",
+		"command": "git.stageSelectedRanges",
+		"when": "isInDiffEditor || editorTextFocus && editorHasSelection"
+	},
+	{
+		"key": "ctrl+k ctrl+alt+s",
+		"command": "-git.stageSelectedRanges",
+		"when": "isInDiffEditor"
+	},
+	{
+		"when": "workbench.scm.active",
+		"key": "alt+g k",
+		"command": "git.clean"
+	},
+	{
+		"key": "alt+g k",
+		"command": "git.revertSelectedRanges",
+		"when": "isInDiffEditor || editorTextFocus"
+	},
+	{
+		"key": "ctrl+k ctrl+r",
+		"command": "-git.revertSelectedRanges",
+		"when": "isInDiffEditor"
+	},
+	{
+		"key": "alt+g u",
+		"command": "git.unstageSelectedRanges",
+		"when": "isInDiffEditor || editorTextFocus && editorHasSelection"
+	},
+	{
+		"key": "ctrl+k ctrl+n",
+		"command": "-git.unstageSelectedRanges",
+		"when": "isInDiffEditor"
+	},
+	{
+		"when": "isInDiffEditor",
+		"key": "ctrl+enter",
+		"command": "git.openFile"
+	},
+	{
+		"key": "alt+v l",
+		"command": "git-graph.view"
+	},
+	//*/
+	{
+		"key": "alt+f f",
+		"command": "workbench.files.action.focusFilesExplorer"
+	},
+	//* Emac's command describe-key usues `C-h k`
+	{
+		"key": "ctrl+h k",
+		"command": "keybindings.editor.recordSearchKeys",
+		"when": "inKeybindings && inKeybindingsSearch"
+	},
+	{
+		"key": "alt+k",
+		"command": "-keybindings.editor.recordSearchKeys",
+		"when": "inKeybindings && inKeybindingsSearch"
+	},
+	// https://code.visualstudio.com/docs/editor/editingevolved
+	{
+		"key": "alt+k",
+		"command": "workbench.action.quickOpenNavigateNext",
+		"when": "inFilesPicker || inQuickOpen"
+	},
+	{
+		"key": "alt+i",
+		"command": "workbench.action.quickOpenNavigatePrevious",
+		"when": "inFilesPicker || inQuickOpen"
+	},
+	{
+		"key": "ctrl+h h",
+		"command": "editor.action.showHover",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+h d",
+		"command": "editor.action.showDefinitionPreviewHover"
+	},
+	{
+		"key": "alt+c f",
+		"command": "sqltools.formatSql",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "alt+c f",
+		"command": "sqltools.formatSql",
+		"when": "notebookEditorFocused && !inputFocus && activeEditor == 'workbench.editor.notebook' && notebookCellType == 'code'"
+	},
+	{
+		"key": "shift+alt+[BracketLeft]",
+		"command": "extension.codeBlock"
+	}
+	//*/
+	// Isso caga o recortar com Ctrl+x
+	// Posso tentar:
+	// - https://marketplace.visualstudio.com/items?itemName=tuttieee.emacs-mcx
+	// - https://marketplace.visualstudio.com/items?itemName=ayrtonmassey.emacs-region
+	// {
+	//     "key": "ctrl+x g",
+	//     "command": "workbench.view.scm",
+	//     "when": "gitlens:enabled && config.gitlens.keymap == 'chorded'"
+	// },
+	// {
+	//     "key": "ctrl+shift+g g",
+	//     "command": "-workbench.view.scm",
+	//     "when": "gitlens:enabled && config.gitlens.keymap == 'chorded'"
+	// }
 ]
