@@ -117,6 +117,26 @@ https://stackoverflow.com/questions/14760567/emacs-auto-load-color-theme-by-time
   (ergoemacs-mode t)
 #+end_src
 
+This can replace =which-key=.
+
+Usage ex.:
+1. press =Ctrl+c=
+2. press Ctrl+h
+3. filter by ='roam'=
+4. navigate with =M-k= or =M-i= to desired command and press =Enter=
+   1. or, type at sign =@= and press the rest of the key chord, eg. =n f=.
+
+#+begin_src emacs-lisp
+  (setq prefix-help-command #'embark-prefix-help-command)
+#+end_src
+
+Ref:
+[[https://youtu.be/qk2Is_sC8Lk?t=5502][System Crafters Live! - The Many Uses of Embark]]
+He set's it under =:init= keyword with =use-package=.
+Should it be set before loading Embark?
+How would we do it?
+Crafted Emacs loads it.
+
 * Org-mode
 This enables us to type =<s + TAB= to expand to a =#+begin_src ... #+end_src= block.
 https://github.com/syl20bnr/spacemacs/issues/11798#issuecomment-454941024

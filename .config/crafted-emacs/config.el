@@ -58,6 +58,8 @@
 (require 'ergoemacs-mode)
 (ergoemacs-mode t)
 
+(setq prefix-help-command #'embark-prefix-help-command)
+
 (when (version<= "9.2" (org-version))
   (require 'org-tempo))
 
