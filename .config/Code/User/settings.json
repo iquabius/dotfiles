@@ -1,4 +1,6 @@
 {
+	"remote.SSH.showLoginTerminal": true,
+	"remote.SSH.useLocalServer": false,
 	// https://github.com/este/este/wiki/Recommended-VSCode-Settings
 	"explorer.confirmDelete": false,
 	"explorer.confirmDragAndDrop": false,
