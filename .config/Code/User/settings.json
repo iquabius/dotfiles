@@ -53,6 +53,7 @@
 	// "liveshare.featureSet": "insiders",
 	"javascript.updateImportsOnFileMove.enabled": "always",
 	"workbench.iconTheme": "vscode-icons",
+	"aws.profile": "profile:vscode-aws-toolkit",
 	"editor.renderWhitespace": "selection",
 	"editor.fontFamily": "'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
 	// "editor.fontSize": 14,
