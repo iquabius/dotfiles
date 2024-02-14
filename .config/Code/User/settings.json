@@ -1,6 +1,9 @@
 {
 	"remote.SSH.showLoginTerminal": true,
 	"remote.SSH.useLocalServer": false,
+	"remote.SSH.remotePlatform": {
+		"sogni-dev": "linux"
+	},
 	"liveshare.launcherClient": "visualStudioCode",
 	// https://github.com/este/este/wiki/Recommended-VSCode-Settings
 	"explorer.confirmDelete": false,
