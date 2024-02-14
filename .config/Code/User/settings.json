@@ -53,6 +53,8 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true
 	},
+	"javascript.autoClosingTags": false,
+	"typescript.autoClosingTags": false,
 	/**/
 	"javascript.updateImportsOnFileMove.enabled": "always",
 	"typescript.experimental.useSeparateSyntaxServer": true,
@@ -71,7 +73,6 @@
 	"window.enableMenuBarMnemonics": false,
 	"diffEditor.ignoreTrimWhitespace": false,
 	"todo-tree.tree.showScanModeButton": false,
-	"workbench.colorTheme": "Default Light+",
 	"workbench.productIconTheme": "icons-carbon",
 	"githubPullRequests.fileListLayout": "tree",
 	"githubPullRequests.pullBranch": "never",
@@ -110,6 +111,8 @@
 	"editor.fontWeight": "450",
 	"editor.letterSpacing": 0.7,
 	"editor.lineHeight": 22,
+	"editor.linkedEditing": true,
+	"explorer.compactFolders": false,
 	"files.trimTrailingWhitespace": true,
 	"files.exclude": {
 		"**/.classpath": true,
@@ -121,6 +124,7 @@
 	"[html]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
+	"window.menuBarVisibility": "hidden",
 	"workbench.editor.tabSizing": "shrink",
 	"editor.suggest.preview": true,
 	"blockman.n01LineHeight": 0,
@@ -132,8 +136,8 @@
 	"editor.wordWrap": "off",
 	"diffEditor.wordWrap": "off",
 	"editor.guides.indentation": false,
-	"editor.guides.bracketPairs": true,
-	"editor.inlayHints.enabled": "onUnlessPressed",
+	"editor.guides.bracketPairs": false,
+	"editor.inlayHints.enabled": "offUnlessPressed",
 	// smooth-scroll-margin in Emacs with smooth-scrolling package
 	"editor.cursorSurroundingLines": 9,
 	/**/
@@ -145,7 +149,7 @@
 		}
 	],
 	"gitlens.mode.active": "zen",
-	"window.zoomLevel": 1,
+	"window.zoomLevel": 2,
 	"editor.suggest.matchOnWordStartOnly": false,
 	"terminal.integrated.profiles.linux": {
 		"bash": {
