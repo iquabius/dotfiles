@@ -54,6 +54,7 @@
 	"typescript.experimental.useSeparateSyntaxServer": true,
 	"workbench.iconTheme": "vscode-icons",
 	"aws.profile": "profile:vscode-aws-toolkit",
+	"cSpell.language": "en,pt,pt_PT",
 	"editor.renderWhitespace": "selection",
 	"editor.fontFamily": "'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
 	// "editor.fontSize": 14,
