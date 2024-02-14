@@ -134,5 +134,26 @@
 	],
 	"gitlens.mode.active": "zen",
 	"window.zoomLevel": 1,
-	"editor.suggest.matchOnWordStartOnly": false
+	"editor.suggest.matchOnWordStartOnly": false,
+	"terminal.integrated.profiles.linux": {
+		"bash": {
+			"path": "bash",
+			"icon": "terminal-bash"
+		},
+		"zsh": {
+			"path": "zsh"
+		},
+		"fish": {
+			"path": "fish",
+			"args": ["--init-command", "nvm use"]
+		},
+		"tmux": {
+			"path": "tmux",
+			"icon": "terminal-tmux"
+		},
+		"pwsh": {
+			"path": "pwsh",
+			"icon": "terminal-powershell"
+		}
+	}
 }
