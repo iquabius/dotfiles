@@ -24,3 +24,8 @@
 ;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
 (require 'ergoemacs-mode)
 (ergoemacs-mode t)
+
+;; Windows
+(if (daemonp)
+    (add-to-list 'default-frame-alist '(fullscreen . fullboth))
+  (toggle-frame-fullscreen))
