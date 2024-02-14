@@ -58,6 +58,12 @@ end
 
 set -g theme_display_virtualenv no
 
+# https://stackoverflow.com/questions/64799841/how-to-stop-docker-and-kubernetes-using-docker-desktop
+# macro to kill the docker desktop app and the VM (excluding vmnetd -> it's a service)
+function killdocker
+  ps ax | grep -i docker | egrep -iv 'grep|com.docker.vmnetd' | awk '{print $1}' | xargs kill
+end
+
 # https://www.calazan.com/docker-cleanup-commands/
 
 # Kill all running containers.
