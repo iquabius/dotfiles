@@ -156,7 +156,7 @@ https://github.com/syl20bnr/spacemacs/issues/11798#issuecomment-454941024
 I like indenting text to the same level has their headings:
 
 #+begin_src emacs-lisp
-  (setq org-adapt-indentation t)
+  (setq org-adapt-indentation 'headline-data)
 #+end_src
 
 ** Org-roam

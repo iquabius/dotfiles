@@ -68,7 +68,7 @@
 (global-visual-line-mode)
 (diminish 'visual-line-mode)
 
-(setq org-adapt-indentation t)
+(setq org-adapt-indentation 'headline-data)
 
 (crafted-ensure-package 'org-roam)
 (setq-default org-roam-directory (file-truename "~/Notes"))
