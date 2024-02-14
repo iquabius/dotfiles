@@ -50,8 +50,8 @@
 		"editor.formatOnSave": true
 	},
 	/**/
-	// "liveshare.featureSet": "insiders",
 	"javascript.updateImportsOnFileMove.enabled": "always",
+	"typescript.experimental.useSeparateSyntaxServer": true,
 	"workbench.iconTheme": "vscode-icons",
 	"aws.profile": "profile:vscode-aws-toolkit",
 	"editor.renderWhitespace": "selection",
