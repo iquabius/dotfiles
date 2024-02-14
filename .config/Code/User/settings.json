@@ -68,8 +68,13 @@
 	"workbench.colorTheme": "Default Light+",
 	"workbench.productIconTheme": "icons-carbon",
 	"githubPullRequests.fileListLayout": "tree",
-	"spellright.language": ["en_US"],
-	"spellright.documentTypes": ["markdown", "plaintext"],
+	"spellright.language": ["Portuguese (Brazilian)", "en_US"],
+	"spellright.documentTypes": [
+		"markdown",
+		"plaintext",
+		"typescript",
+		"typescriptreact"
+	],
 	"[jsonc]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
