@@ -90,6 +90,7 @@ alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 
 alias dotfiles=(which git)' --git-dir=$HOME/.dotfiles/.git/ --work-tree=$HOME'
+alias dotfiles-code="GIT_WORK_TREE=$HOME GIT_DIR=$HOME/.dotfiles/.git/ codium $HOME"
 
 # Speed up Git workflow with keybindings: https://github.com/joseluisq/gitnow
 abbr -a gaa git add -A
