@@ -8,6 +8,7 @@
 ;; Add package definitions for completion packages
 ;; to `package-selected-packages'.
 (require 'crafted-completion-packages)
+(require 'crafted-org-packages)
 (require 'crafted-ui-packages)
 
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
@@ -18,6 +19,7 @@
 ;; Load configuration for crafted-emacs modules
 (require 'crafted-completion-config)
 (require 'crafted-defaults-config)
+(require 'crafted-org-config)
 (require 'crafted-startup-config)
 (require 'crafted-ui-config)
 
