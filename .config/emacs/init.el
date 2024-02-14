@@ -4,3 +4,6 @@
   (load custom-file nil :nomessage))
 
 (load "~/.config/crafted-emacs/modules/crafted-init-config")
+
+;; Load crafted-defaults commonly used configuration for Emacs
+(require 'crafted-defaults-config)
