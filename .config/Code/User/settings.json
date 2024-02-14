@@ -74,6 +74,8 @@
 	"workbench.colorTheme": "Default Light+",
 	"workbench.productIconTheme": "icons-carbon",
 	"githubPullRequests.fileListLayout": "tree",
+	"githubPullRequests.pullBranch": "never",
+	"git.confirmSync": false,
 	"spellright.language": ["Portuguese (Brazilian)", "en_US"],
 	"spellright.documentTypes": [
 		"markdown",
