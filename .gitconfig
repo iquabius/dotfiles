@@ -1,5 +1,5 @@
 [core]
-	editor = codium --wait
+	editor = code --wait
 	# editor = emacsclient -c
 	excludesfile = ~/.gitignore
 
