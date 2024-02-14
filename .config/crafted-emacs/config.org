@@ -246,6 +246,14 @@ Just begin the source code block with:
 ** TODO Set up *Guix Packages* file tangling
    https://github.com/daviwil/dotfiles/blob/0e034ebb688633082a3b0c201b0bc834a9821091/Emacs.org
 
+* Versioning
+
+  #+begin_src emacs-lisp :tangle no
+    ;;(add-to-list 'embark-vc-file-map '("v" vc-next-act))
+    (eval-after-load 'embark
+      (define-key embark-vc-file-map "s" 'magit-stage-file))
+  #+end_src
+
 * Windows
 
 #+begin_src emacs-lisp  
