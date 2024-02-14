@@ -10,6 +10,7 @@
 (require 'crafted-completion-packages)
 (require 'crafted-org-packages)
 (require 'crafted-ui-packages)
+(require 'crafted-writing-packages)
 
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
 
@@ -22,6 +23,7 @@
 (require 'crafted-org-config)
 (require 'crafted-startup-config)
 (require 'crafted-ui-config)
+(require 'crafted-writing-config)
 
 ;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
 (require 'ergoemacs-mode)
