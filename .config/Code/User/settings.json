@@ -23,6 +23,7 @@
 	// "prettier.useTabs": true,
 	// "editor.tabSize": 2,
 	// "prettier.semi": false,
+	"eslint.validate": [],
 	"[json]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
