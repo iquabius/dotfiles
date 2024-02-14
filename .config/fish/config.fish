@@ -49,11 +49,11 @@ if test -d "$JAVA_HOME"
 end
 
 # values are already in the PATH because they are set in ~/.bashrc
-set ANDROID_HOME "$HOME/Android/Sdk"
+set ANDROID_HOME "/opt/android/sdk"
 set ANDROID_SDK_ROOT $ANDROID_HOME
 if test -d "$ANDROID_HOME"
  # https://stackoverflow.com/questions/26483370#49511666
- set PATH "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/emulator" "$ANDROID_HOME/tools" "$ANDROID_HOME/tools/bin" $PATH
+ set PATH "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/emulator" "$ANDROID_HOME/cmdline-tools/bin" $PATH
 end
 
 set -g theme_display_virtualenv no
