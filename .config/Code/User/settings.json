@@ -155,5 +155,19 @@
 			"path": "pwsh",
 			"icon": "terminal-powershell"
 		}
-	}
+	},
+	"totalTypeScript.hideAllTips": false,
+	"totalTypeScript.hiddenTips": [
+		"passing-generics-to-types",
+		"type-alias-declaration",
+		"typing-function-parameters",
+		"literal-type",
+		"variable-type-annotation",
+		"generic-slots-in-functions",
+		"typeof",
+		"pick-utility-type",
+		"partial-utility-type",
+		"nonnullable-utility-type"
+	],
+	"totalTypeScript.hideBasicTips": true
 }
