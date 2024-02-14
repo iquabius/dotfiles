@@ -98,13 +98,13 @@ abbr -a gs git status
 abbr -a gsl git status --long
 
 # wifi-list-available
-abbr -a wla nmcli d wifi list
+abbr -a wifi-la nmcli d wifi list
 # wifi-list-configured
-abbr -a wlc nmcli c
+abbr -a wifi-lc nmcli c
 # wifi-connect
-abbr -a wc nmcli c up
+abbr -a wifi-c nmcli c up
 # wifi-disconnect
-abbr -a wd nmcli c down
+abbr -a wifi-d nmcli c down
 
 # http://www.codecoffee.com/tipsforlinux/articles/22.html
 function dirsize
