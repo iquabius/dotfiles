@@ -14,9 +14,9 @@
 	"vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
 	// Code formatting
 	//*
-	"prettier.useTabs": true,
-	"editor.tabSize": 2,
-	"prettier.semi": false,
+	// "prettier.useTabs": true,
+	// "editor.tabSize": 2,
+	// "prettier.semi": false,
 	"[json]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
