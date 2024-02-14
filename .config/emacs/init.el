@@ -10,6 +10,8 @@
 (require 'crafted-completion-packages)
 (require 'crafted-ui-packages)
 
+(add-to-list 'package-selected-packages 'ergoemacs-mode)
+
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
 
@@ -18,3 +20,7 @@
 (require 'crafted-defaults-config)
 (require 'crafted-startup-config)
 (require 'crafted-ui-config)
+
+;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
+(require 'ergoemacs-mode)
+(ergoemacs-mode t)
