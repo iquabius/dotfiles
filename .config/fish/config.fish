@@ -157,3 +157,8 @@ function rmnode_modules
     find $argv[1] -name 'node_modules' -type d -prune -printf ' Removed %p' -exec rm -rf '{}' +
   end
 end
+
+# pnpm
+set -gx PNPM_HOME "/home/iqb/.local/share/pnpm"
+set -gx PATH "$PNPM_HOME" $PATH
+# pnpm end
