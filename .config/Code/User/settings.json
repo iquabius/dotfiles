@@ -94,6 +94,10 @@
 		"[x]"
 	],
 	"todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+	"vs-kubernetes": {
+		"vscode-kubernetes.kubectl-path-linux": "/home/tchuca/.local/state/vs-kubernetes/tools/kubectl/kubectl",
+		"vscode-kubernetes.helm-path-linux": "/home/tchuca/.local/state/vs-kubernetes/tools/helm/linux-amd64/helm"
+	},
 	//* Recommended settings from Modern Purple Theme
 	"editor.cursorBlinking": "smooth",
 	"editor.cursorStyle": "line",
