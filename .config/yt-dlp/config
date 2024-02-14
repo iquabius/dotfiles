@@ -3,5 +3,5 @@
 # Can we interpolate other commands' outputs?
 # $(date "+%Y")/$(date "+%m-%d %H.%M.%S")
 # ~/Videos/YouTube/2022/07-21 09.45.03
--o '~/Videos/YouTube/2022/%(channel)s ─ %(title)s.%(id)s.%(ext)s'
+--output ~/Videos/YouTube/2024/%(title)s.%(upload_date)s.%(vcodec)s.%(acodec)s.%(autonumber)02d.%(ext)s
 
