@@ -16,4 +16,5 @@
 ;; Load configuration for crafted-emacs modules
 (require 'crafted-completion-config)
 (require 'crafted-defaults-config)
+(require 'crafted-startup-config)
 (require 'crafted-ui-config)
