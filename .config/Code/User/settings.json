@@ -123,6 +123,8 @@
 	},
 	"workbench.editor.tabSizing": "shrink",
 	"editor.suggest.preview": true,
+	"blockman.n01LineHeight": 0,
+	"blockman.n04ColorComboPreset": "Classic Light (Gradients)",
 	"workbench.colorCustomizations": {
 		"editor.lineHighlightBackground": "#1073cf2d",
 		"editor.lineHighlightBorder": "#9fced11f"
