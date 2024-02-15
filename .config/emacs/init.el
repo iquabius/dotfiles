@@ -13,6 +13,7 @@
 (require 'crafted-writing-packages)
 
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
+(add-to-list 'package-selected-packages 'org-roam)
 
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
@@ -28,6 +29,26 @@
 ;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
 (require 'ergoemacs-mode)
 (ergoemacs-mode t)
+
+;; Org-roam
+;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
+(setq-default org-roam-directory (file-truename "~/Notes"))
+(setq org-roam-dailies-directory "Journal/")
+
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry
+         "\n* %<%H:%M> %?"
+         :if-new (file+head "%<%Y/%m-%d>.org"
+                            "#+title: %<%a, %b %d %Y>\n"))))
+
+(require 'org-roam)
+(with-eval-after-load 'org-roam
+  (org-roam-db-autosync-mode))
+
+(define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
+(global-set-key (kbd "C-c n c") 'org-roam-capture)
+(global-set-key (kbd "C-c n f") 'org-roam-node-find)
+(global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)
 
 ;; Windows
 (if (daemonp)
