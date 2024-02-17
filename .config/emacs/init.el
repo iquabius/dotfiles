@@ -1,3 +1,8 @@
+;; TODO: Set up searching with ripgrep
+;; TODO: Set up LaTeX
+;; TODO: Set up projects from crafted-emacs
+;; TODO: Checkout Embark
+
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (and custom-file
            (file-exists-p custom-file))
@@ -21,7 +26,6 @@
 ;; Load configuration for crafted-emacs modules
 (require 'crafted-completion-config)
 (require 'crafted-defaults-config)
-(require 'crafted-org-config)
 (require 'crafted-startup-config)
 (require 'crafted-ui-config)
 (require 'crafted-writing-config)
@@ -29,6 +33,14 @@
 ;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
 (require 'ergoemacs-mode)
 (ergoemacs-mode t)
+
+;; Org-mode
+(require 'crafted-org-config)
+
+(when (version<= "9.2" (org-version))
+  (require 'org-tempo))
+
+(setq org-startup-folded t)
 
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
