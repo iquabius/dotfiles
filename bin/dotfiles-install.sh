@@ -1,3 +1,7 @@
+#!/bin/bash
+
+shopt -s expand_aliases
+
 echo ".dotfiles" >> ~/.gitignore
 alias dotfiles=$(which git)' --git-dir=$HOME/.dotfiles/.git --work-tree=$HOME'
 # Set core.worktree + gitdir in ~/.git to make it work with Magit
