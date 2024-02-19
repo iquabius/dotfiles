@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# https://unix.stackexchange.com/questions/1496/why-doesnt-my-bash-script-recognize-aliases
 shopt -s expand_aliases
 
 echo ".dotfiles" >> ~/.gitignore
