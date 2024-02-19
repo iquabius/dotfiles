@@ -44,7 +44,7 @@
 
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
-(setq-default org-roam-directory (file-truename "~/Notes"))
+(setq-default org-roam-directory (file-truename "~/Data1/Org.d/Roam2/"))
 (setq org-roam-dailies-directory "Journal/")
 
 (setq org-roam-dailies-capture-templates
