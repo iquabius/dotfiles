@@ -15,6 +15,16 @@ if test -e "/home/linuxbrew/.linuxbrew/bin/brew"
   eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 end
 
+# We can skip completion setup if fish is installed with brew
+# https://docs.brew.sh/Shell-Completion#configuring-completions-in-fish
+if test -d (brew --prefix)"/share/fish/completions"
+    set -p fish_complete_path (brew --prefix)/share/fish/completions
+end
+
+if test -d (brew --prefix)"/share/fish/vendor_completions.d"
+    set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
+end
+
 # https://github.com/ajeetdsouza/zoxide#fish
 if type -q zoxide
   zoxide init fish | source
