@@ -1,5 +1,4 @@
 ;; TODO: Set up searching with ripgrep
-;; TODO: Set up LaTeX
 ;; TODO: Set up projects from crafted-emacs
 ;; TODO: Checkout Embark
 
@@ -33,6 +32,11 @@
 ;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
 (require 'ergoemacs-mode)
 (ergoemacs-mode t)
+
+;; Sane defaults
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
 
 ;; Org-mode
 (require 'crafted-org-config)
