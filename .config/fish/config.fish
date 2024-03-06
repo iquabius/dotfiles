@@ -25,6 +25,10 @@ if test -d (brew --prefix)"/share/fish/vendor_completions.d"
     set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
 end
 
+if test -e (brew --prefix asdf)/libexec/asdf.fish
+   source (brew --prefix asdf)/libexec/asdf.fish
+end
+
 # https://github.com/ajeetdsouza/zoxide#fish
 if type -q zoxide
   zoxide init fish | source
