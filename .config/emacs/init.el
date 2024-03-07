@@ -41,8 +41,10 @@
 ;; Org-mode
 (require 'crafted-org-config)
 
-(when (version<= "9.2" (org-version))
-  (require 'org-tempo))
+(with-eval-after-load 'org
+  (org-defkey org-mode-map [(meta return)] 'org-meta-return)
+  (when (version<= "9.2" (org-version))
+    (require 'org-tempo)))
 
 (setq org-startup-folded t)
 
