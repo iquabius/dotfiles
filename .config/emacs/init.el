@@ -1,4 +1,3 @@
-;; TODO: Set up searching with ripgrep
 ;; TODO: Set up projects from crafted-emacs
 ;; TODO: Checkout Embark
 
@@ -16,11 +15,17 @@
 (require 'crafted-ui-packages)
 (require 'crafted-writing-packages)
 
+;; sudo apt install -y ripgrep
+;; https://github.com/Wilfred/deadgrep/blob/master/docs/ALTERNATIVES.md
+(add-to-list 'package-selected-packages 'deadgrep)
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
 (add-to-list 'package-selected-packages 'org-roam)
 
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
+
+(when (executable-find "rg")
+  (global-set-key (kbd "<f5>") 'deadgrep))
 
 ;; Load configuration for crafted-emacs modules
 (require 'crafted-completion-config)
