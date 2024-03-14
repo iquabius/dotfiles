@@ -10,6 +10,6 @@ echo 'gitdir: ./.dotfiles/.git/' >> ~/.git
 dotfiles config --local core.worktree $HOME
 dotfiles config --local status.showUntrackedFiles no
 dotfiles checkout
-dotfiles status
+dotfiles status --long
 dotfiles reset --hard
-dotfiles status
+dotfiles status --long
