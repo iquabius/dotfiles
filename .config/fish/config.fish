@@ -15,6 +15,20 @@ if test -e "/home/linuxbrew/.linuxbrew/bin/brew"
   eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 end
 
+# We can skip completion setup if fish is installed with brew
+# https://docs.brew.sh/Shell-Completion#configuring-completions-in-fish
+if test -d (brew --prefix)"/share/fish/completions"
+    set -p fish_complete_path (brew --prefix)/share/fish/completions
+end
+
+if test -d (brew --prefix)"/share/fish/vendor_completions.d"
+    set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
+end
+
+if test -e (brew --prefix asdf)/libexec/asdf.fish
+   source (brew --prefix asdf)/libexec/asdf.fish
+end
+
 # https://github.com/ajeetdsouza/zoxide#fish
 if type -q zoxide
   zoxide init fish | source
@@ -37,10 +51,10 @@ if test -d "$GOPATH/bin"
 end
 
 # TeX Live installation
-if test -d "/usr/local/texlive/2018"
-  set MANPATH "/usr/local/texlive/2018/texmf-dist/doc/man"
-  set INFOPATH "/usr/local/texlive/2018/texmf-dist/doc/info"
-  set PATH "/usr/local/texlive/2018/bin/x86_64-linux" $PATH
+if test -d "/usr/local/texlive/2023"
+  set MANPATH "/usr/local/texlive/2023/texmf-dist/doc/man"
+  set INFOPATH "/usr/local/texlive/2023/texmf-dist/doc/info"
+  set PATH "/usr/local/texlive/2023/bin/x86_64-linux" $PATH
 end
 
 set JAVA_HOME "/opt/jdk/jdk-21.0.1/"

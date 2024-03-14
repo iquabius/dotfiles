@@ -1,5 +1,3 @@
-;; TODO: Set up searching with ripgrep
-;; TODO: Set up LaTeX
 ;; TODO: Set up projects from crafted-emacs
 ;; TODO: Checkout Embark
 
@@ -17,11 +15,17 @@
 (require 'crafted-ui-packages)
 (require 'crafted-writing-packages)
 
+;; sudo apt install -y ripgrep
+;; https://github.com/Wilfred/deadgrep/blob/master/docs/ALTERNATIVES.md
+(add-to-list 'package-selected-packages 'deadgrep)
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
 (add-to-list 'package-selected-packages 'org-roam)
 
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
+
+(when (executable-find "rg")
+  (global-set-key (kbd "<f5>") 'deadgrep))
 
 ;; Load configuration for crafted-emacs modules
 (require 'crafted-completion-config)
@@ -34,11 +38,18 @@
 (require 'ergoemacs-mode)
 (ergoemacs-mode t)
 
+;; Sane defaults
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+
 ;; Org-mode
 (require 'crafted-org-config)
 
-(when (version<= "9.2" (org-version))
-  (require 'org-tempo))
+(with-eval-after-load 'org
+  (org-defkey org-mode-map [(meta return)] 'org-meta-return)
+  (when (version<= "9.2" (org-version))
+    (require 'org-tempo)))
 
 (setq org-startup-folded t)
 
