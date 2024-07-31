@@ -15,6 +15,10 @@ if test -e "/home/linuxbrew/.linuxbrew/bin/brew"
   eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 end
 
+if test -e "/opt/homebrew/bin/brew"
+  eval (/opt/homebrew/bin/brew shellenv)
+end
+
 # We can skip completion setup if fish is installed with brew
 # https://docs.brew.sh/Shell-Completion#configuring-completions-in-fish
 if test -d (brew --prefix)"/share/fish/completions"
@@ -173,6 +177,6 @@ function rmnode_modules
 end
 
 # pnpm
-set -gx PNPM_HOME "/home/iqb/.local/share/pnpm"
+set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 set -gx PATH "$PNPM_HOME" $PATH
 # pnpm end
