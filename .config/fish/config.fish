@@ -17,6 +17,8 @@ end
 
 if test -e "/opt/homebrew/bin/brew"
   eval (/opt/homebrew/bin/brew shellenv)
+  # Make sure /opt/homebrew/bin occurs before /usr/bin in PATH
+  fish_add_path /opt/homebrew/bin
 end
 
 # We can skip completion setup if fish is installed with brew
