@@ -129,14 +129,11 @@
 	"editor.suggest.preview": true,
 	"blockman.n01LineHeight": 0,
 	"blockman.n04ColorComboPreset": "Classic Light (Gradients)",
-	"workbench.colorCustomizations": {
-		"editor.lineHighlightBackground": "#1073cf2d",
-		"editor.lineHighlightBorder": "#9fced11f"
-	},
+	"workbench.colorCustomizations": {},
 	"editor.wordWrap": "off",
 	"diffEditor.wordWrap": "off",
-	"editor.guides.indentation": false,
-	"editor.guides.bracketPairs": false,
+	// "editor.guides.indentation": false,
+	"editor.guides.bracketPairs": true,
 	"editor.inlayHints.enabled": "offUnlessPressed",
 	// smooth-scroll-margin in Emacs with smooth-scrolling package
 	"editor.cursorSurroundingLines": 9,
@@ -183,7 +180,17 @@
 		"typeof",
 		"pick-utility-type",
 		"partial-utility-type",
-		"nonnullable-utility-type"
+		"nonnullable-utility-type",
+		"record-utility-type",
+		"as-const",
+		"as-const-on-object",
+		"non-null-expression",
+		"returntype-utility-type"
 	],
-	"totalTypeScript.hideBasicTips": true
+	"totalTypeScript.hideBasicTips": true,
+	"editor.accessibilitySupport": "off",
+	"autoDayNightThemeSwitcher.dayTheme": "Default Light Modern",
+	"workbench.colorTheme": "Default Light Modern",
+	"window.customTitleBarVisibility": "never",
+	"typescript.preferences.preferTypeOnlyAutoImports": true
 }
