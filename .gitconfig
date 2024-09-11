@@ -2,6 +2,8 @@
 	editor = code --wait
 	# editor = emacsclient -c
 	excludesfile = ~/.gitignore
+	# brew install delta
+	pager = delta
 
 [user]
 	name = Josias Iquabius
@@ -26,9 +28,13 @@
 	lg = log --oneline --reverse
 	# https://stackoverflow.com/a/34969726/1787829
 	prune-branches = !git remote prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -D
+	undo = reset --soft HEAD^
 
 [log]
 	abbrevCommit = true
+
+[push]
+    autoSetupRemote = true
 
 [status]
 	short = true
