@@ -1,5 +1,11 @@
 // Place your key bindings in this file to override the defaultsauto[]
 [
+	//? Use Cmd+E to toggle sidebar instead?
+	//* Could use that in Arc, Obsidian, etc...
+	{
+		"key": "cmd+e",
+		"command": "-actions.findWithSelection"
+	},
 	{
 		"key": "alt+l",
 		"command": "cursorRight",
@@ -420,12 +426,17 @@
 		"command": "-workbench.action.splitEditor"
 	},
 	{
-		"key": "ctrl+\\",
+		"key": "cmd+e",
 		"command": "workbench.action.toggleSidebarVisibility"
 	},
 	{
 		"key": "ctrl+b",
 		"command": "-workbench.action.toggleSidebarVisibility"
+	},
+	{
+		"key": "cmd+r",
+		"command": "workbench.action.terminal.runSelectedText",
+		"when": "editor.hasSelection"
 	},
 	{
 		"command": "sqltools.executeCurrentQuery",
@@ -608,6 +619,10 @@
 		"key": "ctrl+down",
 		"command": "-selectNextCodeAction",
 		"when": "codeActionMenuVisible"
+	},
+	{
+		"key": "cmd+i",
+		"command": "composerMode.agent"
 	}
 	//*/
 	// Isso caga o recortar com Ctrl+x

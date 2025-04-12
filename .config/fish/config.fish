@@ -11,6 +11,10 @@ if test -d "$HOME/.local/bin"
   set PATH "$HOME/.local/bin" $PATH
 end
 
+if test -d "$HOME/.deno/bin"
+  set PATH "$HOME/.deno/bin" $PATH
+end
+
 if test -e "/home/linuxbrew/.linuxbrew/bin/brew"
   eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 end
@@ -31,9 +35,23 @@ if test -d (brew --prefix)"/share/fish/vendor_completions.d"
     set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
 end
 
-if test -e (brew --prefix asdf)/libexec/asdf.fish
-   source (brew --prefix asdf)/libexec/asdf.fish
+# ASDF configuration code
+echo ASDF_DATA_DIR: $ASDF_DATA_DIR
+# set ASDF_DATA_DIR "$HOME/.asdf"
+echo ASDF_DATA_DIR: $ASDF_DATA_DIR
+
+if test -z $ASDF_DATA_DIR
+    set _asdf_shims "$HOME/.asdf/shims"
+else
+    set _asdf_shims "$ASDF_DATA_DIR/shims"
 end
+
+# Do not use fish_add_path (added in Fish 3.2) because it
+# potentially changes the order of items in PATH
+if not contains $_asdf_shims $PATH
+    set -gx --prepend PATH $_asdf_shims
+end
+set --erase _asdf_shims
 
 # https://github.com/ajeetdsouza/zoxide#fish
 if type -q zoxide
@@ -105,9 +123,12 @@ alias docker-container-ip 'docker inspect -f "{{range .NetworkSettings.Networks}
 # https://ditchwindows.com/elementary-os-community-tips-and-tricks/
 alias current-network-adapter 'lspci -nnk | grep 0280 -A3'
 
-# https://ostechnix.com/how-to-use-pbcopy-and-pbpaste-commands-on-linux/
-alias pbcopy='xclip -selection clipboard'
-alias pbpaste='xclip -selection clipboard -o'
+# Check if we're in Linux because it breaks in MacOS
+if test -d "/usr/bin/pbcopy"
+  # https://ostechnix.com/how-to-use-pbcopy-and-pbpaste-commands-on-linux/
+  alias pbcopy='xclip -selection clipboard'
+  alias pbpaste='xclip -selection clipboard -o'
+end
 
 alias dotfiles=(which git)' --git-dir=$HOME/.dotfiles/.git/ --work-tree=$HOME'
 alias dotfiles-code="GIT_WORK_TREE=$HOME GIT_DIR=$HOME/.dotfiles/.git/ code $HOME"

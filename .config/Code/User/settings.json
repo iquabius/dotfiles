@@ -185,12 +185,80 @@
 		"as-const",
 		"as-const-on-object",
 		"non-null-expression",
-		"returntype-utility-type"
+		"returntype-utility-type",
+		"lowercase-utility-type",
+		"extract-utility-type",
+		"interface-with-generics",
+		"interface-with-multiple-generics",
+		"type-alias-with-generics",
+		"type-alias-with-multiple-generics",
+		"omit-utility-type",
+		"tuple-type",
+		"awaited-utility-type",
+		"in-operator-narrowing",
+		"parameters-utility-type",
+		"keyof"
 	],
 	"totalTypeScript.hideBasicTips": true,
 	"editor.accessibilitySupport": "off",
 	"autoDayNightThemeSwitcher.dayTheme": "Default Light Modern",
+	"autoDayNightThemeSwitcher.nightTheme": "Modern Purple Theme Dark",
 	"workbench.colorTheme": "Default Light Modern",
 	"window.customTitleBarVisibility": "never",
-	"typescript.preferences.preferTypeOnlyAutoImports": true
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"workbench.editorAssociations": {
+		"git-rebase-todo": "gitlens.rebase"
+	},
+	"tailwind-fold.autoFold": false,
+	"tabnine.experimentalAutoImports": true,
+	"supermaven.enable": {
+		"*": true
+	},
+	"better-comments.tags": [
+		{
+			"tag": "!",
+			"color": "#FF2D00",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "?",
+			"color": "#3498DB",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "//",
+			"color": "#474747",
+			"strikethrough": true,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "todo",
+			"color": "#FF8C00",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "*",
+			"color": "#98C379",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		}
+	]
 }
