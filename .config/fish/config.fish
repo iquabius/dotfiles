@@ -35,24 +35,6 @@ if test -d (brew --prefix)"/share/fish/vendor_completions.d"
     set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
 end
 
-# ASDF configuration code
-echo ASDF_DATA_DIR: $ASDF_DATA_DIR
-# set ASDF_DATA_DIR "$HOME/.asdf"
-echo ASDF_DATA_DIR: $ASDF_DATA_DIR
-
-if test -z $ASDF_DATA_DIR
-    set _asdf_shims "$HOME/.asdf/shims"
-else
-    set _asdf_shims "$ASDF_DATA_DIR/shims"
-end
-
-# Do not use fish_add_path (added in Fish 3.2) because it
-# potentially changes the order of items in PATH
-if not contains $_asdf_shims $PATH
-    set -gx --prepend PATH $_asdf_shims
-end
-set --erase _asdf_shims
-
 # https://github.com/ajeetdsouza/zoxide#fish
 if type -q zoxide
   zoxide init fish | source
@@ -203,3 +185,17 @@ end
 set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 set -gx PATH "$PNPM_HOME" $PATH
 # pnpm end
+
+# Configure modern asdf (v0.16+) path and shims
+if test -d $HOME/.asdf/shims
+  fish_add_path --prepend --global $HOME/.asdf/shims
+else
+  # Fallback if your shims are located inside custom data dirs
+  fish_add_path --prepend --global (asdf env ASDF_DATA_DIR 2>/dev/null; or echo $HOME/.asdf)/shims
+end
+
+# Set up shell completions (Optional)
+if not test -f ~/.config/fish/completions/asdf.fish
+  mkdir -p ~/.config/fish/completions
+  asdf completion fish > ~/.config/fish/completions/asdf.fish
+end
