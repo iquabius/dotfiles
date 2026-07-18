@@ -260,5 +260,6 @@
 			"bold": false,
 			"italic": false
 		}
-	]
+	],
+	"extensions.autoUpdate": false
 }

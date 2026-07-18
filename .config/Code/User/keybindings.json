@@ -624,19 +624,4 @@
 		"key": "cmd+i",
 		"command": "composerMode.agent"
 	}
-	//*/
-	// Isso caga o recortar com Ctrl+x
-	// Posso tentar:
-	// - https://marketplace.visualstudio.com/items?itemName=tuttieee.emacs-mcx
-	// - https://marketplace.visualstudio.com/items?itemName=ayrtonmassey.emacs-region
-	// {
-	//     "key": "ctrl+x g",
-	//     "command": "workbench.view.scm",
-	//     "when": "gitlens:enabled && config.gitlens.keymap == 'chorded'"
-	// },
-	// {
-	//     "key": "ctrl+shift+g g",
-	//     "command": "-workbench.view.scm",
-	//     "when": "gitlens:enabled && config.gitlens.keymap == 'chorded'"
-	// }
 ]
