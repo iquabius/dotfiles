@@ -1,0 +1,52 @@
+[core]
+	editor = cursor --wait
+	# editor = emacsclient -c
+	excludesfile = ~/.gitignore
+	# brew install delta
+	pager = delta
+
+[delta]
+    line-numbers = true
+
+[github]
+	user = iquabius
+
+[color "status"]
+	added = green
+	changed = red bold
+	untracked = magenta bold
+
+[color "branch"]
+	remote = yellow
+
+[alias]
+	br = branch
+	ci = commit
+	co = checkout
+	st = status
+	lg = log --oneline --reverse
+	# https://stackoverflow.com/a/34969726/1787829
+	prune-branches = !git remote prune origin && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -D
+	undo = reset --soft HEAD^
+
+[log]
+	abbrevCommit = true
+
+[push]
+    autoSetupRemote = true
+
+[status]
+	short = true
+
+[diff]
+    tool = default-difftool
+[difftool "default-difftool"]
+    cmd = code --wait --diff $LOCAL $REMOTE
+
+[difftool "latexdiff"]
+[init]
+	defaultBranch = main
+
+# Identidade e credenciais ficam na camada privada (~/.dotfiles-private → ~/.gitconfig.local)
+[include]
+	path = ~/.gitconfig.local
