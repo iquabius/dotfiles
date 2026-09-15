@@ -112,9 +112,6 @@ if test -d "/usr/bin/pbcopy"
   alias pbpaste='xclip -selection clipboard -o'
 end
 
-alias dotfiles=(which git)' --git-dir=$HOME/.dotfiles/.git/ --work-tree=$HOME'
-alias dotfiles-code="GIT_WORK_TREE=$HOME GIT_DIR=$HOME/.dotfiles/.git/ code $HOME"
-
 # Speed up Git workflow with keybindings: https://github.com/joseluisq/gitnow
 abbr -a gaa git add -A
 abbr -a gan git add .
