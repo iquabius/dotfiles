@@ -1,0 +1,32 @@
+# Everything Emacs generates next to the config. Stow folds ~/.config/emacs
+# into a symlink to this directory, so package.el, native-comp and the
+# various state files all write straight into the repo.
+
+# package.el and native compilation
+elpa/
+eln-cache/
+
+# Customize — machine-generated; init.el loads it when present
+custom.el
+
+# Session and history state
+history
+recentf.eld
+auto-save-list/
+transient/
+bookmarks
+places
+projects
+tramp
+url/
+var/
+.cache/
+
+# org-roam's database, rebuilt from the notes
+org-roam.db
+org-roam.db-*
+
+# Backups and lock files
+*~
+\#*\#
+.\#*

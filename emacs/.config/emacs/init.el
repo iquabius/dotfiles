@@ -1,3 +1,5 @@
+;;; init.el --- personal configuration  -*- lexical-binding: t; -*-
+
 ;; TODO: Set up projects from crafted-emacs
 ;; TODO: Checkout Embark
 
@@ -55,23 +57,30 @@
 
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
-(setq-default org-roam-directory (file-truename "~/Data1/Org.d/Roam2/"))
-(setq org-roam-dailies-directory "Journal/")
+;;
+;; Only set up when the notes directory is actually here: org-roam-db-autosync-mode
+;; scans it during startup, and on a machine without the notes that aborts init
+;; with (file-missing "Opening directory"), leaving Emacs in the debugger.
+(let ((roam-dir (expand-file-name "~/Data1/Org.d/Roam2/")))
+  (if (not (file-directory-p roam-dir))
+      (message "org-roam: %s not found, skipping setup" roam-dir)
+    (setq-default org-roam-directory (file-truename roam-dir))
+    (setq org-roam-dailies-directory "Journal/")
 
-(setq org-roam-dailies-capture-templates
-      '(("d" "default" entry
-         "\n* %<%H:%M> %?"
-         :if-new (file+head "%<%Y/%m-%d>.org"
-                            "#+title: %<%a, %b %d %Y>\n"))))
+    (setq org-roam-dailies-capture-templates
+          '(("d" "default" entry
+             "\n* %<%H:%M> %?"
+             :if-new (file+head "%<%Y/%m-%d>.org"
+                                "#+title: %<%a, %b %d %Y>\n"))))
 
-(require 'org-roam)
-(with-eval-after-load 'org-roam
-  (org-roam-db-autosync-mode))
+    (require 'org-roam)
+    (with-eval-after-load 'org-roam
+      (org-roam-db-autosync-mode))
 
-(define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
-(global-set-key (kbd "C-c n c") 'org-roam-capture)
-(global-set-key (kbd "C-c n f") 'org-roam-node-find)
-(global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)
+    (define-key org-mode-map (kbd "C-c n i") 'org-roam-node-insert)
+    (global-set-key (kbd "C-c n c") 'org-roam-capture)
+    (global-set-key (kbd "C-c n f") 'org-roam-node-find)
+    (global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)))
 
 ;; Windows
 (if (daemonp)
