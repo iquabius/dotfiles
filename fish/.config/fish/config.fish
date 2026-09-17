@@ -108,11 +108,17 @@ alias docker-container-ip 'docker inspect -f "{{range .NetworkSettings.Networks}
 # https://ditchwindows.com/elementary-os-community-tips-and-tricks/
 alias current-network-adapter 'lspci -nnk | grep 0280 -A3'
 
-# Check if we're in Linux because it breaks in MacOS
-if test -d "/usr/bin/pbcopy"
-  # https://ostechnix.com/how-to-use-pbcopy-and-pbpaste-commands-on-linux/
-  alias pbcopy='xclip -selection clipboard'
-  alias pbpaste='xclip -selection clipboard -o'
+# pbcopy/pbpaste exist on macOS; on Linux, alias them to whatever the session
+# has. Wayland first, X11 as fallback.
+# https://ostechnix.com/how-to-use-pbcopy-and-pbpaste-commands-on-linux/
+if not type -q pbcopy
+  if type -q wl-copy
+    alias pbcopy='wl-copy'
+    alias pbpaste='wl-paste'
+  else if type -q xclip
+    alias pbcopy='xclip -selection clipboard'
+    alias pbpaste='xclip -selection clipboard -o'
+  end
 end
 
 # Speed up Git workflow with keybindings: https://github.com/joseluisq/gitnow
@@ -210,7 +216,10 @@ end
 source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 
 # Added by LM Studio CLI (lms)
-set -gx PATH $PATH /Users/josiasbusiquia/.lmstudio/bin
+# fish_add_path instead of the generated `set -gx PATH $PATH ...`: it skips the
+# directory when it doesn't exist and won't append a second copy in a nested
+# shell. $HOME is /Users/josiasbusiquia on the Mac, so this is the same path.
+fish_add_path --append $HOME/.lmstudio/bin
 # End of LM Studio CLI section
 
 # Camada privada opcional (~/.dotfiles-private)
