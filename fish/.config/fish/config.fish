@@ -27,12 +27,15 @@ end
 
 # We can skip completion setup if fish is installed with brew
 # https://docs.brew.sh/Shell-Completion#configuring-completions-in-fish
-if test -d (brew --prefix)"/share/fish/completions"
-    set -p fish_complete_path (brew --prefix)/share/fish/completions
-end
+# Guarded: without brew, (brew --prefix) errors on every shell start.
+if type -q brew
+    if test -d (brew --prefix)"/share/fish/completions"
+        set -p fish_complete_path (brew --prefix)/share/fish/completions
+    end
 
-if test -d (brew --prefix)"/share/fish/vendor_completions.d"
-    set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
+    if test -d (brew --prefix)"/share/fish/vendor_completions.d"
+        set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
+    end
 end
 
 # https://github.com/ajeetdsouza/zoxide#fish
@@ -184,17 +187,22 @@ set -gx PATH "$PNPM_HOME" $PATH
 # pnpm end
 
 # Configure modern asdf (v0.16+) path and shims
-if test -d $HOME/.asdf/shims
-  fish_add_path --prepend --global $HOME/.asdf/shims
-else
-  # Fallback if your shims are located inside custom data dirs
-  fish_add_path --prepend --global (asdf env ASDF_DATA_DIR 2>/dev/null; or echo $HOME/.asdf)/shims
-end
+# Guarded: the else branch and the completion block below both run `asdf`,
+# which errors on every shell start when asdf isn't installed — and the
+# completion block creates an empty ~/.config/fish/completions on the way.
+if type -q asdf
+  if test -d $HOME/.asdf/shims
+    fish_add_path --prepend --global $HOME/.asdf/shims
+  else
+    # Fallback if your shims are located inside custom data dirs
+    fish_add_path --prepend --global (asdf env ASDF_DATA_DIR 2>/dev/null; or echo $HOME/.asdf)/shims
+  end
 
-# Set up shell completions (Optional)
-if not test -f ~/.config/fish/completions/asdf.fish
-  mkdir -p ~/.config/fish/completions
-  asdf completion fish > ~/.config/fish/completions/asdf.fish
+  # Set up shell completions (Optional)
+  if not test -f ~/.config/fish/completions/asdf.fish
+    mkdir -p ~/.config/fish/completions
+    asdf completion fish > ~/.config/fish/completions/asdf.fish
+  end
 end
 
 # Added by OrbStack: command-line tools and integration
