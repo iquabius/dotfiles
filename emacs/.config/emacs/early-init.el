@@ -1,3 +1,5 @@
+;;; early-init.el --- personal configuration  -*- lexical-binding: t; -*-
+
 (load "~/.config/crafted-emacs/modules/crafted-early-init-config")
 
 ;; Pin ergoemacs to melpa
