@@ -17,7 +17,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | Pacote | O que instala |
 | --- | --- |
 | `fish` | `~/.config/fish` (config, plugins) |
-| `emacs` | `~/.config/emacs` e `~/.config/crafted-emacs-v1` |
+| `emacs` | `~/.config/emacs` (precisa do crafted-emacs clonado à parte — ver nota) |
 | `git` | `~/.gitconfig` (sem identidade — ver nota) |
 | `tmux` | `~/.tmux.conf` |
 | `ssh` | `~/.ssh/rc` |
@@ -37,8 +37,11 @@ Detalhes que valem saber:
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
   `~/.config/crafted-emacs/modules/…`, que não está neste repo — é preciso clonar
-  [crafted-emacs](https://github.com/SystemCrafters/crafted-emacs) à parte. O
-  pacote `crafted-emacs-v1` é resto do layout antigo.
+  [crafted-emacs](https://github.com/SystemCrafters/crafted-emacs) à parte:
+
+  ```bash
+  git clone https://github.com/SystemCrafters/crafted-emacs ~/.config/crafted-emacs
+  ```
 - **O `fish_plugins` não instala nada sozinho.** O fisher não vem versionado
   aqui; enquanto não for instalado à mão, o arquivo fica inerte (passo 5).
 
