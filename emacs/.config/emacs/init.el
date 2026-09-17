@@ -23,6 +23,11 @@
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
 (add-to-list 'package-selected-packages 'org-roam)
 
+;; org-ref supplies the cite:/textcite:/ref:/label: link types the TCC's org
+;; sources use. Without it `org-latex-export-to-latex' aborts outright:
+;;   user-error: Org export aborted.  Unable to resolve link: "cite:edwards2009"
+(add-to-list 'package-selected-packages 'org-ref)
+
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
 
@@ -78,6 +83,10 @@
     (require 'org-tempo)))
 
 (setq org-startup-folded t)
+
+;; Loaded eagerly rather than autoloaded: the link types have to exist before
+;; an export runs, not after the first org-ref command is invoked.
+(require 'org-ref)
 
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
