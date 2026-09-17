@@ -106,6 +106,25 @@
     (global-set-key (kbd "C-c n f") 'org-roam-node-find)
     (global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)))
 
+;; Clipboard — the PGTK (native Wayland) build takes ownership of the selection
+;; and then serves no content: anything copied in Emacs is unpastable in other
+;; applications, and the copy also wipes whatever was on the clipboard.
+;; `emacs -Q' does it too, so it is the build, not this configuration. Reading
+;; the clipboard works, so only the write side is replaced — piped through
+;; wl-copy, which offers the usual UTF8_STRING/text-plain targets.
+;;
+;; Guarded on the pgtk feature rather than `window-system', which is nil at
+;; init time under --daemon. The X11 build (EMACS_TOOLKIT=gtk on openSUSE) does
+;; not need this, and neither does macOS.
+(when (and (featurep 'pgtk) (executable-find "wl-copy"))
+  (setq interprogram-cut-function
+        (lambda (text)
+          (let ((proc (make-process :name "wl-copy" :buffer nil :noquery t
+                                    :connection-type 'pipe
+                                    :command '("wl-copy"))))
+            (process-send-string proc text)
+            (process-send-eof proc)))))
+
 ;; Windows
 (if (daemonp)
     (add-to-list 'default-frame-alist '(fullscreen . fullboth))
