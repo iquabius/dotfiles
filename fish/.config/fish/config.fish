@@ -3,17 +3,12 @@
 
 # set PATH "$HOME/.dropbox-bin" $PATH
 
-if test -d "$HOME/bin"
-  set PATH "$HOME/bin" $PATH
-end
-
-if test -d "$HOME/.local/bin"
-  set PATH "$HOME/.local/bin" $PATH
-end
-
-if test -d "$HOME/.deno/bin"
-  set PATH "$HOME/.deno/bin" $PATH
-end
+# fish_add_path --path --prepend replaces `set PATH <dir> $PATH`: it skips a
+# directory that doesn't exist (so the `test -d` guards are redundant) and
+# refuses a duplicate, which the plain `set` form added once per nested shell.
+fish_add_path --prepend --path $HOME/bin
+fish_add_path --prepend --path $HOME/.local/bin
+fish_add_path --prepend --path $HOME/.deno/bin
 
 if test -e "/home/linuxbrew/.linuxbrew/bin/brew"
   eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
@@ -49,35 +44,24 @@ if type -q starship
   starship init fish | source
 end
 
-# https://github.com/axetroy/dvm
-if test -d "$HOME/.deno/bin"
-  set PATH "$HOME/.deno/bin" $PATH
-end
-
 set GOPATH "$HOME/go"
-if test -d "$GOPATH/bin"
-  set PATH "/usr/local/go/bin" "$GOPATH/bin" $PATH
-end
+fish_add_path --prepend --path /usr/local/go/bin $GOPATH/bin
 
 # TeX Live installation
 if test -d "/usr/local/texlive/2023"
   set MANPATH "/usr/local/texlive/2023/texmf-dist/doc/man"
   set INFOPATH "/usr/local/texlive/2023/texmf-dist/doc/info"
-  set PATH "/usr/local/texlive/2023/bin/x86_64-linux" $PATH
+  fish_add_path --prepend --path /usr/local/texlive/2023/bin/x86_64-linux
 end
 
 set JAVA_HOME "/opt/jdk/jdk-21.0.1/"
-if test -d "$JAVA_HOME"
-  set PATH "$JAVA_HOME/bin" $PATH
-end
+fish_add_path --prepend --path $JAVA_HOME/bin
 
 # values are already in the PATH because they are set in ~/.bashrc
 set ANDROID_HOME "/opt/android/sdk"
 set ANDROID_SDK_ROOT $ANDROID_HOME
-if test -d "$ANDROID_HOME"
- # https://stackoverflow.com/questions/26483370#49511666
- set PATH "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/emulator" "$ANDROID_HOME/cmdline-tools/bin" $PATH
-end
+# https://stackoverflow.com/questions/26483370#49511666
+fish_add_path --prepend --path $ANDROID_HOME/platform-tools $ANDROID_HOME/emulator $ANDROID_HOME/cmdline-tools/bin
 
 set -g theme_display_virtualenv no
 
@@ -189,7 +173,7 @@ end
 
 # pnpm
 set -gx PNPM_HOME "$HOME/.local/share/pnpm"
-set -gx PATH "$PNPM_HOME" $PATH
+fish_add_path --prepend --path $PNPM_HOME
 # pnpm end
 
 # Configure modern asdf (v0.16+) path and shims
@@ -218,8 +202,10 @@ source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 # Added by LM Studio CLI (lms)
 # fish_add_path instead of the generated `set -gx PATH $PATH ...`: it skips the
 # directory when it doesn't exist and won't append a second copy in a nested
-# shell. $HOME is /Users/josiasbusiquia on the Mac, so this is the same path.
-fish_add_path --append $HOME/.lmstudio/bin
+# shell. --path keeps it in $PATH itself (and last, as the installer intended)
+# rather than in the universal $fish_user_paths, which outlives this file.
+# $HOME is /Users/josiasbusiquia on the Mac, so this is the same path.
+fish_add_path --append --path $HOME/.lmstudio/bin
 # End of LM Studio CLI section
 
 # Camada privada opcional (~/.dotfiles-private)
