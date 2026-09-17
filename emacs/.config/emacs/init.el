@@ -1,4 +1,4 @@
-;;; init.el --- personal configuration  -*- lexical-binding: t; -*-
+;;; init.el --- personal configuration  -*- lexical-binding: t; coding: utf-8 -*-
 
 ;; TODO: Set up projects from crafted-emacs
 ;; TODO: Checkout Embark
@@ -38,6 +38,30 @@
 
 ;; Universal Keyboard Shortcuts (Ctrl-C, Ctrl-V)
 (require 'ergoemacs-mode)
+
+;; ErgoEmacs places its bindings by physical key position, translating from a
+;; `us' layout to whatever `ergoemacs-keyboard-layout' names. It ships `pt' and
+;; `pt-nativo' but no Brazilian ABNT2, so with the default `us' every binding
+;; that lands on punctuation sits on the wrong physical key here.
+;;
+;; A layout is just a variable named ergoemacs-layout-<name>: eight rows of
+;; fifteen slots, one per physical key (four unshifted, then the same shifted),
+;; aligned with `ergoemacs-layout-us'. Values below come from XKB's br(abnt2),
+;; which is `latin' plus the overrides for ' = ¨ ´ [ ] ç ~ \ ; / .
+(defvar ergoemacs-layout-br
+  '(""  "'"  "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" ""
+    ""  ""   "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "´" "[" ""
+    ""  ""   "a" "s" "d" "f" "g" "h" "j" "k" "l" "ç" "~" "]" ""
+    ""  "\\" "z" "x" "c" "v" "b" "n" "m" "," "." ";" "/" "" ""
+    ;; Shifted
+    ""  "\"" "!" "@" "#" "$" "%" "¨" "&" "*" "(" ")" "_" "+" ""
+    ""  ""   "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
+    ""  ""   "A" "S" "D" "F" "G" "H" "J" "K" "L" "Ç" "^" "}" ""
+    ""  "|"  "Z" "X" "C" "V" "B" "N" "M" "<" ">" ":" "?" "" "")
+  "Brazilian ABNT2 layout, from XKB `br(abnt2)'.")
+
+(setq ergoemacs-keyboard-layout "br")
+
 (ergoemacs-mode t)
 
 ;; Sane defaults
