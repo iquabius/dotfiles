@@ -25,6 +25,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `vscode-oss`, `vscodium` | apontam para o `vscode` via symlink (mesmos ajustes) |
 | `latexmk` | `~/.config/latexmk` |
 | `ytdlp` | `~/.config/yt-dlp` |
+| `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
 
 Detalhes que valem saber:
 
@@ -33,6 +34,27 @@ Detalhes que valem saber:
   configurada à parte.
 - **VS Code é fonte única.** `Code - OSS` e `VSCodium` são symlinks internos que
   apontam para o pacote `vscode` — editar os ajustes do Code vale para os três.
+- **O pacote `darkman` não guarda a localização.** O `config.yaml` público não
+  tem `lat`/`lng`: as coordenadas vêm de `DARKMAN_LAT`/`DARKMAN_LNG`, que têm
+  precedência sobre o arquivo e ficam numa camada privada, fora deste repo:
+
+  ```bash
+  mkdir -p ~/.config/systemd/user/darkman.service.d
+  cat > ~/.config/systemd/user/darkman.service.d/location.conf <<'EOF'
+  [Service]
+  Environment=DARKMAN_LAT=-00.00
+  Environment=DARKMAN_LNG=-00.00
+  EOF
+  chmod 600 ~/.config/systemd/user/darkman.service.d/location.conf
+  systemctl --user daemon-reload
+  systemctl --user enable --now darkman.service
+  ```
+
+  Sem esse arquivo o darkman sobe e roda, mas **nunca faz transição** — o
+  `config.yaml` traz `usegeoclue: false`, então não há outra fonte de
+  localização. Confira com `systemctl --user status darkman.service`: o log
+  imprime o próximo nascer e pôr do sol, e um sinal trocado aparece ali e em
+  mais lugar nenhum.
 - **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
