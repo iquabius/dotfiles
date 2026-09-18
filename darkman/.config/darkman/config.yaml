@@ -1,0 +1,24 @@
+# darkman — transições automáticas claro/escuro no nascer e no pôr do sol.
+#
+# NÃO coloque lat/lng aqui: este arquivo é público.
+#
+# As coordenadas vêm de DARKMAN_LAT / DARKMAN_LNG, que têm precedência sobre
+# este arquivo (`man 1 darkman`, seção ENVIRONMENT) e ficam por máquina em
+#
+#     ~/.config/systemd/user/darkman.service.d/location.conf
+#
+# fora deste repositório. Sem elas o darkman sobe, mas nunca faz transição —
+# `usegeoclue: false` abaixo desliga a única outra fonte de localização.
+
+# Nunca perguntar ao geoclue. A localização vem do ambiente, então nem o
+# geoclue nem os serviços de localização do GNOME precisam ser ligados.
+usegeoclue: false
+
+# Inerte no GNOME: o backend de portal do darkman declara UseIn=sway, então
+# quem responde org.freedesktop.appearance é o xdg-desktop-portal-gnome, lendo
+# a gsetting que dark-mode.d/10-gnome.sh escreve. Mantido para o arquivo servir
+# sem mudanças numa sessão não-GNOME.
+portal: true
+
+# Serviço D-Bus, para `darkman set dark|light|toggle` funcionar no shell.
+dbusserver: true
