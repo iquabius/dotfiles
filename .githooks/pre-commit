@@ -1,0 +1,46 @@
+#!/bin/sh
+# Mantém caminhos absolutos de home fora do repositório.
+#
+# `/home/<user>/` e `/Users/<user>/` entregam o nome da conta da máquina que
+# escreveu a linha. Três deles entraram aqui antes deste hook existir —
+# `josiasbusiquia`, `tchuca` e `iqb` — em comentário e em settings.json.
+# Use `$HOME`, `~`, ou uma variável que a própria ferramenta expanda.
+#
+# Só as linhas ADICIONADAS são verificadas, então ocorrência antiga não trava
+# um commit que nem mexeu nela.
+#
+# Para um caso legítimo: git commit --no-verify
+
+set -eu
+
+# Contas de sistema, que não são nome de pessoa.
+ALLOW='linuxbrew|runner|root'
+
+fail=0
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+    # Pula binário: --numstat marca os dois contadores com "-".
+    case "$(git diff --cached --numstat -- "$f" | cut -f1)" in
+        -) continue ;;
+    esac
+
+    hits=$(git diff --cached -U0 --no-color -- "$f" \
+           | grep '^+' | grep -v '^+++' \
+           | grep -E '/(home|Users)/[A-Za-z0-9._-]+/' \
+           | grep -vE "/(home|Users)/($ALLOW)/" || true)
+
+    if [ -n "$hits" ]; then
+        if [ "$fail" -eq 0 ]; then
+            echo "pre-commit: caminho absoluto de home nas linhas adicionadas:" >&2
+            echo >&2
+        fi
+        fail=1
+        echo "  $f" >&2
+        printf '%s\n' "$hits" | sed 's/^+/      /' >&2
+    fi
+done
+
+if [ "$fail" -ne 0 ]; then
+    echo >&2
+    echo "  Troque por \$HOME ou ~. Se for mesmo necessário: git commit --no-verify" >&2
+    exit 1
+fi

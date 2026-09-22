@@ -55,6 +55,8 @@ Detalhes que valem saber:
   localização. Confira com `systemctl --user status darkman.service`: o log
   imprime o próximo nascer e pôr do sol, e um sinal trocado aparece ali e em
   mais lugar nenhum.
+- **`.githooks/` não é pacote Stow.** É hook de repositório, ligado com
+  `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
 - **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
@@ -109,6 +111,19 @@ gh auth login
 ```bash
 git clone https://github.com/iquabius/dotfiles.git ~/.dotfiles
 ```
+
+Ligue os hooks logo depois de clonar — `core.hooksPath` é config local, não vem
+junto no clone:
+
+```bash
+cd ~/.dotfiles && git config core.hooksPath .githooks
+```
+
+O `pre-commit` recusa `/home/<user>/` e `/Users/<user>/` nas linhas
+adicionadas: caminho absoluto de home entrega o nome da conta da máquina que
+escreveu a linha, e três já tinham entrado aqui desse jeito. Só as linhas
+novas são olhadas, e `git commit --no-verify` passa por cima quando for
+mesmo o caso.
 
 ### 3. Aplicar os symlinks
 

@@ -97,10 +97,6 @@
 		"[x]"
 	],
 	"todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
-	"vs-kubernetes": {
-		"vscode-kubernetes.kubectl-path-linux": "/home/tchuca/.local/state/vs-kubernetes/tools/kubectl/kubectl",
-		"vscode-kubernetes.helm-path-linux": "/home/tchuca/.local/state/vs-kubernetes/tools/helm/linux-amd64/helm"
-	},
 	//* Recommended settings from Modern Purple Theme
 	"editor.cursorBlinking": "smooth",
 	"editor.cursorStyle": "line",
@@ -138,13 +134,6 @@
 	// smooth-scroll-margin in Emacs with smooth-scrolling package
 	"editor.cursorSurroundingLines": 9,
 	/**/
-	"json.schemas": [
-		{
-			"name": "vscode-expo-manifest",
-			"url": "file:///home/iqb/.config/Code/User/globalStorage/bycedric.vscode-expo/manifest-45.0.0.json",
-			"fileMatch": ["app.json", "app.config.json"]
-		}
-	],
 	"gitlens.mode.active": "zen",
 	"window.zoomLevel": 2,
 	"editor.suggest.matchOnWordStartOnly": false,
