@@ -204,7 +204,8 @@ source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 # directory when it doesn't exist and won't append a second copy in a nested
 # shell. --path keeps it in $PATH itself (and last, as the installer intended)
 # rather than in the universal $fish_user_paths, which outlives this file.
-# $HOME is /Users/josiasbusiquia on the Mac, so this is the same path.
+# $HOME differs between macOS and Linux, so the variable resolves to the same
+# directory the installer's absolute path meant, on either system.
 fish_add_path --append --path $HOME/.lmstudio/bin
 # End of LM Studio CLI section
 
