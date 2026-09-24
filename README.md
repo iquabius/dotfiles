@@ -22,7 +22,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `tmux` | `~/.tmux.conf` |
 | `ssh` | `~/.ssh/rc` |
 | `vscode` | `~/.config/Code/User` (fonte única dos ajustes de editor) |
-| `vscode-oss`, `vscodium` | apontam para o `vscode` via symlink (mesmos ajustes) |
+| `vscode-oss`, `vscodium`, `cursor` | apontam para o `vscode` via symlink (mesmos ajustes) |
 | `latexmk` | `~/.config/latexmk` |
 | `ytdlp` | `~/.config/yt-dlp` |
 | `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
@@ -32,8 +32,9 @@ Detalhes que valem saber:
 - **A identidade do git não está aqui.** O `.gitconfig` público não guarda
   `user.name`, `user.email` nem credenciais — isso vem de uma camada privada,
   configurada à parte.
-- **VS Code é fonte única.** `Code - OSS` e `VSCodium` são symlinks internos que
-  apontam para o pacote `vscode` — editar os ajustes do Code vale para os três.
+- **VS Code é fonte única.** `Code - OSS`, `VSCodium` e Cursor são symlinks
+  internos que apontam para o pacote `vscode`: editar os ajustes do Code vale
+  para os quatro, inclusive os atalhos de teclado.
 - **O pacote `darkman` não guarda a localização.** O `config.yaml` público não
   tem `lat`/`lng`: as coordenadas vêm de `DARKMAN_LAT`/`DARKMAN_LNG`, que têm
   precedência sobre o arquivo e ficam numa camada privada, fora deste repo:
@@ -130,7 +131,28 @@ mesmo o caso.
 Instale só os pacotes que fizerem sentido na máquina:
 
 ```bash
-cd ~/.dotfiles && stow fish emacs git tmux ssh vscode vscode-oss vscodium latexmk ytdlp
+cd ~/.dotfiles && stow fish emacs git tmux ssh latexmk ytdlp
+cd ~/.dotfiles && stow --no-folding vscode vscode-oss vscodium cursor
+```
+
+Os editores exigem `--no-folding`. Sem ele, numa máquina onde
+`~/.config/Code` (ou `Cursor`) ainda não existe, o Stow cria o diretório
+inteiro como um symlink para dentro deste repo, e o editor passa a gravar
+histórico, cache e `workspaceStorage` aqui dentro. Com `--no-folding` os
+diretórios são reais e só os `.json` viram symlink.
+
+**(macOS)** No Mac, Code e Cursor leem de `~/Library/Application Support`, não
+de `~/.config`. Ligue os dois `.json` de lá aos que o Stow criou (tire da
+frente os arquivos que já existirem):
+
+```bash
+for app in Code Cursor; do
+  d="$HOME/Library/Application Support/$app/User"
+  mkdir -p "$d"
+  for f in settings.json keybindings.json; do
+    ln -sn "../../../../.config/$app/User/$f" "$d/$f"
+  done
+done
 ```
 
 ### 4. Se o Stow reclamar de conflito
