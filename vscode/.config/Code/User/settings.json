@@ -255,7 +255,6 @@
 	"window.autoDetectColorScheme": true,
 	"workbench.preferredDarkColorTheme": "Default Dark Modern",
 	"workbench.preferredLightColorTheme": "Default Light Modern",
-	"workbench.statusBar.visible": false,
 	"audioCues.enabled": false,
 	"diffEditor.renderSideBySide": false,
 	"git.blame.editorDecoration.enabled": true,
