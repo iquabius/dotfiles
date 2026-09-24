@@ -250,5 +250,18 @@
 			"italic": false
 		}
 	],
-	"extensions.autoUpdate": false
+	"extensions.autoUpdate": false,
+	// Merged from Cursor's own settings.json when Cursor joined this file.
+	"window.autoDetectColorScheme": true,
+	"workbench.preferredDarkColorTheme": "Default Dark Modern",
+	"workbench.preferredLightColorTheme": "Default Light Modern",
+	"workbench.statusBar.visible": false,
+	"audioCues.enabled": false,
+	"diffEditor.renderSideBySide": false,
+	"git.blame.editorDecoration.enabled": true,
+	"git.inputValidation": true,
+	"git.openRepositoryInParentFolders": "never",
+	"gitlens.currentLine.enabled": false,
+	"markdown-preview-enhanced.previewTheme": "one-light.css",
+	"markdown-preview-enhanced.codeBlockTheme": "one-light.css"
 }
