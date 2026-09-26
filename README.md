@@ -25,6 +25,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `vscode-oss`, `vscodium`, `cursor` | apontam para o `vscode` via symlink (mesmos ajustes) |
 | `latexmk` | `~/.config/latexmk` |
 | `ytdlp` | `~/.config/yt-dlp` |
+| `asdf` | `~/.tool-versions` (versões globais de nodejs, pnpm, yarn, deno, erlang e elixir) |
 | `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
 
 Detalhes que valem saber:
@@ -131,7 +132,7 @@ mesmo o caso.
 Instale só os pacotes que fizerem sentido na máquina:
 
 ```bash
-cd ~/.dotfiles && stow fish emacs git tmux ssh latexmk ytdlp
+cd ~/.dotfiles && stow fish emacs git tmux ssh latexmk ytdlp asdf
 cd ~/.dotfiles && stow --no-folding vscode vscode-oss vscodium cursor
 ```
 
@@ -195,7 +196,29 @@ O Stow dobra `~/.config/fish` num symlink só, então tudo que o fish escreve
 chsh -s /usr/bin/fish    # pede a sua senha, não a de root
 ```
 
-### 6. Camada privada e conferência
+### 6. Ferramentas do asdf
+
+O pacote `asdf` traz só o `~/.tool-versions`; o asdf em si vem de fora.
+**(macOS)** `brew install asdf`. **(Linux)** siga a instalação do site do
+asdf. O `config.fish` põe os shims no `PATH` quando o `asdf` existe.
+
+O asdf não tem arquivo de plugins, e `asdf install` falha para ferramenta
+sem plugin. A primeira coluna do `.tool-versions` é o nome curto de cada
+plugin, então o próprio arquivo serve de lista:
+
+```bash
+cut -d' ' -f1 ~/.tool-versions | xargs -n1 asdf plugin add
+cd ~ && asdf install
+```
+
+O `erlang` compila do fonte e demora; as dependências de build estão no
+README do asdf-erlang. O `elixir` vem pré-compilado, mas o sufixo
+`-otp-28` pede o Erlang 28 do mesmo arquivo.
+
+Se o deno também estiver instalado pelo Homebrew, vale o do asdf: os shims
+entram antes no `PATH`.
+
+### 7. Camada privada e conferência
 
 Configure a **camada privada** à parte (identidade e credenciais do git), seguindo
 as instruções dela. Como o `[include]` dela é a **última** diretiva do
