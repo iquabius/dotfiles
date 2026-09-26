@@ -54,15 +54,6 @@ if test -d "/usr/local/texlive/2023"
   fish_add_path --prepend --path /usr/local/texlive/2023/bin/x86_64-linux
 end
 
-set JAVA_HOME "/opt/jdk/jdk-21.0.1/"
-fish_add_path --prepend --path $JAVA_HOME/bin
-
-# values are already in the PATH because they are set in ~/.bashrc
-set ANDROID_HOME "/opt/android/sdk"
-set ANDROID_SDK_ROOT $ANDROID_HOME
-# https://stackoverflow.com/questions/26483370#49511666
-fish_add_path --prepend --path $ANDROID_HOME/platform-tools $ANDROID_HOME/emulator $ANDROID_HOME/cmdline-tools/bin
-
 set -g theme_display_virtualenv no
 
 # https://stackoverflow.com/questions/64799841/how-to-stop-docker-and-kubernetes-using-docker-desktop
