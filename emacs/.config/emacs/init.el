@@ -17,6 +17,15 @@
 (require 'crafted-ui-packages)
 (require 'crafted-writing-packages)
 
+;; Emacs 31 draws Corfu's popup in terminals itself (tty child frames), and
+;; Corfu warns whenever corfu-terminal loads. crafted-completion-config loads
+;; it when `display-graphic-p' is nil at init, which is always true in the
+;; daemon, so every first client frame opened on that warning. Not installing
+;; it makes crafted's `(require 'corfu-terminal nil :noerror)' a no-op.
+(when (featurep 'tty-child-frames)
+  (setq package-selected-packages
+        (delq 'corfu-terminal package-selected-packages)))
+
 ;; sudo apt install -y ripgrep
 ;; https://github.com/Wilfred/deadgrep/blob/master/docs/ALTERNATIVES.md
 (add-to-list 'package-selected-packages 'deadgrep)
