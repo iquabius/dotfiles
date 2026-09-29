@@ -11,3 +11,7 @@
 ;; no longer exists — it fails to load at all. Rolling MELPA has the v3 line,
 ;; which dropped helm.
 (add-to-list 'package-pinned-packages (cons 'org-ref "melpa"))
+;; org-ref reads the .bib through bibtex-completion. MELPA Stable's is 2.0.0
+;; (2021), written for parsebib 1.x: against parsebib 6 it parses every file
+;; into zero entries, so key completion comes up empty without an error.
+(add-to-list 'package-pinned-packages (cons 'bibtex-completion "melpa"))
