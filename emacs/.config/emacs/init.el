@@ -28,6 +28,11 @@
 ;;   user-error: Org export aborted.  Unable to resolve link: "cite:edwards2009"
 (add-to-list 'package-selected-packages 'org-ref)
 
+;; Git: Magit for status, staging and history; diff-hl marks changed lines in
+;; the fringe of the buffer being edited.
+(add-to-list 'package-selected-packages 'magit)
+(add-to-list 'package-selected-packages 'diff-hl)
+
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
 
@@ -189,6 +194,23 @@
     (global-set-key (kbd "C-c n c") 'org-roam-capture)
     (global-set-key (kbd "C-c n f") 'org-roam-node-find)
     (global-set-key (kbd "C-c n j") 'org-roam-dailies-capture-today)))
+
+;; Git — Magit's status is on C-x g. Refining every hunk word by word is what
+;; makes prose diffs readable: without it a changed word in an Org paragraph
+;; shows as the whole line removed and added again.
+(setq magit-diff-refine-hunk 'all)
+
+;; RET on a diff line visits it in the file, but Org files open folded
+;; (`org-startup-folded'), so the line would land inside a hidden subtree.
+(add-hook 'magit-diff-visit-file-hook
+          (lambda () (when (derived-mode-p 'org-mode) (org-reveal))))
+
+;; diff-hl: C-x v [ and C-x v ] jump between changed hunks, C-x v * shows the
+;; old text of the hunk in place, C-x v n reverts it and C-x v S stages it.
+;; flydiff updates the marks while typing instead of on save.
+(global-diff-hl-mode)
+(diff-hl-flydiff-mode)
+(add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
 
 ;; Clipboard — the PGTK (native Wayland) build takes ownership of the selection
 ;; and then serves no content: anything copied in Emacs is unpastable in other
