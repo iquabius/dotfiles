@@ -282,3 +282,43 @@
 (if (daemonp)
     (add-to-list 'default-frame-alist '(fullscreen . fullboth))
   (toggle-frame-fullscreen))
+
+;; Startup warnings from openSUSE's site-lisp. These package-owned files have
+;; no `lexical-binding' cookie, and Emacs 31 warns about each one. They load
+;; from site-start, before early-init.el, so nothing here stops them from being
+;; logged:
+;;
+;; - A standalone Emacs delays startup warnings until after init, so
+;;   suppressing their type is enough.
+;; - The daemon logs them at once and shows *Warnings* on the first client
+;;   frame without checking any suppression. So remove them from the buffer,
+;;   kill it if nothing else is left, and skip showing a killed buffer.
+;;
+;; `warning--display-buffer' is internal (Emacs 31); if it is renamed, the
+;; advice does nothing and the warnings come back.
+(defconst my/site-lisp-lexbind-files
+  '("/usr/share/emacs/site-lisp/suse-start-po-mode.el"            ; gettext-runtime
+    "/usr/share/emacs/site-lisp/site-start.d/vterm-init.el")      ; emacs-vterm
+  "Package-owned files whose missing `lexical-binding' cookie is not ours to fix.")
+
+(require 'warnings)
+(dolist (file my/site-lisp-lexbind-files)
+  (add-to-list 'warning-suppress-log-types
+               `(files missing-lexbind-cookie ,file)))
+
+(defun my/drop-site-lisp-lexbind-warnings ()
+  "Remove warnings about `my/site-lisp-lexbind-files' from *Warnings*."
+  (when-let* ((buffer (get-buffer "*Warnings*")))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+        (dolist (file my/site-lisp-lexbind-files)
+          (goto-char (point-min))
+          (while (search-forward (format "cookie in %S." file) nil t)
+            (let ((start (pos-bol)))
+              (search-forward "for more information.")
+              (delete-region start (min (1+ (point)) (point-max))))))
+        (when (string-blank-p (buffer-string))
+          (kill-buffer buffer))))))
+
+(advice-add 'warning--display-buffer :before-while #'buffer-live-p)
+(my/drop-site-lisp-lexbind-warnings)
