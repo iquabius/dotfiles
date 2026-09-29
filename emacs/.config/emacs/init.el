@@ -150,6 +150,19 @@
             (add-hook 'completion-at-point-functions #'my/org-ref-cite-capf nil t)
             (add-hook 'post-self-insert-hook #'my/org-ref-cite-after-colon nil t)))
 
+;; `ts' blocks: Org looks for a `ts-mode', which does not exist, and leaves the
+;; block uncoloured. typescript-ts-mode needs the tree-sitter grammar, which
+;; `treesit-install-language-grammar' compiles (a C compiler is required);
+;; without it js-mode colours the JavaScript subset, most of a TS snippet.
+(with-eval-after-load 'org-src
+  (let ((mode (if (treesit-language-available-p 'typescript) 'typescript-ts 'js)))
+    (add-to-list 'org-src-lang-modes (cons "ts" mode))
+    (add-to-list 'org-src-lang-modes (cons "typescript" mode))))
+
+;; Code in src blocks sits at the column of #+begin_src; the default of 2
+;; re-indents every block edited through C-c '.
+(setq org-edit-src-content-indentation 0)
+
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
 ;;
