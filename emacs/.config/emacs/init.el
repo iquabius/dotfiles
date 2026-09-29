@@ -33,6 +33,9 @@
 (add-to-list 'package-selected-packages 'magit)
 (add-to-list 'package-selected-packages 'diff-hl)
 
+;; Picks a spelling correction through the completion UI (vertico).
+(add-to-list 'package-selected-packages 'flyspell-correct)
+
 ;; Install the packages listed in the `package-selected-packages' list.
 (package-install-selected-packages :noconfirm)
 
@@ -78,6 +81,27 @@
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
+
+;; Spelling — Hunspell checks against several dictionaries at once, so English
+;; terms inside Portuguese text are not flagged; aspell takes one at a time.
+;; The combined name must be registered before a buffer asks for it (the TCC
+;; does, in .dir-locals.el). The personal dictionary is set explicitly because
+;; for a combined name Hunspell would otherwise invent one per combination.
+(when (executable-find "hunspell")
+  (with-eval-after-load 'ispell
+    (setq ispell-program-name "hunspell"
+          ispell-dictionary "pt_BR,en_US"
+          ispell-personal-dictionary "~/.hunspell_personal")
+    ;; Hunspell ignores a personal dictionary that does not exist yet.
+    (unless (file-exists-p ispell-personal-dictionary)
+      (write-region "" nil ispell-personal-dictionary nil 0))
+    (ispell-set-spellchecker-params)
+    (ispell-hunspell-add-multi-dic "pt_BR,en_US")))
+
+;; C-; lists the corrections for the misspelled word before point in the
+;; minibuffer, instead of cycling through them in place.
+(with-eval-after-load 'flyspell
+  (keymap-set flyspell-mode-map "C-;" #'flyspell-correct-wrapper))
 
 ;; Org-mode
 (require 'crafted-org-config)
