@@ -82,6 +82,9 @@
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 
+;; After a prefix such as C-c or C-x v, list what can follow it.
+(which-key-mode)
+
 ;; Spelling — Hunspell checks against several dictionaries at once, so English
 ;; terms inside Portuguese text are not flagged; aspell takes one at a time.
 ;; The combined name must be registered before a buffer asks for it (the TCC
