@@ -168,6 +168,17 @@
 ;; re-indents every block edited through C-c '.
 (setq org-edit-src-content-indentation 0)
 
+;; Chapters that a master .tex pulls in with \input must be exported body-only,
+;; or each brings its own \documentclass and preamble. The dispatcher way is
+;; C-c C-e C-b l l, and forgetting the C-b breaks the build.
+(defun my/org-latex-export-body-only ()
+  "Export the buffer to its .tex file as a body-only fragment."
+  (interactive)
+  (message "Exported %s" (org-latex-export-to-latex nil nil nil t)))
+
+(with-eval-after-load 'org
+  (org-defkey org-mode-map (kbd "C-c e") 'my/org-latex-export-body-only))
+
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
 ;;
