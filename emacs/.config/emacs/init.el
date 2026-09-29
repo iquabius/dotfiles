@@ -88,6 +88,68 @@
 ;; an export runs, not after the first org-ref command is invoked.
 (require 'org-ref)
 
+;; org-ref v3 no longer binds its insert command (v2 took C-c ] itself, which
+;; Org otherwise gives to `org-remove-file', an agenda command). No prefix
+;; inserts a cite, C-u a ref, C-u C-u a label; on an existing cite link it
+;; appends the key to it.
+(with-eval-after-load 'org
+  (org-defkey org-mode-map (kbd "C-c ]") 'org-ref-insert-link))
+
+;; Citation keys pop up as soon as `cite:', `textcite:' or any other org-ref
+;; cite type is typed, rather than after `corfu-auto-prefix' characters of the
+;; key. They come from the bibliography org-ref resolves for the buffer, so a
+;; project points `bibtex-completion-bibliography' at its .bib (the TCC does it
+;; in .dir-locals.el).
+(defun my/org-ref-cite-capf ()
+  "Complete the citation key at point inside an org-ref cite link."
+  (let* ((end (point))
+         (beg (save-excursion (skip-chars-backward "^][() \t\n:,;&") (point)))
+         (start (save-excursion (skip-chars-backward "^][() \t\n") (point))))
+    (when (save-excursion
+            (goto-char start)
+            (looking-at (concat (regexp-opt (mapcar #'car org-ref-cite-types))
+                                ":")))
+      (let ((bibtex-completion-bibliography (org-ref-find-bibliography))
+            (notes (make-hash-table :test #'equal)))
+        (list beg end
+              (mapcar
+               (lambda (candidate)
+                 (let* ((entry (cdr candidate))
+                        (key (bibtex-completion-get-value "=key=" entry)))
+                   ;; biblatex entries carry `date', not `year', and
+                   ;; bibtex-completion only keeps `year'.
+                   (puthash key
+                            (replace-regexp-in-string
+                             "[{}]" ""
+                             (format "  %s (%s) %s"
+                                     (bibtex-completion-shorten-authors
+                                      (bibtex-completion-get-value
+                                       "author" entry
+                                       (bibtex-completion-get-value
+                                        "editor" entry "")))
+                                     (bibtex-completion-get-value
+                                      "year" entry
+                                      (bibtex-completion-get-value
+                                       "date" entry ""))
+                                     (bibtex-completion-get-value
+                                      "title" entry "")))
+                            notes)
+                   key))
+               (bibtex-completion-candidates))
+              :exclusive 'no
+              :annotation-function (lambda (key) (gethash key notes)))))))
+
+(defun my/org-ref-cite-after-colon ()
+  "Open the key completion when the colon of a cite link is typed."
+  (when (and (eq last-command-event ?:)
+             (my/org-ref-cite-capf))
+    (completion-at-point)))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-hook 'completion-at-point-functions #'my/org-ref-cite-capf nil t)
+            (add-hook 'post-self-insert-hook #'my/org-ref-cite-after-colon nil t)))
+
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
 ;;
