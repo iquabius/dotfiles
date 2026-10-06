@@ -196,6 +196,20 @@ Relative names resolve from the buffer's directory.")
 (defvar my/org-ref-glossary-file-cache (make-hash-table :test #'equal)
   "File name -> (MODTIME . ENTRIES), so fontification does not reread it.")
 
+(defun my/org-ref-glossary-display (latex)
+  "LATEX with `\\emph{...}' and `\\textit{...}' turned into italic text.
+For the tooltip and the completion annotation, which show the string as is."
+  (let ((pos 0) (out ""))
+    (while (string-match "\\\\\\(?:emph\\|textit\\){\\([^{}]*\\)}" latex pos)
+      (setq out (concat out (substring latex pos (match-beginning 0))
+                        (propertize (match-string 1 latex) 'face 'italic))
+            pos (match-end 0)))
+    (concat out (substring latex pos))))
+
+;; GTK tooltips (the pgtk default) drop text properties, so the italic of a
+;; glossary description would not show; Emacs-drawn tooltips keep them.
+(setq use-system-tooltips nil)
+
 (defun my/org-ref-glossary-read-file (file)
   "Alist (LABEL . PLIST) of the `\\newglossaryentry' definitions in FILE."
   (let ((modtime (file-attribute-modification-time (file-attributes file)))
@@ -223,10 +237,11 @@ Relative names resolve from the buffer's directory.")
                         (forward-sexp)
                         (setq plist
                               (plist-put plist (intern (concat ":" key))
-                                         (replace-regexp-in-string
-                                          "[ \t\n]+" " "
-                                          (buffer-substring
-                                           value-start (1- (point)))))))))))
+                                         (my/org-ref-glossary-display
+                                          (replace-regexp-in-string
+                                           "[ \t\n]+" " "
+                                           (buffer-substring-no-properties
+                                            value-start (1- (point))))))))))))
               (push (cons label (append (list :label label :file file
                                               :tex-position position)
                                         plist))
