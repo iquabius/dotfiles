@@ -125,6 +125,12 @@
 
 (setq org-startup-folded t)
 
+;; A file:x.org::text link searches the text of x.org, as the TCC's source
+;; matrix (texto/fontes/*.org) links each entry to the start of a paragraph.
+;; By default Org matches only headlines in an Org file, offers to create
+;; one named after the text, and then fails with "No match".
+(setq org-link-search-must-match-exact-headline nil)
+
 ;; Loaded eagerly rather than autoloaded: the link types have to exist before
 ;; an export runs, not after the first org-ref command is invoked.
 (require 'org-ref)
