@@ -180,15 +180,120 @@
               :exclusive 'no
               :annotation-function (lambda (key) (gethash key notes)))))))
 
+;; Glossary links (`gls:', `glspl:', `Gls:'...) look for the entry only in the
+;; buffer itself: a `#+name: glossary' table, a `\newglossaryentry' in a
+;; latex header, or an #+INCLUDE'd file. A project that keeps its entries in a
+;; LaTeX file loaded by the master document (the TCC: latex/siglas.tex) names
+;; that file in `my/org-ref-glossary-files', from .dir-locals.el; the lookup
+;; behind the tooltip and the face falls back to it, following the link opens
+;; the entry there, and the labels complete after the colon like cite keys.
+(defvar-local my/org-ref-glossary-files nil
+  "LaTeX files with `\\newglossaryentry' definitions for org-ref gls links.
+Relative names resolve from the buffer's directory.")
+(put 'my/org-ref-glossary-files 'safe-local-variable
+     (lambda (v) (and (listp v) (seq-every-p #'stringp v))))
+
+(defvar my/org-ref-glossary-file-cache (make-hash-table :test #'equal)
+  "File name -> (MODTIME . ENTRIES), so fontification does not reread it.")
+
+(defun my/org-ref-glossary-read-file (file)
+  "Alist (LABEL . PLIST) of the `\\newglossaryentry' definitions in FILE."
+  (let ((modtime (file-attribute-modification-time (file-attributes file)))
+        (cached (gethash file my/org-ref-glossary-file-cache)))
+    (if (and cached (equal (car cached) modtime))
+        (cdr cached)
+      (let (entries)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (while (re-search-forward "^[ \t]*\\\\newglossaryentry{\\([^}]+\\)}" nil t)
+            (let ((label (match-string 1))
+                  (position (match-beginning 0))
+                  (plist nil)
+                  end)
+              (when (re-search-forward "{" nil t)
+                (backward-char)
+                (setq end (save-excursion (forward-sexp) (point)))
+                (dolist (key '("name" "description"))
+                  (save-excursion
+                    (when (re-search-forward
+                           (concat "\\_<" key "[ \t]*=[ \t]*{") end t)
+                      (let ((value-start (point)))
+                        (backward-char)
+                        (forward-sexp)
+                        (setq plist
+                              (plist-put plist (intern (concat ":" key))
+                                         (replace-regexp-in-string
+                                          "[ \t\n]+" " "
+                                          (buffer-substring
+                                           value-start (1- (point)))))))))))
+              (push (cons label (append (list :label label :file file
+                                              :tex-position position)
+                                        plist))
+                    entries))))
+        (setq entries (nreverse entries))
+        (puthash file (cons modtime entries) my/org-ref-glossary-file-cache)
+        entries))))
+
+(defun my/org-ref-glossary-file-entries ()
+  "Entries of every readable file in `my/org-ref-glossary-files'."
+  (seq-mapcat (lambda (f)
+                (let ((file (expand-file-name f)))
+                  (when (file-readable-p file)
+                    (my/org-ref-glossary-read-file file))))
+              my/org-ref-glossary-files))
+
+(defun my/org-ref-glossary-from-files (orig label)
+  "Call ORIG for LABEL, then look in `my/org-ref-glossary-files'."
+  (or (funcall orig label)
+      (cdr (assoc label (my/org-ref-glossary-file-entries)))))
+
+(defun my/org-ref-glossary-follow-tex (orig entry)
+  "Open an entry found in a LaTeX glossary file at its definition, else ORIG."
+  (let ((data (get-text-property (point) 'or-glossary)))
+    (if (plist-get data :tex-position)
+        (progn
+          (org-mark-ring-push)
+          (find-file (plist-get data :file))
+          (goto-char (plist-get data :tex-position)))
+      (funcall orig entry))))
+
+(with-eval-after-load 'org-ref-glossary
+  (advice-add 'or-parse-glossary-entry :around #'my/org-ref-glossary-from-files)
+  (advice-add 'or-follow-glossary :around #'my/org-ref-glossary-follow-tex))
+
+(defun my/org-ref-glossary-capf ()
+  "Complete the label at point inside an org-ref glossary link."
+  (let* ((end (point))
+         (beg (save-excursion (skip-chars-backward "^][() \t\n:") (point)))
+         (start (save-excursion (skip-chars-backward "^][() \t\n") (point))))
+    (when (and my/org-ref-glossary-files
+               (boundp 'org-ref-glossary-gls-commands)
+               (save-excursion
+                 (goto-char start)
+                 (let ((case-fold-search nil))
+                   (looking-at
+                    (concat (regexp-opt (mapcar #'car org-ref-glossary-gls-commands))
+                            ":")))))
+      (let ((entries (my/org-ref-glossary-file-entries)))
+        (list beg end (mapcar #'car entries)
+              :exclusive 'no
+              :annotation-function
+              (lambda (label)
+                (let ((entry (cdr (assoc label entries))))
+                  (format "  %s: %s" (plist-get entry :name)
+                          (plist-get entry :description)))))))))
+
 (defun my/org-ref-cite-after-colon ()
-  "Open the key completion when the colon of a cite link is typed."
+  "Open the completion when the colon of a cite or glossary link is typed."
   (when (and (eq last-command-event ?:)
-             (my/org-ref-cite-capf))
+             (or (my/org-ref-cite-capf) (my/org-ref-glossary-capf)))
     (completion-at-point)))
 
 (add-hook 'org-mode-hook
           (lambda ()
             (add-hook 'completion-at-point-functions #'my/org-ref-cite-capf nil t)
+            (add-hook 'completion-at-point-functions #'my/org-ref-glossary-capf nil t)
             (add-hook 'post-self-insert-hook #'my/org-ref-cite-after-colon nil t)))
 
 ;; `ts' blocks: Org looks for a `ts-mode', which does not exist, and leaves the
