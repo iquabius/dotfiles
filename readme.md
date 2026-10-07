@@ -59,6 +59,8 @@ Detalhes que valem saber:
   mais lugar nenhum.
 - **`.githooks/` não é pacote Stow.** É hook de repositório, ligado com
   `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
+- **`.config/` também não.** O `.config/revisao` lista os caminhos de código
+  que pedem revisão do ramo antes do `main`; o ciclo está no `AGENTS.md`.
 - **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
