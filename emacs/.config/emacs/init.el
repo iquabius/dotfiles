@@ -125,6 +125,62 @@
 
 (setq org-startup-folded t)
 
+;; Prose wraps while typing, at 80 columns. One space after a period ends a
+;; sentence, for filling and for M-a/M-e.
+(setq-default fill-column 80)
+(add-hook 'text-mode-hook #'auto-fill-mode)
+(setq sentence-end-double-space nil)
+
+;; M-q in Org refills the paragraph with one sentence per line (semantic line
+;; feeds), the layout of the TCC's sources. ErgoEmacs's M-q fills the paragraph
+;; as one block, joining the sentences. Three places neither end a sentence nor
+;; take a line break, in M-q or in auto-fill:
+;;
+;; - after an abbreviation, as in p. ex.;
+;; - inside a bracket link, or a citation, [[textcite:x][p. 1 e 21]], would be
+;;   split across two lines;
+;; - inside an export snippet, so that the TCC's @@latex:\todo{...}@@ notes
+;;   stay on one line. The @@ that closes one also closes a sentence.
+(defconst gambi/abbreviations '("p" "pp" "ex" "al" "cf" "fig" "e.g" "i.e")
+  "Words whose final period does not end a sentence.")
+
+(defun gambi/fill-nobreak-p ()
+  "Non-nil after one of `gambi/abbreviations', or inside a link or snippet."
+  (or (looking-back (concat "\\(?:^\\|[^[:alnum:]]\\)"
+                            (regexp-opt gambi/abbreviations) "\\.[ \t]*")
+                    (pos-bol))
+      (looking-back "\\[\\[[^]\n]*\\(?:\\]\\[[^]\n]*\\)?" (pos-bol))
+      (looking-back "@@[-A-Za-z0-9]+:\\(?:[^@]\\|@[^@]\\)*" (pos-bol))))
+
+(defun gambi/forward-sentence (&optional arg)
+  "Like `forward-sentence-default-function', past `gambi/fill-nobreak-p'."
+  (if (and arg (< arg 0))
+      (forward-sentence-default-function arg)
+    (dotimes (_ (or arg 1))
+      (let (start)
+        (while (progn (setq start (point))
+                      (forward-sentence-default-function 1)
+                      (and (> (point) start) (gambi/fill-nobreak-p))))))))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (setq-local sentence-end-base "[.?!…‽][]\"'”’)}»›@]*")
+            (add-hook 'fill-nobreak-predicate #'gambi/fill-nobreak-p nil t)))
+
+(defun gambi/fill-paragraph-sentences (&optional justify region)
+  "Fill the paragraph, or the active region, one sentence per line.
+`fill-paragraph-semlf', ending sentences with `gambi/forward-sentence'."
+  (interactive (progn
+                 (barf-if-buffer-read-only)
+                 (list (if current-prefix-arg 'full) t)))
+  (let ((forward-sentence-function #'gambi/forward-sentence))
+    (fill-paragraph-semlf justify region)))
+
+(with-eval-after-load 'org
+  (keymap-set org-mode-map "M-q" #'gambi/fill-paragraph-sentences)
+  (keymap-set org-mode-map "<remap> <ergoemacs-compact-uncompact-block>"
+              #'gambi/fill-paragraph-sentences))
+
 ;; A file:x.org::text link searches the text of x.org, as the TCC's source
 ;; matrix (texto/fontes/*.org) links each entry to the start of a paragraph.
 ;; By default Org matches only headlines in an Org file, offers to create
