@@ -1,0 +1,9 @@
+# Caminhos de código: mudar um deles pede a revisão do ramo antes do main
+# (o ciclo está no AGENTS.md). Um pathspec do git por linha; diretório com
+# curinga termina em /*. Esta lista também é código.
+.config/revisao
+.githooks/
+*.el
+*.fish
+*.sh
+ssh/.ssh/rc
