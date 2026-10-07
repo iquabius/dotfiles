@@ -317,6 +317,48 @@ For the tooltip and the completion annotation, which show the string as is."
             (add-hook 'completion-at-point-functions #'my/org-ref-glossary-capf nil t)
             (add-hook 'post-self-insert-hook #'my/org-ref-cite-after-colon nil t)))
 
+;; Chapter refs (`ref:chap:results') point at labels the LaTeX master defines
+;; (the TCC: `\chapter{Resultados}\label{chap:results}' in latex/tcc.tex), so
+;; org-ref never finds them in the Org source: it paints the link as missing,
+;; and following it left point at the top of the buffer. A `chap:X' label that
+;; is not in the buffer stands for X.org beside the current file, when that
+;; file exists; following the link opens it, and the link is not flagged.
+;; Export is untouched: the link still becomes \ref{chap:X}.
+(defun gambi/org-ref-chapter-file (label)
+  "Return X.org beside the current file for LABEL `chap:X', if it exists."
+  (when (and buffer-file-name
+             (string-prefix-p "chap:" label)
+             (not (assoc label (org-ref-get-labels))))
+    (let ((file (expand-file-name (concat (substring label 5) ".org")
+                                  (file-name-directory buffer-file-name))))
+      (and (file-exists-p file) file))))
+
+(defun gambi/org-ref-jump-to-chapter-file (orig &optional path)
+  "Open the chapter file of a `chap:' label at point, else call ORIG with PATH."
+  (let* ((label (or (get-text-property (point) 'org-ref-ref-label) path))
+         (file (and label (gambi/org-ref-chapter-file label))))
+    (if (not file)
+        (funcall orig path)
+      (org-mark-ring-push)
+      (find-file file))))
+
+(defun gambi/org-ref-activate-chapter-file (orig start end path bracketp)
+  "Call ORIG, then unflag the `chap:' labels in PATH that name a file."
+  (funcall orig start end path bracketp)
+  (when org-ref-activate-ref-links
+    (save-excursion
+      (goto-char start)
+      (dolist (label (split-string path ","))
+        (when (search-forward label end t)
+          (when-let* ((file (gambi/org-ref-chapter-file label)))
+            (add-text-properties (match-beginning 0) (match-end 0)
+                                 (list 'face 'org-ref-ref-face
+                                       'help-echo (concat "Opens "
+                                                          (file-name-nondirectory file))))))))))
+
+(advice-add 'org-ref-ref-jump-to :around #'gambi/org-ref-jump-to-chapter-file)
+(advice-add 'org-ref-ref-activate :around #'gambi/org-ref-activate-chapter-file)
+
 ;; `ts' blocks: Org looks for a `ts-mode', which does not exist, and leaves the
 ;; block uncoloured. typescript-ts-mode needs the tree-sitter grammar, which
 ;; `treesit-install-language-grammar' compiles (a C compiler is required);
