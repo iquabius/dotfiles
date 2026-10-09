@@ -442,19 +442,23 @@ For the tooltip and the completion annotation, which show the string as is."
 ;; A `~' right before an em dash is LaTeX's non-breaking space, so that the
 ;; dash never starts a line: `diferentes~--- aqui' in the TCC. ox-latex escapes
 ;; every `~' of plain text to \textasciitilde{}, and the PDF printed a tilde.
-;; Since a `\' of plain text becomes $\backslash$, \textasciitilde{}--- there
-;; can only come from `~---', which goes back to a raw `~'. Any other `~' still
-;; prints as a tilde. Verbatim and code (`~x~', `=x=') are not plain text and
-;; never reach the filter. Org's `\nbsp{}---' gives the same output.
-(defun gambi/org-latex-nbsp-before-dash (text backend _info)
-  "Turn \\textasciitilde{}--- in plain TEXT into ~--- for a LaTeX BACKEND."
-  (if (org-export-derived-backend-p backend 'latex)
-      (string-replace "\\textasciitilde{}---" "~---" text)
-    text))
+;; Plain text cannot spell \textasciitilde{} itself, since its `{', `}' and a
+;; `\' before a letter are escaped too, so \textasciitilde{}--- there comes from
+;; `~---' and goes back to a raw `~'. Any other `~' still prints as a tilde.
+;;
+;; This advises the LaTeX plain-text transcoder rather than adding an export
+;; filter: headlines go through anonymous backends derived from `latex', which
+;; hand a filter no backend name to test. Every LaTeX export of every Org file
+;; gets it, beamer included; other backends never call it. Verbatim and code
+;; (`~x~', `=x=') are not plain text and are untouched, but `~a b~---' is code
+;; to Org's parser before any of this runs; `\nbsp{}---' avoids that.
+(defun gambi/org-latex-nbsp-before-dash (text)
+  "Turn \\textasciitilde{}--- in transcoded plain TEXT into ~---."
+  (string-replace "\\textasciitilde{}---" "~---" text))
 
-(with-eval-after-load 'ox
-  (add-hook 'org-export-filter-plain-text-functions
-            #'gambi/org-latex-nbsp-before-dash))
+(with-eval-after-load 'ox-latex
+  (advice-add 'org-latex-plain-text :filter-return
+              #'gambi/org-latex-nbsp-before-dash))
 
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
