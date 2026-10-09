@@ -439,6 +439,23 @@ For the tooltip and the completion annotation, which show the string as is."
 (with-eval-after-load 'org
   (org-defkey org-mode-map (kbd "C-c e") 'my/org-latex-export-body-only))
 
+;; A `~' right before an em dash is LaTeX's non-breaking space, so that the
+;; dash never starts a line: `diferentes~--- aqui' in the TCC. ox-latex escapes
+;; every `~' of plain text to \textasciitilde{}, and the PDF printed a tilde.
+;; Since a `\' of plain text becomes $\backslash$, \textasciitilde{}--- there
+;; can only come from `~---', which goes back to a raw `~'. Any other `~' still
+;; prints as a tilde. Verbatim and code (`~x~', `=x=') are not plain text and
+;; never reach the filter. Org's `\nbsp{}---' gives the same output.
+(defun gambi/org-latex-nbsp-before-dash (text backend _info)
+  "Turn \\textasciitilde{}--- in plain TEXT into ~--- for a LaTeX BACKEND."
+  (if (org-export-derived-backend-p backend 'latex)
+      (string-replace "\\textasciitilde{}---" "~---" text)
+    text))
+
+(with-eval-after-load 'ox
+  (add-hook 'org-export-filter-plain-text-functions
+            #'gambi/org-latex-nbsp-before-dash))
+
 ;; Org-roam
 ;; ln -s ~/Mega/Data1/Org.d/Roam2/ ~/Notes
 ;;
