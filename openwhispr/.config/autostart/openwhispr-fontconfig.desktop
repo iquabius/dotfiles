@@ -1,0 +1,26 @@
+# Autostart do OpenWhispr com um fontconfig privado.
+#
+# O OpenWhispr (Electron) traz o próprio libfontconfig, mais velho que o do
+# sistema, e ele não lê os caches que o do sistema escreve nem os regenera:
+# a janela abre com ícones e caixas e nenhum caractere de texto. Com
+# FONTCONFIG_FILE apontando para ~/.config/open-whispr/fonts.conf, que
+# declara um cachedir próprio, ele gera e usa os seus.
+#
+# O nome deste arquivo é de propósito. O app reescreve o open-whispr.desktop
+# dele a cada partida (syncAutostartEntry), voltando o Exec para o binário
+# cru, então editar aquele arquivo dura segundos. Ele só lê esse nome: deixe
+# "iniciar com o sistema" DESLIGADO nas preferências do app, ou as duas
+# entradas disputam o login e a crua pode vencer.
+#
+# O ~ quem expande é o fontconfig, não o shell, e no Exec ele precisa estar
+# entre aspas (é caractere reservado). Caminho relativo sem ~ não serve: o
+# fontconfig não resolve contra o diretório atual.
+[Desktop Entry]
+Type=Application
+Name=OpenWhispr (fontconfig privado)
+Comment=Inicia o OpenWhispr com FONTCONFIG_FILE apontando para um cache próprio
+Exec=env "FONTCONFIG_FILE=~/.config/open-whispr/fonts.conf" /opt/OpenWhispr/open-whispr --hidden
+Icon=open-whispr
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
