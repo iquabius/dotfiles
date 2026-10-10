@@ -27,6 +27,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `ytdlp` | `~/.config/yt-dlp` |
 | `asdf` | `~/.tool-versions` (versões globais de nodejs, pnpm, yarn, deno, erlang e elixir) |
 | `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
+| `openwhispr` | `~/.config/autostart/openwhispr-fontconfig.desktop` e `~/.config/open-whispr/fonts.conf` **(Linux)** |
 
 Detalhes que valem saber:
 
@@ -57,6 +58,19 @@ Detalhes que valem saber:
   localização. Confira com `systemctl --user status darkman.service`: o log
   imprime o próximo nascer e pôr do sol, e um sinal trocado aparece ali e em
   mais lugar nenhum.
+- **O pacote `openwhispr` contorna o fontconfig embutido do app.** O
+  OpenWhispr traz um libfontconfig mais velho que não lê os caches do sistema,
+  e a janela abre sem texto. A entrada de autostart do pacote o lança com
+  `FONTCONFIG_FILE` apontando para um cache próprio. Ela tem nome diferente do
+  `open-whispr.desktop` do app porque o app reescreve aquele a cada partida;
+  por isso o "iniciar com o sistema" das preferências dele fica desligado.
+  Instale com `--no-folding`: sem ele, numa máquina onde `~/.config/open-whispr`
+  ainda não existe, o Stow faz do diretório um symlink para cá, e o app passa a
+  gravar banco, logs e o `.env` com token dentro deste repo:
+
+  ```bash
+  cd ~/.dotfiles && stow --no-folding openwhispr
+  ```
 - **`.githooks/` não é pacote Stow.** É hook de repositório, ligado com
   `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
 - **`.config/` também não.** O `.config/revisao` lista os caminhos de código
