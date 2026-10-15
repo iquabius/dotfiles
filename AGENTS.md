@@ -8,7 +8,9 @@ instalada à parte.
 ## Ciclo: ramo, revisão, merge
 
 Todo trabalho, de pessoa ou de agente, chega ao `main` assim (decisão de
-2026-10-07). O histórico é registro: o que foi revisado não se reescreve.
+2026-10-07, revista em 2026-10-14). O que está no `main` ou foi enviado é
+registro e não se reescreve; o ramo ainda não juntado é rascunho, e a
+história dele se condensa antes do merge (passo 5).
 
 1. **Ramo no lugar.** Antes do primeiro commit, `git switch -c <tarefa>`
    no checkout em que se trabalha; as mudanças ainda não commitadas vão
@@ -22,13 +24,29 @@ Todo trabalho, de pessoa ou de agente, chega ao `main` assim (decisão de
    só de texto ou de configuração simples (readme, `settings.json` dos
    editores, `.gitconfig`, `tmux.conf`, `latexmkrc`) dispensa a revisão,
    mas não o ramo.
-4. **Cada achado vira commit novo** no ramo, que nomeia o achado que
-   responde, um por achado ou por grupo coerente. Revise de novo até o
-   veredito **Ready to merge**.
-5. **Marque a ponta**: `git revisao pronto`. Achado que o autor decide
+4. **Cada achado vira um conserto** no ramo: `git commit --fixup=<commit
+   que ele corrige>`, ou commit novo quando ele não corrige um commit só.
+   Revise de novo até o veredito **Ready to merge**.
+5. **Condense o ramo** antes de marcar (passo 7 da `linus-review`): cada
+   conserto entra no commit que ele corrige, e a série fica com uma
+   mudança lógica por commit, com as mensagens escritas a partir da
+   árvore (skill `commit-message`), sem as rodadas da revisão:
+
+   ```sh
+   revisada=$(git rev-parse HEAD)
+   GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash \
+       --committer-date-is-author-date "$(git merge-base main HEAD)"
+   git diff "$revisada" HEAD   # tem de sair vazio
+   ```
+
+   A série refeita à mão (juntar, dividir, reescrever mensagens) passa
+   pelo mesmo `git diff` vazio. Com a árvore igual à revisada, só o eixo
+   History da `linus-review` roda de novo, sobre a série nova; com outra
+   árvore, a revisão do ramo inteiro.
+6. **Marque a ponta**: `git revisao pronto`. Achado que o autor decide
    deixar de pé: `git revisao excecao -m "<motivo do autor>"`. O agente
    não decide isso sozinho.
-6. **Merge no main**, sem rebase nem squash:
+7. **Merge no main**, sem rebase nem squash na hora do merge:
 
    ```sh
    git switch main
@@ -37,11 +55,12 @@ Todo trabalho, de pessoa ou de agente, chega ao `main` assim (decisão de
    git branch -d <tarefa>
    ```
 
-7. **O push é do autor.** O agente não faz push.
+8. **O push é do autor.** O agente não faz push.
 
-Nunca, depois de uma revisão ou de um push: `git commit --amend`,
-commits `fixup!` com `rebase -i --autosquash`, `git rebase main`, merge
-squash, `--no-verify`.
+Nunca, no que já está no `main` ou foi enviado: `git commit --amend`,
+rebase ou outra reescrita da história, `git rebase main`, merge squash.
+Nunca, em lugar nenhum: `--no-verify`. No ramo ainda não juntado,
+reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 
 ## Portões
 
