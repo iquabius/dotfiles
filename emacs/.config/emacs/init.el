@@ -384,7 +384,7 @@ For the tooltip and the completion annotation, which show the string as is."
   "Return X.org beside the current file for LABEL `chap:X', if it exists."
   (when (and buffer-file-name
              (string-prefix-p "chap:" label)
-             (not (assoc label (org-ref-get-labels))))
+             (not (org-ref-find-label-in-buffer label)))
     (let ((file (expand-file-name (concat (substring label 5) ".org")
                                   (file-name-directory buffer-file-name))))
       (and (file-exists-p file) file))))
@@ -414,6 +414,358 @@ For the tooltip and the completion annotation, which show the string as is."
 
 (advice-add 'org-ref-ref-jump-to :around #'gambi/org-ref-jump-to-chapter-file)
 (advice-add 'org-ref-ref-activate :around #'gambi/org-ref-activate-chapter-file)
+
+;; Section labels from the title. ox-latex gives every headline a \label, and
+;; without a CUSTOM_ID the key is `org' plus a random number drawn anew on
+;; each Emacs run (`org-export-new-reference'), so every export of an
+;; unchanged file rewrote every \label{sec:org...}. A project that lists the
+;; files of its document in `gambi/org-document-files' (the TCC, from
+;; .dir-locals.el) gets sec:<title slug> instead, for the titles of the listed
+;; Org files: a title repeated in the document takes first the slug of its
+;; nearest ancestor whose title is not repeated (sec:contador-concisao), and
+;; -2, -3 settle what still collides with another label of the listed files
+;; (a CUSTOM_ID, a #+NAME, a <<target>>, a \label). The export sets the slug
+;; as the headline's CUSTOM_ID, which becomes the label only with
+;; `org-latex-prefer-user-labels' on (the TCC sets it); a CUSTOM_ID written in
+;; the file wins. A file that is not in its own list, like the TCC's source
+;; notes under texto/fontes/, where the relative names resolve to nothing, is
+;; left alone. The export finds each headline's label by its titles from the
+;; top and by how many came before with the same ones, as the whole file has
+;; them, less COMMENT trees, the footnotes and the file's #+EXCLUDE_TAGS:
+;; exporting a subtree only falls back to the random label, and #+SELECT_TAGS,
+;; #+FILETAGS and tag groups are not followed.
+;;
+;; org-ref finds labels only by searching file text, where these slugs are
+;; not. So its label list (`C-c ]' with `C-u') gets every title of the
+;; document; choosing one writes the slug as that title's CUSTOM_ID, even in
+;; another file, which freezes it: a later rename of the title no longer moves
+;; the label. The CUSTOM_ID is written when the label is chosen, before the
+;; link goes in, so a C-g after that leaves it, with the same label it would
+;; have had anyway. Following a ref: link reaches a title or a label in any
+;; listed file; org-ref itself fails in a LaTeX file, unfolding Org headings
+;; there, and says a label it did reach in another Org file was not found. A
+;; `chap:X' label is listed from the LaTeX master but still opens X.org
+;; (`gambi/org-ref-chapter-file'). Only ref links search the listed files:
+;; glossary links also read `org-ref-get-included-files'.
+(require 'ox)
+(require 'ucs-normalize)
+
+(defvar-local gambi/org-document-files nil
+  "Files of the document the buffer belongs to, in document order.
+Relative names resolve from the buffer's directory, and wildcards expand.
+The titles of the Org files get labels from `gambi/org-section-labels';
+org-ref also searches every file for labels to ref.")
+(put 'gambi/org-document-files 'safe-local-variable
+     (lambda (v) (and (listp v) (seq-every-p #'stringp v))))
+
+(defun gambi/org-document-file-list (names dir)
+  "Readable files of NAMES, a `gambi/org-document-files' value, from DIR."
+  (let ((default-directory dir))
+    (seq-uniq
+     (seq-filter #'file-readable-p
+                 (mapcan (lambda (name)
+                           (if (string-match-p "[*?[]" name)
+                               (file-expand-wildcards (expand-file-name name))
+                             (list (expand-file-name name))))
+                         names)))))
+
+(defun gambi/org-document (names file)
+  "Files of NAMES, the document FILE belongs to, or nil if FILE is not one."
+  (let ((files (gambi/org-document-file-list names (file-name-directory file))))
+    (and (member (expand-file-name file) files) files)))
+
+(defun gambi/org-slug (title)
+  "TITLE without links, markup or accents, lowercase, words joined by hyphens."
+  (let* ((s (ucs-normalize-NFD-string (org-link-display-format title)))
+         (s (downcase (replace-regexp-in-string "[^[:ascii:]]" "" s)))
+         (s (replace-regexp-in-string "[^a-z0-9]+" "-" s))
+         (s (string-trim s "-+" "-+")))
+    (if (string-empty-p s) "titulo" s)))
+
+(defun gambi/org-title-path (headline)
+  "Raw titles from the top down to HEADLINE, an Org element."
+  (nreverse (mapcar (lambda (h) (org-element-property :raw-value h))
+                    (seq-filter (lambda (e) (eq (org-element-type e) 'headline))
+                                (org-element-lineage headline nil t)))))
+
+(defun gambi/org-own-title (title)
+  "The raw title of TITLE, a plist with the :path of its titles from the top."
+  (car (last (plist-get title :path))))
+
+(defun gambi/org-exported-headline-p (headline exclude-tags)
+  "Non-nil unless HEADLINE or an ancestor is commented, excluded or footnotes.
+EXCLUDE-TAGS are the tags that keep a tree out of the export."
+  (seq-every-p (lambda (h)
+                 (not (or (org-element-property :commentedp h)
+                          (org-element-property :footnote-section-p h)
+                          (seq-intersection (org-element-property :tags h)
+                                            exclude-tags))))
+               (seq-filter (lambda (e) (eq (org-element-type e) 'headline))
+                           (org-element-lineage headline nil t))))
+
+(defun gambi/org-scan-labels ()
+  "Labels org-ref would find in the current buffer, as strings."
+  (let ((case-fold-search t)
+        (rx (string-join org-ref-ref-label-regexps "\\|"))
+        labels)
+    (org-with-wide-buffer
+     (goto-char (point-min))
+     (while (re-search-forward rx nil t)
+       (push (match-string-no-properties 1) labels)))
+    labels))
+
+(defun gambi/org-scan-titles ()
+  "Exported titles of the current Org buffer in order, as plists.
+The file's #+EXCLUDE_TAGS replace `org-export-exclude-tags', as in export,
+even when empty."
+  (org-with-wide-buffer
+   (let ((exclude (if-let* ((keyword (assoc "EXCLUDE_TAGS"
+                                            (org-collect-keywords '("EXCLUDE_TAGS")))))
+                      (mapcan #'split-string (cdr keyword))
+                    org-export-exclude-tags)))
+     (org-element-map (org-element-parse-buffer 'headline) 'headline
+       (lambda (h)
+         (when (gambi/org-exported-headline-p h exclude)
+           (list :path (gambi/org-title-path h)
+                 :custom-id (org-element-property :CUSTOM_ID h)
+                 :begin (org-element-property :begin h))))))))
+
+(defvar gambi/org-scan-cache (make-hash-table :test #'equal)
+  "File name -> (STAMP . SCAN), so fontification does not reread it.")
+
+(defun gambi/org-file-scan (file)
+  "Plist (:titles :labels) of FILE; titles only for an Org file.
+A buffer visiting FILE is read instead of the disk, unsaved edits included.
+TITLES are plists (:path :custom-id :begin); LABELS are strings."
+  (let* ((buffer (find-buffer-visiting file))
+         (stamp (if buffer
+                    (cons buffer (buffer-chars-modified-tick buffer))
+                  (file-attribute-modification-time (file-attributes file))))
+         (cached (gethash file gambi/org-scan-cache)))
+    (if (equal (car cached) stamp)
+        (cdr cached)
+      (let* ((org (string-suffix-p ".org" file))
+             (scan (lambda ()
+                     (list :titles (and org (gambi/org-scan-titles))
+                           :labels (gambi/org-scan-labels))))
+             (result (if buffer
+                         (with-current-buffer buffer (funcall scan))
+                       (with-temp-buffer
+                         (insert-file-contents file)
+                         (when org (delay-mode-hooks (org-mode)))
+                         (funcall scan)))))
+        (puthash file (cons stamp result) gambi/org-scan-cache)
+        result))))
+
+(defvar gambi/org-section-labels-cache nil
+  "(FILES SCANS . LABELS) of the last `gambi/org-section-labels'.")
+
+(defun gambi/org-section-labels (files)
+  "Labels of the titles of FILES, in document order.
+Each is a plist (:label :file :path :n :begin :custom-id), where N counts the
+titles of FILE with the same PATH, so that two of them are told apart. A
+title with a CUSTOM_ID has it as its label."
+  (let ((scans (mapcar #'gambi/org-file-scan files)))
+    ;; Fontification asks for this once per ref link on screen: the labels
+    ;; are only worked out again when some file has a new scan.
+    (if (pcase-let ((`(,old-files ,old-scans . ,_) gambi/org-section-labels-cache))
+          (and (equal files old-files)
+               (seq-every-p #'identity (cl-mapcar #'eq scans old-scans))))
+        (cddr gambi/org-section-labels-cache)
+      (let ((labels (gambi/org-section-labels-1 files scans)))
+        (setq gambi/org-section-labels-cache (cons files (cons scans labels)))
+        labels))))
+
+(defun gambi/org-section-labels-1 (files scans)
+  "Labels of FILES, whose scans are SCANS; see `gambi/org-section-labels'."
+  (let ((titles
+         (cl-mapcan (lambda (file scan)
+                      (let ((seen (make-hash-table :test #'equal)))
+                        (mapcar (lambda (title)
+                                  (let ((n (cl-incf (gethash (plist-get title :path)
+                                                             seen 0))))
+                                    (append (list :file file :n n) title)))
+                                (plist-get scan :titles))))
+                    files scans))
+        (count (make-hash-table :test #'equal))
+        (used (make-hash-table :test #'equal))
+        labels)
+    (dolist (scan scans)
+      (dolist (label (plist-get scan :labels))
+        (puthash label t used)))
+    (dolist (title titles)
+      (cl-incf (gethash (gambi/org-slug (gambi/org-own-title title)) count 0)))
+    (dolist (title titles)
+      (if-let* ((id (plist-get title :custom-id)))
+          (push (append (list :label id) title) labels)
+        (let* ((unique (lambda (raw)
+                         (= 1 (gethash (gambi/org-slug raw) count 0))))
+               (own (gambi/org-own-title title))
+               (ancestor (and (not (funcall unique own))
+                              (seq-find unique
+                                        (cdr (reverse (plist-get title :path))))))
+               (base (concat "sec:"
+                             (and ancestor (concat (gambi/org-slug ancestor) "-"))
+                             (gambi/org-slug own)))
+               (label base)
+               (i 1))
+          (while (gethash label used)
+            (setq label (format "%s-%d" base (cl-incf i))))
+          (puthash label t used)
+          (push (append (list :label label) title) labels))))
+    (nreverse labels)))
+
+;; The filter runs in the copy of the buffer that the export parses, and the
+;; copy keeps only the local variables named org-* (and a few more, in
+;; `org-element--generate-copy-script'), so the file list is read in the
+;; buffer the export started from.
+(defun gambi/org-latex-section-labels (tree backend info)
+  "Give each headline of TREE without a CUSTOM_ID its label from the title."
+  (when-let* (((org-export-derived-backend-p backend 'latex))
+              (file (plist-get info :input-file))
+              (source (or (get-buffer (plist-get info :input-buffer))
+                          (current-buffer)))
+              (names (buffer-local-value 'gambi/org-document-files source))
+              (files (gambi/org-document names file)))
+    (let* ((file (expand-file-name file))
+           (labels (seq-filter (lambda (l) (equal (plist-get l :file) file))
+                               (gambi/org-section-labels files)))
+           (seen (make-hash-table :test #'equal)))
+      (org-element-map tree 'headline
+        (lambda (h)
+          (let* ((path (gambi/org-title-path h))
+                 (n (cl-incf (gethash path seen 0)))
+                 (label (seq-find (lambda (l)
+                                    (and (equal (plist-get l :path) path)
+                                         (= (plist-get l :n) n)))
+                                  labels)))
+            (when (and label (not (plist-get label :custom-id))
+                       (not (org-element-property :CUSTOM_ID h)))
+              (org-element-put-property h :CUSTOM_ID
+                                        (plist-get label :label)))))
+        info)))
+  tree)
+
+(add-hook 'org-export-filter-parse-tree-functions
+          #'gambi/org-latex-section-labels)
+
+(defun gambi/org-ref-document ()
+  "Files of the document of the current buffer, or nil outside one."
+  (and gambi/org-document-files buffer-file-name
+       (gambi/org-document gambi/org-document-files buffer-file-name)))
+
+(defun gambi/org-ref-title-labels ()
+  "Title labels of the document of the current buffer."
+  (when-let* ((files (gambi/org-ref-document)))
+    (gambi/org-section-labels files)))
+
+(defun gambi/org-ref-add-title-labels (labels)
+  "Add to org-ref's LABELS the title labels of the document.
+A CUSTOM_ID org-ref already found stays as it is; one it missed, because
+org-ref reads the other files from disk and it is not saved yet, comes in."
+  (append labels
+          (delq nil
+                (mapcar (lambda (l)
+                          (let ((path (plist-get l :path)))
+                            (unless (assoc (plist-get l :label) labels)
+                              (cons (plist-get l :label)
+                                    (format "%s: %s %s"
+                                            (file-name-nondirectory
+                                             (plist-get l :file))
+                                            (make-string (length path) ?*)
+                                            (gambi/org-own-title l))))))
+                        (gambi/org-ref-title-labels)))))
+
+(defun gambi/org-ref-title-label (label)
+  "The title label plist of LABEL in the current document, if any."
+  (seq-find (lambda (l) (equal (plist-get l :label) label))
+            (gambi/org-ref-title-labels)))
+
+(defun gambi/org-ref-to-title (title)
+  "Move to the headline of TITLE, a title label plist, in the current buffer."
+  (goto-char (plist-get title :begin))
+  (unless (and (org-at-heading-p)
+               (equal (org-get-heading t t t t) (gambi/org-own-title title)))
+    (error "Title %s moved; save and try again" (gambi/org-own-title title))))
+
+(defun gambi/org-ref-goto-title (title)
+  "Visit the file of the TITLE label plist and move to its headline."
+  (find-file (plist-get title :file))
+  (widen)
+  (gambi/org-ref-to-title title))
+
+(defun gambi/org-ref-freeze-title-label (label)
+  "Write LABEL as the CUSTOM_ID of its title when it is a title label."
+  (when-let* ((title (and (stringp label) (gambi/org-ref-title-label label)))
+              ((not (plist-get title :custom-id))))
+    (with-current-buffer (find-file-noselect (plist-get title :file))
+      (save-excursion
+        (save-restriction
+          (widen)
+          (gambi/org-ref-to-title title)
+          (org-entry-put nil "CUSTOM_ID" label))))
+    (message "CUSTOM_ID %s written in %s" label
+             (file-name-nondirectory (plist-get title :file))))
+  label)
+
+(defun gambi/org-ref-freeze-completed-link (link)
+  "Freeze the title label at the end of LINK, a completed `ref:label'."
+  (when (string-match ":" link)
+    (gambi/org-ref-freeze-title-label (substring link (match-end 0))))
+  link)
+
+(defun gambi/org-ref-label-in-other-file (label)
+  "(FILE . POSITION) of LABEL in another listed file, if any."
+  (seq-some (lambda (file)
+              (and (not (equal file (expand-file-name buffer-file-name)))
+                   (member label (plist-get (gambi/org-file-scan file) :labels))
+                   (when-let* ((pos (org-ref-find-label-in-file label file)))
+                     (cons file pos))))
+            (gambi/org-ref-document)))
+
+(defun gambi/org-ref-jump-in-document (orig &optional path)
+  "Visit the title or the label at point in another listed file, else ORIG.
+ORIG gets PATH. A `chap:' label that opens a chapter file goes to ORIG."
+  (let* ((label (or (get-text-property (point) 'org-ref-ref-label) path))
+         (here (or (null label) (string-match-p "," label)
+                   (gambi/org-ref-chapter-file label)
+                   (org-ref-find-label-in-buffer label)))
+         (title (and (not here) (gambi/org-ref-title-label label)))
+         (other (and (not here) (not title)
+                     (gambi/org-ref-label-in-other-file label))))
+    (cond (title
+           (org-mark-ring-push)
+           (gambi/org-ref-goto-title title))
+          (other
+           (org-mark-ring-push)
+           (find-file (car other))
+           (goto-char (cdr other))
+           (when (derived-mode-p 'org-mode)
+             (org-fold-show-entry)))
+          (t (funcall orig path)))))
+
+(defvar gambi/org-ref-in-ref-labels nil
+  "Non-nil while org-ref gathers or follows ref labels.")
+
+(defun gambi/org-ref-with-document-files (orig &rest args)
+  "Call ORIG with ARGS while org-ref ref labels search the document files."
+  (let ((gambi/org-ref-in-ref-labels t))
+    (apply orig args)))
+
+(defun gambi/org-ref-add-document-files (files)
+  "Add the document files to the FILES org-ref searches for ref labels."
+  (if-let* ((document (and gambi/org-ref-in-ref-labels (gambi/org-ref-document))))
+      (seq-uniq (append files (remove (expand-file-name buffer-file-name) document)))
+    files))
+
+(with-eval-after-load 'org-ref-ref-links
+  (advice-add 'org-ref-get-labels :filter-return #'gambi/org-ref-add-title-labels)
+  (advice-add 'org-ref-select-label :filter-return #'gambi/org-ref-freeze-title-label)
+  (advice-add 'org-ref-complete-link :filter-return #'gambi/org-ref-freeze-completed-link)
+  (advice-add 'org-ref-ref-jump-to :around #'gambi/org-ref-jump-in-document)
+  (advice-add 'org-ref-get-labels-multi-file :around #'gambi/org-ref-with-document-files)
+  (advice-add 'org-ref-ref-jump-to :around #'gambi/org-ref-with-document-files)
+  (advice-add 'org-ref-get-included-files :filter-return #'gambi/org-ref-add-document-files))
 
 ;; `ts' blocks: Org looks for a `ts-mode', which does not exist, and leaves the
 ;; block uncoloured. typescript-ts-mode needs the tree-sitter grammar, which
