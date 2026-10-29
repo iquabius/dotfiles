@@ -4,7 +4,11 @@
 Fecha, do lado do agente, as saídas que o git-revisao não vê:
 
 - recusa o que desligaria os hooks do git: git commit com --no-verify ou
-  -n; mexer em core.hooksPath, que desliga os hooks do repositório; trocar
+  -n e git push, merge ou pull com --no-verify, que pula o pre-push e o
+  commit-msg, também por um alias gravado na configuração; mexer em
+  hook.* da configuração, que liga os hooks do git-revisao e do
+  git-assunto-merge, em core.hooksPath, que desliga os hooks do
+  repositório, ou em include.*, que traz outra configuração; trocar
   a configuração global pelo ambiente (GIT_CONFIG_GLOBAL, GIT_CONFIG_COUNT,
   HOME...) antes de um git que commita, junta, puxa ou envia, porque é a
   global que liga os hooks do git-revisao; tirar CLAUDECODE do ambiente,
@@ -15,13 +19,14 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
   revisão de pé é decisão dele.
 
-O push sem revisão fica com o pre-push. Estas regras pegam as formas
-diretas: separam o comando em palavras pelas aspas, separadores,
-comentários e heredocs do shell (analisar) e leem cada chamada do git
-palavra por palavra; um script gravado em arquivo e depois executado, o
-git chamado por uma variável e os argumentos ou o comando que chegam
-por um pipe ao xargs ou a um shell passam por elas, e o portão que
-segura de fato é o pre-push do push, que é do autor.
+O push sem revisão fica com o pre-push, que estas regras protegem do
+--no-verify e de hook.*. Elas pegam as formas diretas: separam o
+comando em palavras pelas aspas, separadores, comentários e heredocs do
+shell (analisar) e leem cada chamada do git palavra por palavra; um
+script gravado em arquivo e depois executado, o git chamado por uma
+variável e os argumentos ou o comando que chegam por um pipe ao xargs
+ou a um shell passam por elas, e o portão que segura de fato é o
+pre-push do push, que é do autor.
 
 Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
 a decisão na saída padrão; sem nada a dizer, sai calado com 0.
@@ -59,20 +64,28 @@ SHELLS = {"sh", "bash", "dash", "zsh"}
 PROFUNDIDADE = 8
 
 
-# Opções do git commit que levam argumento: as curtas que o levam na
-# palavra seguinte (ou colado), as que só o aceitam colado (-uno, -Schave)
-# e as longas. O argumento não é opção: em git commit -m --no-verify, o
-# --no-verify é a mensagem.
+# Opções do git commit, push, merge e pull que levam argumento: as curtas
+# que o levam na palavra seguinte (ou colado), as que só o aceitam colado
+# (-uno, -Schave) e as longas. O argumento não é opção: em git push -o
+# --no-verify, o --no-verify é o texto do -o.
 OPCOES_COM_ARGUMENTO = {
     "commit": ("mFCct", "uS", (
         "--message", "--file", "--reuse-message", "--reedit-message", "--template",
         "--author", "--date", "--fixup", "--squash", "--trailer", "--cleanup")),
+    "push": ("o", "", ("--push-option", "--repo", "--receive-pack", "--exec")),
+    "merge": ("mFsX", "S", ("--message", "--file", "--strategy", "--strategy-option",
+                            "--into-name", "--cleanup")),
+    "pull": ("sXo", "S", ("--strategy", "--strategy-option", "--server-option",
+                          "--depth", "--deepen", "--shallow-since", "--shallow-exclude",
+                          "--upload-pack", "--negotiation-tip")),
 }
+# O -j e o --jobs do pull ficam de fora: o argumento deles é opcional e só
+# conta colado (-j4, --jobs=4).
 
 
 def pula_hooks(sub, args):
-    """O git commit com --no-verify (também abreviado, como --no-verif)
-    ou -n."""
+    """O git commit, push, merge ou pull com --no-verify (também abreviado,
+    como --no-verif) ou, no commit, -n."""
     curtas, coladas, longas = OPCOES_COM_ARGUMENTO[sub]
     pular = False
     for p in args:
@@ -430,8 +443,13 @@ def chamada_do_git(ps):
 
 def protegida(chave, secao=False):
     """Por que a chave (ou a seção) da configuração do git não se mexe, ou None."""
+    if re.match(r"(?i)hook(?:\.|$)", chave):
+        return "mexer em hook.* do git desliga os hooks do git-revisao e do git-assunto-merge"
     if re.fullmatch(r"(?i)core\.hookspath", chave) or (secao and chave.lower() == "core"):
         return "mexer em core.hooksPath desliga os hooks do repositório"
+    if re.match(r"(?i)include(?:if)?(?:\.|$)", chave):
+        return ("mexer em include.* do git traz outra configuração, que pode desligar "
+                "os hooks do git-revisao")
     return None
 
 
@@ -544,6 +562,18 @@ def notas_da_revisao(args, pares, ambiente):
                                     ["remove"], ["prune"]))
 
 
+def alias_gravado(args):
+    """O valor do alias que o git config grava (git config alias.x 'commit -n'),
+    ou None."""
+    nomes = config_nomes(args)
+    if nomes is None or nomes[0] in SECAO or nomes[0] == "edit":
+        return None
+    ps = nomes[1]
+    if len(ps) >= 2 and ps[0].lower().startswith("alias."):
+        return ps[1]
+    return None
+
+
 def gh_posicionais(args):
     """As palavras do gh que não são opção nem o argumento do -R/--repo."""
     posicionais, pular = [], False
@@ -651,18 +681,25 @@ def decisoes_simples(ps, nivel, herdado):
         gravados = config_grava(args)
         if ("", False) in gravados:
             yield "deny", ("Recusado: editar a configuração do git no editor pode "
-                           "mexer em core.hooksPath; use git config com a chave.")
+                           "mexer em hook.* e core.hooksPath; use git config com a chave.")
             return
         nomes += gravados
     for nome_config, secao in nomes:
         if motivo := protegida(nome_config, secao):
             yield "deny", f"Recusado: {motivo}."
             return
+    if sub == "config" and (alias := alias_gravado(args)):
+        # O alias gravado roda depois, quando chamado: confere-se já.
+        yield from decisoes(alias[1:] if alias.startswith("!") else "git " + alias,
+                            nivel + 1, ambiente)
     if sub in GRAVA_SUBS and any(CONFIG_DO_GIT.match(v) for v in ambiente):
         yield "deny", ENV_CONFIG
     if sub == "commit" and pula_hooks(sub, args):
         yield "deny", ("Recusado: git commit com --no-verify ou -n pula o "
                        "pre-commit, que guarda o main do commit de agente.")
+    if sub in ("push", "merge", "pull") and pula_hooks(sub, args):
+        yield "deny", (f"Recusado: git {sub} com --no-verify pula os hooks do "
+                       "git-revisao e do git-assunto-merge.")
     if sub == "notes" and notas_da_revisao(args, pares, ambiente):
         yield "deny", f"Recusado: {NOTAS}."
     if sub == "update-ref" and any(a.endswith("notes/revisao") for a in args):

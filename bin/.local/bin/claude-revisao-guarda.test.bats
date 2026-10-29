@@ -191,6 +191,32 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	done
 }
 
+@test "mexer em hook.* é recusado, também entre aspas" {
+	for c in 'git -c hook.revisao-push.enabled=false push' \
+		'git -c "hook.revisao-push.enabled=false" push' \
+		'git -cHook.revisao-push.enabled=false push' \
+		'git --config-env=hook.revisao-push.enabled=X push' \
+		'git config --global hook.assunto-merge.enabled false' \
+		'git -C ~/x config hook.revisao-commit.command true' \
+		'git config hook.revisao-push.command "echo --show"' \
+		'git config set hook.revisao-push.enabled false' \
+		'git config unset hook.revisao-push.command' \
+		'git config --unset-all hook.revisao-push.event' \
+		'git config --global --remove-section hook.revisao-push' \
+		'git config --global -e' \
+		'git config --global --unset-a hook.revisao-push.event' \
+		'git config --global --remove-s hook.revisao-push' \
+		"git -c 'hook.revisao-push.enabled=false' -c 'x.y=a;b' push" \
+		"git config hook.revisao-push.command ';'" \
+		'git config 2>/dev/null hook.revisao-push.enabled false' \
+		'git config --global include.path /tmp/sem-hooks' \
+		'git config -t bool hook.revisao-push.enabled false' \
+		'git config -t string alias.p "push --no-verify"'; do
+		run guarda "$c"
+		recusa
+	done
+}
+
 @test "o git dentro de prefixo, palavra do shell, aspas ou eval também se confere" {
 	for c in "'git' commit -n -m x" 'g\it commit -n -m x' "git 'commit' -n" \
 		'/usr/bin/git commit -n -m x' 'sudo git commit -n -m x' \
@@ -220,6 +246,67 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	for c in "echo 'ok; git commit -n'" "git commit -m 'ok; git commit -n'" \
 		'# exemplo; git commit -n' 'echo "git commit -n -m x"' 'make check 2>&1 | tail' \
 		'echo a &>/dev/null; git status' 'sleep 1 & git status'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "hook.* e push --no-verify se conferem por prefixo, heredoc, aspas e eval" {
+	for c in "'git' config hook.x z" "git 'config' hook.x z" 'sudo git config --system hook.x z' \
+		'timeout 60 git config --global hook.x z' 'env -S "git config hook.x z"' \
+		"env -S'git push --no-verify'" 'echo "$(git config hook.x z)"' \
+		"eval 'git config hook.x z'" "bash <<< 'git config hook.x z'" \
+		'git config -zf /tmp/config hook.x z' "git config hook.x '>log'" \
+		"git -c alias.x='config' x hook.y z" "git -c alias.x='config hook.x z' x" \
+		'git -c alias.p="!git push --no-verify" p' 'git push --no-verify>/dev/null' \
+		$'bash <<\'EOF\'\ngit config hook.x z\nEOF' $'git \\\nconfig hook.x z' \
+		$'cat <<\'EOF\'; git push --no-verify\ntexto\nEOF' \
+		$'cat <<\'EOF\' && git config hook.x z\ntexto\nEOF'; do
+		run guarda "$c"
+		recusa
+	done
+	for c in $'cat <<\'END-OF\'\n$(git config hook.x z)\nEND-OF' \
+		$'cat <<EOF\ngit config hook.x z\nEOF' "echo '\$(git config hook.x z)'" \
+		'git push origin main # --no-verify' "git -c alias.x='config hook.y z' status" \
+		'git config --get hook.x # --unset' 'git config hook.x # description' \
+		'git config -f/tmp/settings --get hook.x' 'echo "git config hook.x z"'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "ler hook.* passa, na forma nova e na antiga" {
+	for c in 'git config --get hook.revisao-push.command' \
+		'git config hook.revisao-push.command' \
+		'git config get hook.revisao-push.command' \
+		'git config --show-origin --get-regexp ^hook\.' \
+		'git config --list --show-origin' 'git config list' \
+		'git log --grep hook.x' 'git config user.name Fulano' \
+		'git config --ge hook.revisao-push.command' \
+		'git commit -m "nota: git config hook.x y; git push --no-verify"'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "push, merge e pull com --no-verify são recusados, também abreviados ou num alias; o comum passa" {
+	for c in 'git push --no-verify' 'git push origin main --no-verify' \
+		'git push --no-verif' 'git push --no-veri origin t' \
+		'cd ~/x && git -C ~/y push --no-verify origin t' \
+		'git -c x.y=1 push --no-verify' "'git' push --no-verify" \
+		"git commit -m 'fix; hooks' --no-verify" 'timeout 60 git push --no-verify' \
+		'git push 2>&1 --no-verify' 'git merge --no-verify t' 'git merge --no-verif t' \
+		'git pull --no-verify' 'git config --global alias.p "push --no-verify"' \
+		"git config set alias.c '!git commit -n'" 'git config alias.h "config hook.x z"' \
+		'git push -o -- --no-verify origin main' 'git merge -m -- --no-verify t' \
+		'git pull -j --no-verify' 'git pull --jobs --no-verify'; do
+		run guarda "$c"
+		recusa
+	done
+	for c in 'git push' 'git push -n origin main' 'git push -u origin t' \
+		'git push origin -- --no-verify' 'git merge --no-ff -m "Junta o ramo t: x" t' \
+		'git config --global alias.st status' 'git config --get alias.p' \
+		'git push -o --no-verify origin main' 'git push -o ci.skip origin main'; do
 		run guarda "$c"
 		[ -z "$output" ]
 	done
