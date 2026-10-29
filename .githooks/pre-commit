@@ -20,13 +20,13 @@ fail=0
 for f in $(git diff --cached --name-only --diff-filter=ACM); do
     # Pula binário: --numstat marca os dois contadores com "-".
     case "$(git diff --cached --numstat -- "$f" | cut -f1)" in
-        -) continue ;;
+    -) continue ;;
     esac
 
-    hits=$(git diff --cached -U0 --no-color -- "$f" \
-           | grep '^+' | grep -v '^+++' \
-           | grep -E '/(home|Users)/[A-Za-z0-9._-]+/' \
-           | grep -vE "/(home|Users)/($ALLOW)/" || true)
+    hits=$(git diff --cached -U0 --no-color -- "$f" |
+        grep '^+' | grep -v '^+++' |
+        grep -E '/(home|Users)/[A-Za-z0-9._-]+/' |
+        grep -vE "/(home|Users)/($ALLOW)/" || true)
 
     if [ -n "$hits" ]; then
         if [ "$fail" -eq 0 ]; then
