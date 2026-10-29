@@ -22,11 +22,14 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
 O push sem revisão fica com o pre-push, que estas regras protegem do
 --no-verify e de hook.*. Elas pegam as formas diretas: separam o
 comando em palavras pelas aspas, separadores, comentários e heredocs do
-shell (analisar) e leem cada chamada do git palavra por palavra; um
-script gravado em arquivo e depois executado, o git chamado por uma
-variável e os argumentos ou o comando que chegam por um pipe ao xargs
-ou a um shell passam por elas, e o portão que segura de fato é o
-pre-push do push, que é do autor.
+shell (analisar), acham o git, o gh, o git-revisao, os shells e os
+prefixos (RODADOS) onde estiverem nas palavras de um comando, e leem cada
+chamada do git palavra por palavra; um script gravado em arquivo e depois
+executado, o git chamado por uma variável, os argumentos ou o comando que
+chegam por um pipe ao xargs, a um shell ou ao source, o comando que um
+programa recebe como um texto só e passa a um shell (watch '...', su -c)
+e as outras formas que o bin/readme.md lista passam por elas, e o portão
+que segura de fato é o pre-push do push, que é do autor.
 
 Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
 a decisão na saída padrão; sem nada a dizer, sai calado com 0.
@@ -36,6 +39,8 @@ import json
 import re
 import shlex
 import sys
+from collections import namedtuple
+from dataclasses import dataclass, field
 
 # A variável que troca a configuração global do git: o arquivo, as chaves
 # do ambiente, ou o HOME e o XDG_CONFIG_HOME, onde o git a procura.
@@ -57,11 +62,32 @@ NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à
 EXCECAO = ("git revisao excecao deixa código ir ao main sem o veredito "
            "Ready to merge; confirme que a decisão e o motivo são do autor.")
 
-SHELLS = {"sh", "bash", "dash", "zsh"}
+# Os shells em que o -c é uma opção sem argumento e o script é a primeira
+# palavra que não é opção (bash -c -x '...', tcsh -cf '...'): os do POSIX e
+# o csh; e os em que o -c leva o script como argumento (fish -c '...',
+# também --command e -C, nu -c).
+SHELLS_C_SOLTO = {"sh", "bash", "rbash", "dash", "ash", "hush", "zsh", "ksh", "ksh93", "mksh",
+                  "lksh", "pdksh", "oksh", "yash", "posh", "osh", "ysh", "csh", "tcsh"}
+SHELLS = SHELLS_C_SOLTO | {"fish", "rc", "es", "elvish", "xonsh", "nu"}
+# Os comandos que rodam um texto no shell de agora.
+NO_MESMO_SHELL = {"source", "."}
+# A atribuição de variável do shell: NOME=valor, ou NOME+=valor, que acrescenta.
+ATRIBUI = re.compile(r"(\w+)\+?=(.*)", re.S)
 # Até quantos níveis de texto que roda (eval, sh -c, $(...)) o guarda confere:
 # oito cobrem com folga o aninhamento escrito à mão (eval dentro de sh -c
 # dentro de $(...)), e o limite dá fim à recursão.
 PROFUNDIDADE = 8
+
+
+def atribuicao(a):
+    """A troca de ambiente (NOME=valor) que a atribuição `a` faz."""
+    m = ATRIBUI.fullmatch(a)
+    return f"{m[1]}={m[2]}"
+
+
+def programa(palavra):
+    """O nome do programa, sem o diretório (/usr/bin/git é git)."""
+    return palavra.rsplit("/", 1)[-1]
 
 
 # Opções do git commit, push, merge e pull que levam argumento: as curtas
@@ -110,8 +136,12 @@ def pula_hooks(sub, args):
     return False
 
 
+# O descritor que vem colado antes de um redirecionamento: 2>, {fd}>.
+DESCRITOR = re.compile(r"\d+|\{\w+\}")
 # Redirecionamento colado (2>/dev/null, >>x, 2>&1) ou solto (> x).
-REDIRECIONA = re.compile(r"\d*(?:&>>?|>>?|<|>&|<&)(.*)", re.S)
+REDIRECIONA = re.compile(r"(?:\d*|\{\w+\})(?:&>>?|>\||<>|>>?|<|>&|<&)(.*)", re.S)
+# O here-string (<<< x, também 0<<<x), com o texto colado, se vier.
+HERE_STRING = re.compile(r"(?:\d*|\{\w+\})<<<(.*)", re.S)
 
 
 def ansi_c(m):
@@ -177,17 +207,24 @@ def substituicoes(texto):
 
 
 def valores(palavras):
-    """Os valores das palavras cruas de um comando simples, sem os
-    redirecionamentos e com o <<< do here-string separado do texto dele."""
-    ps, pular = [], False
+    """(valores das palavras cruas de um comando simples, sem os
+    redirecionamentos, [texto de cada here-string, que é a entrada dele],
+    {posição em valores de cada palavra com aspas ou barra}). O here-string
+    sai das palavras onde estiver: git <<< x push é git push."""
+    ps, entradas, citadas, pular, entrada = [], [], set(), False, False
     for bruta in palavras:
         if pular:
             pular = False
             continue
-        if bruta.startswith("<<<"):
-            ps.append("<<<")
-            if bruta[3:]:
-                ps.append(desaspa(bruta[3:]))
+        if entrada:
+            entrada = False
+            entradas.append(desaspa(bruta))
+            continue
+        if m := HERE_STRING.fullmatch(bruta):
+            if m[1]:
+                entradas.append(desaspa(m[1]))
+            else:
+                entrada = True
             continue
         # O operador nunca está entre aspas; o destino pode estar
         # (2>"/dev/null"). A palavra que começa com aspas não é redirecionamento.
@@ -195,28 +232,50 @@ def valores(palavras):
         if m:
             pular = not m[1]
             continue
+        if re.search(r"['\"\\]", bruta):
+            citadas.add(len(ps))
         ps.append(desaspa(bruta))
-    return ps
+    return ps, entradas, citadas
+
+
+# Um comando simples, em palavras, com o texto de cada here-string e as
+# posições das palavras com aspas à parte; e um texto que roda, com o
+# ambiente trocado que recebe e se roda no shell de agora (eval, source) ou
+# num processo filho.
+Comando = namedtuple("Comando", "palavras entradas citadas")
+Texto = namedtuple("Texto", "texto ambiente mesmo_shell")
+
+
+@dataclass
+class Heredoc:
+    """Um heredoc aberto na linha. O leitor é (ambiente trocado, mesmo shell)
+    de quem o lê como script, ou None; a vaga é o lugar, logo depois do
+    comando que o recebe, onde entra o que o corpo roda."""
+    delimitador: str
+    tira_tabs: bool
+    entre_aspas: bool
+    leitor: tuple = None
+    vaga: list = field(default_factory=list)
 
 
 def analisar(texto):
-    """([palavras de cada comando simples, na ordem], [(texto que roda,
-    ambiente trocado que ele recebe)]).
+    """O que o texto roda, na ordem em que roda: um Comando para cada comando
+    simples e um Texto para cada texto que roda.
 
     Separa em palavras com as regras do shell que mudam o que roda: as aspas
     protegem o que está dentro, o separador fora delas (; & | ( ) e a quebra
     de linha) fecha o comando, o # no começo de uma palavra abre um
     comentário até o fim da linha, e o redirecionamento sai das palavras. Os
     textos que rodam são as substituições de comando ($(...) e `...`, também
-    entre aspas duplas, não entre simples) e o corpo de heredoc: inteiro, se
-    o comando que o recebe é um shell (sudo bash <<EOF também); senão, só as
+    entre aspas duplas, não entre simples), antes do comando em que estão, e
+    o corpo de heredoc, logo depois do comando que o recebe: inteiro, se quem
+    o lê é um shell (sudo bash <<EOF também) ou o source; senão, só as
     substituições, e nem elas quando o delimitador vem entre aspas.
     """
-    comandos, textos = [], []
+    itens = []
     palavras, cru = [], []
-    # Heredocs abertos na linha: (delimitador, tira tabs, delimitador entre
-    # aspas, vai a um shell).
-    pendentes = []
+    # Os heredocs do comando que se lê, e os abertos na linha.
+    do_comando, pendentes = [], []
     aspa = None
     i = 0
 
@@ -228,8 +287,15 @@ def analisar(texto):
 
     def fecha_comando():
         fecha_palavra()
-        if ps := valores(palavras):
-            comandos.append(ps)
+        ps, entradas, citadas = valores(palavras)
+        if ps:
+            itens.append(Comando(ps, entradas, citadas))
+        # Quem lê o heredoc só se sabe com o comando inteiro (<<EOF source x).
+        leitor = leitor_do_heredoc(ps, citadas)
+        for heredoc in do_comando:
+            heredoc.leitor = leitor
+            itens.append(heredoc.vaga)
+        do_comando.clear()
         palavras.clear()
 
     while i < len(texto):
@@ -250,10 +316,10 @@ def analisar(texto):
             if c == "`":
                 j = texto.find("`", i + 1)
                 j = len(texto) if j < 0 else j + 1
-                textos.append((texto[i + 1:j - 1], []))
+                itens.append(Texto(texto[i + 1:j - 1], [], False))
             else:
                 j = fecha(texto, i + 1, "(", ")")
-                textos.append((texto[i + 2:j - 1], []))
+                itens.append(Texto(texto[i + 2:j - 1], [], False))
             cru.append(texto[i:j])
             i = j
             continue
@@ -276,42 +342,42 @@ def analisar(texto):
             fim = len(texto) if fim < 0 else fim
             i = fim
         elif texto.startswith("<<<", i):
-            cru.append("<<<")  # o here-string, inteiro: o <<< não é heredoc
+            # O here-string, inteiro: o <<< não é heredoc. Colado (git<<<x),
+            # começa outra palavra; o descritor (0<<<, {fd}<<<) fica com ele.
+            if cru and not DESCRITOR.fullmatch("".join(cru)):
+                fecha_palavra()
+            cru.append("<<<")
             i += 3
         elif texto.startswith("<<", i):
+            if DESCRITOR.fullmatch("".join(cru)):
+                cru = []  # o descritor do heredoc (0<<EOF) sai com ele
             fecha_palavra()
             m = re.match(r"<<(-?)[ \t]*('[^'\n]*'|\"[^\"\n]*\"|[^\s;&|<>()]+)", texto[i:])
             if not m:
                 i += 2
                 continue
-            # O corpo é o script do shell que o recebe, com o ambiente que ele
-            # recebe, a menos que o shell já tenha o script no -c: aí o corpo
-            # é só a entrada dele.
-            ambiente = []
-            roda = sem_prefixos(valores(palavras), ambiente)
-            vai_a_shell = (bool(roda) and roda[0].rsplit("/", 1)[-1] in SHELLS
-                           and script_do_shell(roda) is None)
-            pendentes.append((desaspa(m[2]), bool(m[1]), bool(re.search("['\"]", m[2])),
-                              ambiente if vai_a_shell else None))
+            heredoc = Heredoc(desaspa(m[2]), bool(m[1]), bool(re.search("['\"]", m[2])))
+            do_comando.append(heredoc)
+            pendentes.append(heredoc)
             i += m.end()
         elif c == "\n":
             fecha_comando()
             i += 1
-            for delimitador, tira_tabs, entre_aspas, do_shell in pendentes:
+            for heredoc in pendentes:
                 corpo = []
                 while i < len(texto):
                     fim = texto.find("\n", i)
                     fim = len(texto) if fim < 0 else fim
                     linha = texto[i:fim]
                     i = fim + 1
-                    if (linha.lstrip("\t") if tira_tabs else linha) == delimitador:
+                    if (linha.lstrip("\t") if heredoc.tira_tabs else linha) == heredoc.delimitador:
                         break
                     corpo.append(linha)
                 corpo = "\n".join(corpo)
-                if do_shell is not None:
-                    textos.append((corpo, do_shell))
-                elif not entre_aspas:
-                    textos.extend((t, []) for t in substituicoes(corpo))
+                if heredoc.leitor is not None:
+                    heredoc.vaga.append(Texto(corpo, *heredoc.leitor))
+                elif not heredoc.entre_aspas:
+                    heredoc.vaga.extend(Texto(t, [], False) for t in substituicoes(corpo))
             pendentes = []
         elif c == "&" and (texto.startswith("&>", i) or (cru and cru[-1] in "<>")):
             # O & de &>, >& e <& (2>&1) é do redirecionamento, não separa
@@ -320,14 +386,17 @@ def analisar(texto):
                 fecha_palavra()
             cru.append(c)
             i += 1
+        elif c == "|" and cru and cru[-1] == ">":
+            cru.append(c)  # o >| é um redirecionamento, não um pipe
+            i += 1
         elif c in ";&|()":
             fecha_comando()
             i += 1
         elif c in "<>":
             # O redirecionamento colado (commit>/dev/null) começa outra
-            # palavra; o número do descritor (2>) fica com ele.
+            # palavra; o descritor (2>, {fd}>) fica com ele.
             antes = "".join(cru)
-            if cru and not antes.isdigit() and antes[-1] not in "<>&":
+            if cru and not DESCRITOR.fullmatch(antes) and antes[-1] not in "<>&":
                 fecha_palavra()
             cru.append(c)
             i += 1
@@ -338,11 +407,11 @@ def analisar(texto):
             cru.append(c)
             i += 1
     fecha_comando()
-    return comandos, textos
+    return [x for item in itens for x in (item if isinstance(item, list) else [item])]
 
 
 # O que roda o comando seguinte, e as opções de cada um que levam argumento.
-PREFIXOS = {"command": set(), "nohup": set(),
+PREFIXOS = {"command": set(), "builtin": set(), "nohup": set(),
             "time": {"-f", "-o", "--format", "--output"},
             "exec": {"-a"},
             "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-U", "-r", "-t", "--user",
@@ -355,10 +424,52 @@ PREFIXOS = {"command": set(), "nohup": set(),
                       "--delimiter", "--max-args", "--max-procs", "--replace"}}
 # Prefixos que levam, depois das opções, uma palavra antes do comando.
 PREFIXO_COM_POSICIONAL = {"timeout"}
-# Palavras do shell que abrem um comando simples dentro de if, laço ou grupo.
-PALAVRAS_DO_SHELL = {"{", "}", "!", "if", "then", "else", "elif", "do", "while", "until"}
+# Palavras do shell que abrem um comando simples dentro de if, laço ou grupo,
+# também as do fish (and, or, not).
+PALAVRAS_DO_SHELL = {"{", "}", "!", "if", "then", "else", "elif", "do", "while", "until",
+                     "and", "or", "not"}
 # O env -S separa o argumento em palavras, que são o comando que ele roda.
 ENV_SEPARA = {"-S", "--split-string"}
+# Os programas que o guarda lê, onde estiverem nas palavras de um comando:
+# qualquer outro programa pode rodá-los (setsid git, watch git sem aspas,
+# find -exec git, stdbuf bash -c), e nenhuma lista de prefixos os esgota.
+# Os prefixos que são do próprio shell (command, exec, builtin) ficam de
+# fora: outro programa não os roda.
+RODADOS = {"git", "gh", "git-revisao"} | SHELLS | (
+    set(PREFIXOS) - {"command", "exec", "builtin"})
+
+
+def comandos_possiveis(ps, citadas):
+    """[(palavras sem os prefixos, ambiente trocado que recebe, achado no
+    meio)] de cada comando que `ps` pode rodar: o do começo e o que começa
+    em cada palavra seguinte, sem aspas (fora de `citadas`), que é um
+    programa de RODADOS, e que recebe também as atribuições que vêm antes
+    dele. A palavra entre aspas é texto (printf '%s' 'git' 'push'). O
+    command -v git só procura o programa, não o roda."""
+    proprio = []
+    roda = sem_prefixos(ps, proprio)
+    possiveis = [(roda, proprio, False)]
+    if not roda:
+        return possiveis
+    for j in range(1, len(ps)):
+        if j not in citadas and programa(ps[j]) in RODADOS:
+            antes = [a for a in ps[:j] if ATRIBUI.fullmatch(a)]
+            proprio = []
+            possiveis.append((sem_prefixos(antes + ps[j:], proprio), proprio, True))
+    return possiveis
+
+
+def leitor_do_heredoc(ps, citadas):
+    """(ambiente trocado, roda no mesmo shell) de quem lê como script o
+    heredoc dado a `ps`: um shell sem o -c, num processo filho, ou o source
+    e o ., no shell de agora; None se ninguém o roda."""
+    for roda, proprio, _ in comandos_possiveis(ps, citadas):
+        nome = programa(roda[0]) if roda else ""
+        if nome in SHELLS and not scripts_do_shell(roda):
+            return proprio, False
+        if nome in NO_MESMO_SHELL:
+            return proprio, True
+    return None
 
 
 def sem_prefixos(ps, ambiente=None):
@@ -366,8 +477,8 @@ def sem_prefixos(ps, ambiente=None):
 
     Tira as atribuições (VAR=valor), as palavras do shell que abrem um
     comando dentro de if, laço ou grupo ({, !, then, do...) e os prefixos
-    que rodam o comando seguinte (command, exec, nohup, time, sudo, env,
-    nice, timeout, xargs), com as opções deles; o env -S põe no lugar as
+    que rodam o comando seguinte (command, builtin, exec, nohup, time, sudo,
+    env, nice, timeout, xargs), com as opções deles; o env -S põe no lugar as
     palavras do argumento dele. Na lista `ambiente`, se vier, ficam as
     variáveis que o comando recebe trocadas, como NOME=valor: as atribuídas
     e, com o valor vazio, as que o env -u tira.
@@ -375,9 +486,9 @@ def sem_prefixos(ps, ambiente=None):
     ambiente = [] if ambiente is None else ambiente
     i = 0
     while i < len(ps):
-        nome = ps[i].rsplit("/", 1)[-1]
-        if re.fullmatch(r"\w+=.*", ps[i], re.S):
-            ambiente.append(ps[i])
+        nome = programa(ps[i])
+        if ATRIBUI.fullmatch(ps[i]):
+            ambiente.append(atribuicao(ps[i]))
             i += 1
         elif ps[i] in PALAVRAS_DO_SHELL:
             i += 1
@@ -386,7 +497,7 @@ def sem_prefixos(ps, ambiente=None):
         elif nome in PREFIXOS:
             com_argumento = PREFIXOS[nome]
             i += 1
-            while i < len(ps) and (ps[i].startswith("-") or re.fullmatch(r"\w+=.*", ps[i], re.S)):
+            while i < len(ps) and (ps[i].startswith("-") or ATRIBUI.fullmatch(ps[i])):
                 colado = next((ps[i][len(o):].removeprefix("=") for o in ENV_SEPARA
                                if ps[i].startswith(o) and ps[i] != o), None)
                 if colado is not None or (ps[i] in ENV_SEPARA and i + 1 < len(ps)):
@@ -397,8 +508,8 @@ def sem_prefixos(ps, ambiente=None):
                         separadas = texto.split()
                     ps = ps[:i] + separadas + ps[i + (1 if colado is not None else 2):]
                     break
-                if re.fullmatch(r"\w+=.*", ps[i], re.S):
-                    ambiente.append(ps[i])
+                if ATRIBUI.fullmatch(ps[i]):
+                    ambiente.append(atribuicao(ps[i]))
                 elif nome == "env" and (m := re.fullmatch(r"(?:-u|--unset=?)(\w*)", ps[i])):
                     ambiente.append((m[1] or (ps[i + 1] if i + 1 < len(ps) else "")) + "=")
                 elif nome == "env" and re.fullmatch(r"-|-\w*i\w*|--ignore-environment", ps[i]):
@@ -412,33 +523,98 @@ def sem_prefixos(ps, ambiente=None):
     return ps[i:]
 
 
-# Opções globais do git que levam o argumento na palavra seguinte.
+# Opções globais do git (2.56) que levam o argumento na palavra seguinte, as
+# que não levam, e as que só imprimem algo e saem, sem rodar o subcomando (o
+# --exec-path=<dir> colado não sai; o --list-cmds=<grupo> sai).
 GIT_OPCAO_COM_ARGUMENTO = {"-c", "-C", "--git-dir", "--work-tree", "--namespace",
-                           "--config-env", "--super-prefix", "--exec-path"}
+                           "--config-env", "--attr-source", "--shallow-file"}
+GIT_OPCAO_SEM_ARGUMENTO = {
+    "-p", "--paginate", "-P", "--no-pager", "--bare", "--no-replace-objects",
+    "--no-lazy-fetch", "--no-optional-locks", "--no-advice", "--literal-pathspecs",
+    "--glob-pathspecs", "--noglob-pathspecs", "--icase-pathspecs"}
+GIT_OPCAO_SAI = {"-v", "--version", "-h", "--help", "--exec-path", "--html-path",
+                 "--man-path", "--info-path"}
 
 
-def chamada_do_git(ps):
-    """([(chave, valor) de -c e --config-env], subcomando, [argumentos]) de um git.
+def valor_no_ambiente(ambiente, nome):
+    """O último valor que `ambiente` (NOME=valor) dá a `nome`, ou None."""
+    return next((v.split("=", 1)[1] for v in reversed(ambiente)
+                 if v.split("=", 1)[0] == nome), None)
 
-    `ps` são as palavras que vêm depois do git, até o fim do comando.
-    """
+
+def pares_do_ambiente(ambiente):
+    """[(chave, valor)] da configuração que o git lê do ambiente, na ordem em
+    que ele a lê: cada GIT_CONFIG_KEY_<n> com o GIT_CONFIG_VALUE_<n>, para n
+    abaixo do GIT_CONFIG_COUNT, e depois o GIT_CONFIG_PARAMETERS
+    ('chave'='valor' ...). O valor que falta é None, que o guarda não sabe."""
     pares = []
-    i = 0
-    while i < len(ps) and ps[i].startswith("-"):
-        p = ps[i]
-        if p in GIT_OPCAO_COM_ARGUMENTO and i + 1 < len(ps):
-            if p in ("-c", "--config-env"):
-                pares.append(tuple((ps[i + 1].split("=", 1) + [""])[:2]))
-            i += 2
-            continue
-        if p.startswith("-c") and len(p) > 2:
-            pares.append(tuple((p[2:].split("=", 1) + [""])[:2]))
-        elif p.startswith("--config-env="):
-            pares.append(tuple((p.removeprefix("--config-env=").split("=", 1) + [""])[:2]))
-        i += 1
-    if i >= len(ps):
-        return pares, None, []
-    return pares, ps[i], ps[i + 1:]
+    contagem = valor_no_ambiente(ambiente, "GIT_CONFIG_COUNT") or ""
+    contagem = int(contagem) if contagem.isdigit() else 0
+    chaves = {}
+    for v in ambiente:
+        if (m := re.fullmatch(r"GIT_CONFIG_KEY_(\d+)=(.*)", v, re.S)) and int(m[1]) < contagem:
+            chaves[int(m[1])] = m[2]
+    for n, chave in sorted(chaves.items()):
+        pares.append((chave, valor_no_ambiente(ambiente, f"GIT_CONFIG_VALUE_{n}")))
+    if parametros := valor_no_ambiente(ambiente, "GIT_CONFIG_PARAMETERS"):
+        try:
+            palavras = shlex.split(parametros)
+        except ValueError:
+            palavras = parametros.split()
+        pares += [tuple(p.partition("=")[::2]) for p in palavras]
+    return pares
+
+
+def chamadas_do_git(ps, ambiente, estrita):
+    """[([(chave, valor) de -c e --config-env], subcomando, [argumentos])] de
+    um git: uma leitura só, e mais uma para cada opção global que o guarda
+    não conhece, que pode levar ou não a palavra seguinte (git --nova x push).
+    Com `estrita` (o git achado no meio das palavras de outro comando), a
+    opção desconhecida é a que o git recusa sem rodar nada, e não dá leitura:
+    em grep -e git -e commit -n, o git -e commit -n não roda.
+
+    `ps` são as palavras que vêm depois do git, até o fim do comando. Os
+    pares começam pelos da configuração do ambiente (pares_do_ambiente), que
+    os -c da linha vencem. O valor do --config-env vem do `ambiente`, e é
+    None quando ele não o diz. Os pares de todas as leituras valem para cada
+    uma: um -c que seria o argumento de uma opção desconhecida conta também.
+    """
+    def par(texto, do_ambiente):
+        chave, _, valor = texto.partition("=")
+        return chave, valor_no_ambiente(ambiente, valor) if do_ambiente else valor
+
+    pares, subs, inicios, vistos = pares_do_ambiente(ambiente), [], [0], set()
+    while inicios:
+        i = inicios.pop()
+        while i is not None and i < len(ps) and i not in vistos and ps[i].startswith("-"):
+            vistos.add(i)
+            p = ps[i]
+            if p in GIT_OPCAO_SAI or p.startswith("--list-cmds="):
+                i = None  # o git imprime e sai
+            elif p in GIT_OPCAO_COM_ARGUMENTO and i + 1 < len(ps):
+                if p in ("-c", "--config-env"):
+                    pares.append(par(ps[i + 1], p == "--config-env"))
+                i += 2
+            elif p.startswith("-c") and len(p) > 2:
+                pares.append(par(p[2:], False))
+                i += 1
+            elif p.startswith("--config-env="):
+                pares.append(par(p.removeprefix("--config-env="), True))
+                i += 1
+            elif (p.split("=", 1)[0] in GIT_OPCAO_COM_ARGUMENTO | {"--exec-path"}
+                  or p in GIT_OPCAO_SEM_ARGUMENTO):
+                i += 1  # a conhecida, sem argumento ou com ele colado
+            elif estrita:
+                i = None
+            elif "=" in p:
+                i += 1  # a desconhecida com o argumento colado
+            else:
+                inicios.append(i + 2)
+                i += 1
+        if i is not None and i not in vistos:
+            vistos.add(i)
+            subs.append(i)
+    return [(pares, ps[i] if i < len(ps) else None, ps[i + 1:]) for i in subs]
 
 
 def protegida(chave, secao=False):
@@ -541,37 +717,42 @@ def config_nomes(args):
     return ("set", posicionais) if len(posicionais) >= 2 else None
 
 
+REF_DA_REVISAO = "refs/notes/revisao"
+
+
 def notas_da_revisao(args, pares, ambiente):
-    """O git notes que grava nas notas da revisão: a ref vem do --ref (também
-    abreviado), do -c core.notesRef ou do GIT_NOTES_REF do ambiente."""
-    ref = next((v.split("=", 1)[1] for v in ambiente if v.startswith("GIT_NOTES_REF=")), "")
-    ref = next((v for c, v in pares if c.lower() == "core.notesref"), ref)
-    posicionais, i = [], 0
-    while i < len(args):
+    """O git notes que grava nas notas da revisão. A ref segue a precedência
+    do git: o último --ref (também abreviado) antes do subcomando; senão o
+    GIT_NOTES_REF do ambiente; senão o último core.notesRef dos pares. Só o
+    --ref se expande (revisao e notes/revisao são refs/notes/revisao): o git
+    recusa o GIT_NOTES_REF e o core.notesRef fora de refs/notes/. O valor que
+    o guarda não sabe (None) conta como o da revisão."""
+    ref = valor_no_ambiente(ambiente, "GIT_NOTES_REF") or next(
+        (v for c, v in reversed(pares) if c.lower() == "core.notesref"), "")
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
         a = args[i]
         nome = a.split("=", 1)[0]
         if len(nome) > 2 and "--ref".startswith(nome):
             ref = a.split("=", 1)[1] if "=" in a else (args[i + 1] if i + 1 < len(args) else "")
+            if not ref.startswith("refs/notes/"):
+                ref = "refs/" + ref if ref.startswith("notes/") else "refs/notes/" + ref
             i += 1 if "=" in a else 2
             continue
-        if not a.startswith("-"):
-            posicionais.append(a)
         i += 1
-    return (ref.endswith("revisao")
-            and posicionais[:1] in (["add"], ["append"], ["edit"], ["copy"], ["merge"],
-                                    ["remove"], ["prune"]))
+    return (ref is None or ref == REF_DA_REVISAO) and args[i:i + 1] in (
+        ["add"], ["append"], ["edit"], ["copy"], ["merge"], ["remove"], ["prune"])
 
 
-def alias_gravado(args):
-    """O valor do alias que o git config grava (git config alias.x 'commit -n'),
-    ou None."""
+def par_gravado(args):
+    """(chave, valor) que o git config grava (git config alias.x 'commit -n'),
+    ou None. Só o set, o --add e o --replace-all gravam um valor; no --unset,
+    a palavra depois da chave é o filtro do que se tira."""
     nomes = config_nomes(args)
-    if nomes is None or nomes[0] in SECAO or nomes[0] == "edit":
+    if nomes is None or nomes[0] not in ("set", "--add", "--replace-all"):
         return None
     ps = nomes[1]
-    if len(ps) >= 2 and ps[0].lower().startswith("alias."):
-        return ps[1]
-    return None
+    return (ps[0], ps[1]) if len(ps) >= 2 else None
 
 
 def gh_posicionais(args):
@@ -608,53 +789,196 @@ def decidir(decisao, motivo):
     return 0
 
 
-def script_do_shell(ps):
-    """O texto que um shell roda pelo -c (bash -lc '...') ou, sem o -c, pelo
-    here-string (bash <<< '...'); None se não há. Com o -c, o here-string é
-    só a entrada do script."""
-    args = [a for a in ps[1:] if a != "<<<"] if "<<<" in ps else ps[1:]
-    for j, a in enumerate(args):
-        if a.startswith("-") and not a.startswith("--") and "c" in a[1:]:
-            resto = [x for x in args[j + 1:] if x != "--"]
-            return resto[0] if resto else None
-    if "<<<" in ps[:-1]:
-        return ps[ps.index("<<<") + 1]
-    return None
+def scripts_do_shell(ps):
+    """Os textos que o shell `ps[0]` roda pelo -c; vazia se não há -c.
+
+    Nos de SHELLS_C_SOLTO, o -c é uma opção como as outras (bash -lc, bash
+    -c -x, bash -o pipefail -c, tcsh -cf) e o script é a primeira palavra
+    que não é opção nem argumento de uma opção que o leva (-o, -O, o -R do
+    ksh, --rcfile, --init-file, o --emulate do zsh); o - sozinho, como o --,
+    encerra as opções. Nos outros (fish, nu...), o -c leva o script como
+    argumento, colado ou na palavra seguinte, e há também o --command
+    (--commands no nu) e o -C (--init-command) do fish, que podem se
+    repetir. Uma palavra solta antes do -c não encerra as opções (bash x.sh
+    -c '...' se confere também): o guarda não arrisca.
+    """
+    if programa(ps[0]) not in SHELLS_C_SOLTO:
+        scripts, i = [], 1
+        while i < len(ps) and ps[i] != "--":
+            a = ps[i]
+            nome, igual, valor = a.partition("=")
+            if len(nome) > 2 and any(o.startswith(nome) for o in (
+                    "--command", "--commands", "--init-command")):
+                scripts += [valor] if igual else ps[i + 1:i + 2]
+                i += 1 if igual else 2
+            elif re.match(r"-[^-]*[cC]", a):
+                resto = a[re.search("[cC]", a).end():]
+                scripts += [resto] if resto else ps[i + 1:i + 2]
+                i += 1 if resto else 2
+            else:
+                i += 1
+        return scripts
+    com_c, i = False, 1
+    while i < len(ps):
+        a = ps[i]
+        if a in ("--", "-"):
+            return ps[i + 1:i + 2] if com_c else []
+        if a in ("--rcfile", "--init-file", "--emulate"):
+            i += 2
+        elif a.startswith("--"):
+            i += 1
+        elif len(a) > 1 and a[0] in "-+":
+            com_c = com_c or (a[0] == "-" and "c" in a)
+            i += 1 + sum(letra in "oOR" for letra in a[1:])
+        elif com_c:
+            return [a]
+        else:
+            i += 1
+    return []
 
 
-def decisoes_simples(ps, nivel, herdado):
-    """As decisões para um comando simples, já em palavras.
+def trocas_do_set(args):
+    """As trocas de ambiente do set do fish e do csh, como NOME=valor.
+
+    No fish, set NOME valor troca também a variável que já vem exportada
+    (HOME), set -x a exporta, e set -e e set -u a tiram dos filhos; set -q,
+    -S e -n só leem. No csh, set home=/x troca o HOME, que o tcsh mantém
+    igual ao home. O set do bash não troca o ambiente, mas a forma dele que
+    traz um nome depois das opções (set -e HOME) se lê como a do fish: o
+    guarda não sabe qual shell roda o texto.
+    """
+    longas = {"--erase": "e", "--unexport": "u", "--query": "q", "--show": "S",
+              "--names": "n"}
+    opcoes, i = "", 0
+    while i < len(args) and args[i].startswith("-") and args[i] != "--":
+        a = args[i]
+        if a.startswith("--"):
+            # Também abreviada; a ambígua (--e) conta como todas as possíveis.
+            opcoes += "".join(v for o, v in longas.items() if len(a) > 2 and o.startswith(a))
+        else:
+            opcoes += a[1:]
+        i += 1
+    if args[i:i + 1] == ["--"]:
+        i += 1
+    if i >= len(args) or any(letra in opcoes for letra in "qSn"):
+        return []
+    nome, _, valor = args[i].partition("=")
+    nome = nome.split("[", 1)[0]  # o índice do fish: set -e CLAUDECODE[1]
+    nome = "HOME" if nome == "home" else nome
+    if "e" in opcoes or "u" in opcoes:
+        return [nome + "="]
+    return [f"{nome}={' '.join([valor] + args[i + 1:]).strip()}"]
+
+
+def nomes_gravados(args, com_argumento, do_nome=""):
+    """As variáveis em que o read ou o mapfile grava: as palavras depois das
+    opções e o argumento da opção `do_nome` (o -a do read). As letras de
+    `com_argumento` levam argumento, colado ou não."""
+    nomes, i = [], 0
+    while i < len(args):
+        a = args[i]
+        if a.startswith("-") and len(a) > 1 and a != "--":
+            for k, letra in enumerate(a[1:]):
+                if letra in com_argumento + do_nome:
+                    colado = a[k + 2:]
+                    argumento = colado or (args[i + 1] if i + 1 < len(args) else "")
+                    i += 0 if colado else 1
+                    if letra == do_nome:
+                        nomes.append(argumento)
+                    break
+        elif a != "--":
+            nomes.append(a)
+        i += 1
+    return nomes
+
+
+# Os comandos que só trocam o ambiente dos comandos seguintes: no shell do
+# POSIX, também os que gravam numa variável (printf -v, read, mapfile,
+# readarray, getopts, let), que, se já vem exportada, como HOME, segue
+# exportada; no fish, o set; no csh, o set, o setenv e o unsetenv.
+MUDAM_AMBIENTE = DECLARA | {"unset", "set", "setenv", "unsetenv", "printf", "read", "mapfile",
+                            "readarray", "getopts", "let"}
+# A variável em que uma expressão do let grava: HOME=0, HOME+=1, HOME++.
+GRAVA_NO_LET = re.compile(r"\s*(?:\+\+|--)?\s*(\w+)\s*(?:\+\+|--|(?:[-+*/%&|^]|<<|>>)?=)")
+
+
+def trocas_de_ambiente(nome, args):
+    """As trocas de ambiente (NOME=valor; vazio quando tira ou não se sabe o
+    valor) que o comando `nome` com estes `args` faz, se é de MUDAM_AMBIENTE."""
+    if nome in DECLARA:
+        trocas = [atribuicao(a) for a in args if ATRIBUI.fullmatch(a)]
+        nomes = [a.split("=", 1)[0] for a in args if not a.startswith(("-", "+"))]
+        if "CLAUDECODE" in nomes and any(a in ("-n", "+x") for a in args):
+            trocas.append("CLAUDECODE=")  # export -n tira a variável dos filhos
+        return trocas
+    if nome in ("unset", "unsetenv"):
+        return [a + "=" for a in args if not a.startswith("-")]
+    if nome == "set":
+        return trocas_do_set(args)
+    if nome == "setenv":
+        return [f"{args[0]}={' '.join(args[1:])}"] if args else []
+    if nome == "printf":
+        variavel = args[1] if args[:1] == ["-v"] and len(args) > 1 else (
+            args[0][2:] if args and args[0].startswith("-v") else "")
+        return [variavel + "="] if variavel else []
+    if nome == "read":
+        return [n + "=" for n in nomes_gravados(args, "dinNptu", "a")]
+    if nome in ("mapfile", "readarray"):
+        return [n + "=" for n in nomes_gravados(args, "dnOsuCc")]
+    if nome == "getopts":
+        return [args[1] + "="] if len(args) > 1 else []
+    if nome == "let":
+        return [m[1] + "=" for a in args if (m := GRAVA_NO_LET.match(a))]
+    return []
+
+
+def decisoes_simples(comando, nivel, herdado):
+    """As decisões para um Comando: as do comando do começo e as de cada
+    comando que ele pode rodar (setsid git, find -exec git).
 
     `herdado` é o ambiente trocado antes deste comando, como NOME=valor: no
     shell que o roda (env HOME=/x bash -c '...') ou num comando anterior do
-    mesmo texto. O comando que só atribui (HOME=/x), o export, o declare e o
-    unset o aumentam para os comandos seguintes.
+    mesmo texto. O comando do começo que só atribui (HOME=/x), os de
+    MUDAM_AMBIENTE, o eval e o source o aumentam para os comandos seguintes;
+    o achado no meio das palavras pode nem rodar (echo env HOME=/x), e não o
+    muda.
     """
-    proprio = []
-    ps = sem_prefixos(ps, proprio)
-    nome = ps[0].rsplit("/", 1)[-1] if ps else ""
-    novos = list(proprio)
-    if nome in DECLARA:
-        novos += [a for a in ps[1:] if re.fullmatch(r"\w+=.*", a, re.S)]
-        nomes = [a.split("=", 1)[0] for a in ps[1:] if not a.startswith(("-", "+"))]
-        if "CLAUDECODE" in nomes and any(a in ("-n", "+x") for a in ps[1:]):
-            novos.append("CLAUDECODE=")  # export -n tira a variável dos filhos
-    elif nome == "unset":
-        novos += [a + "=" for a in ps[1:] if not a.startswith("-")]
+    for roda, proprio, no_meio in comandos_possiveis(comando.palavras, comando.citadas):
+        yield from decisoes_do_comando(roda, proprio, comando.entradas, nivel,
+                                       list(herdado) if no_meio else herdado, no_meio)
+
+
+def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
+    """As decisões para o comando `ps`, já sem os prefixos, que recebe o
+    ambiente `herdado` com as trocas de `proprio`; `no_meio` diz que
+    comandos_possiveis o achou no meio das palavras de outro, e o git se lê
+    então estrito (chamadas_do_git)."""
+    nome = programa(ps[0]) if ps else ""
+    novos = list(proprio) + trocas_de_ambiente(nome, ps[1:])
     if any(v.startswith("CLAUDECODE=") and v != "CLAUDECODE=1" for v in novos):
         yield "deny", CLAUDECODE
-    if not ps or nome in DECLARA or nome == "unset":
+    if not ps or nome in MUDAM_AMBIENTE:
         herdado += novos
         return
     ambiente = herdado + proprio
     if nome == "git-revisao" and ps[1:2] == ["excecao"]:
         yield "ask", EXCECAO
     if nome == "eval":
-        yield from decisoes(" ".join(ps[1:]), nivel + 1, ambiente)
+        texto = " ".join(ps[2:] if ps[1:2] == ["--"] else ps[1:])
+        yield from decisoes_do_texto(texto, nivel + 1, herdado, proprio, True)
+        return
+    if nome in NO_MESMO_SHELL:
+        # O source /dev/stdin <<< '...' roda o here-string no shell de agora.
+        for texto in entradas:
+            yield from decisoes_do_texto(texto, nivel + 1, herdado, proprio, True)
         return
     if nome in SHELLS:
-        if (script := script_do_shell(ps)) is not None:
-            yield from decisoes(script, nivel + 1, ambiente)
+        # Sem o -c, o here-string é o script (bash <<< '...'); com ele, só a
+        # entrada do script. Os scripts de um shell (fish -c x -c y) rodam no
+        # mesmo processo filho, um depois do outro, com o mesmo ambiente.
+        do_shell = list(herdado) + list(proprio)
+        for script in scripts_do_shell(ps) or entradas:
+            yield from decisoes(script, nivel + 1, do_shell)
         return
     if nome == "gh":
         if gh_junta(ps[1:]):
@@ -664,18 +988,24 @@ def decisoes_simples(ps, nivel, herdado):
             # O alias do gh roda depois, quando chamado: confere-se já.
             alias = posicionais[3]
             shell = alias.startswith("!") or any(a in ("-s", "--shell") for a in ps[1:])
-            yield from decisoes(alias.removeprefix("!") if shell else "gh " + alias,
-                                nivel + 1, ambiente)
+            yield from decisoes_do_texto(alias.removeprefix("!") if shell else "gh " + alias,
+                                         nivel + 1, ambiente)
         return
-    if nome != "git":
-        return
-    pares, sub, args = chamada_do_git(ps[1:])
+    if nome == "git":
+        for pares, sub, args in chamadas_do_git(ps[1:], ambiente, estrita=no_meio):
+            yield from decisoes_do_git(pares, sub, args, nivel, ambiente)
+
+
+def decisoes_do_git(pares, sub, args, nivel, ambiente):
+    """As decisões para uma leitura do git (chamadas_do_git) que recebe o
+    `ambiente` trocado."""
     # O alias definido por -c roda o valor dele quando é o subcomando.
     for chave, valor in pares:
         if chave.lower() == f"alias.{sub}".lower() and valor:
             texto = valor[1:] if valor.startswith("!") else "git " + valor
-            yield from decisoes(" ".join([texto] + [shlex.quote(a) for a in args]),
-                                nivel + 1, ambiente)
+            yield from decisoes_do_texto(" ".join([texto] + [shlex.quote(a) for a in args]),
+                                         nivel + 1, ambiente)
+    gravado = par_gravado(args) if sub == "config" else None
     nomes = [(chave, False) for chave, _ in pares]
     if sub == "config":
         gravados = config_grava(args)
@@ -688,10 +1018,11 @@ def decisoes_simples(ps, nivel, herdado):
         if motivo := protegida(nome_config, secao):
             yield "deny", f"Recusado: {motivo}."
             return
-    if sub == "config" and (alias := alias_gravado(args)):
+    if gravado and gravado[0].lower().startswith("alias."):
         # O alias gravado roda depois, quando chamado: confere-se já.
-        yield from decisoes(alias[1:] if alias.startswith("!") else "git " + alias,
-                            nivel + 1, ambiente)
+        alias = gravado[1]
+        yield from decisoes_do_texto(alias[1:] if alias.startswith("!") else "git " + alias,
+                                     nivel + 1, ambiente)
     if sub in GRAVA_SUBS and any(CONFIG_DO_GIT.match(v) for v in ambiente):
         yield "deny", ENV_CONFIG
     if sub == "commit" and pula_hooks(sub, args):
@@ -708,22 +1039,35 @@ def decisoes_simples(ps, nivel, herdado):
         yield "ask", EXCECAO
 
 
-def decisoes(cmd, nivel=0, herdado=()):
+def decisoes_do_texto(texto, nivel, ambiente, proprio=(), mesmo_shell=False):
+    """As decisões para um texto que roda com o `ambiente` e as trocas de
+    `proprio`. O que ele troca no ambiente vale para os comandos seguintes de
+    fora só quando roda no mesmo shell (eval, source); num processo filho
+    (sh -c, $(...), alias), fica nele."""
+    local = list(ambiente) + list(proprio)
+    antes = len(local)
+    yield from decisoes(texto, nivel, local)
+    if mesmo_shell:
+        ambiente += local[antes:]  # o que o texto acrescentou
+
+
+def decisoes(cmd, nivel=0, ambiente=None):
     """As decisões ("deny" ou "ask", motivo) para um comando e, um nível por
-    vez, para cada texto que ele roda (sh -c, eval, substituição de comando,
-    heredoc lido por um shell, alias), com o ambiente trocado que cada um
-    recebe."""
+    vez, para cada texto que ele roda (sh -c, eval, source, substituição de
+    comando, heredoc lido por um shell, alias), com o ambiente trocado que
+    cada um recebe. O que o comando troca no ambiente fica em `ambiente`."""
     if nivel > PROFUNDIDADE:
         # Mais fundo que isso, o guarda não confere: recusa, em vez de calar.
         yield "deny", ("Recusado: comando aninhado demais (eval, sh -c, $(...)) para "
                        "o guarda conferir; rode-o mais raso.")
         return
-    comandos, textos = analisar(cmd)
-    ambiente = list(herdado)
-    for ps in comandos:
-        yield from decisoes_simples(ps, nivel, ambiente)
-    for texto, proprio in textos:
-        yield from decisoes(texto, nivel + 1, ambiente + proprio)
+    ambiente = [] if ambiente is None else ambiente
+    for item in analisar(cmd):
+        if isinstance(item, Comando):
+            yield from decisoes_simples(item, nivel, ambiente)
+        else:
+            yield from decisoes_do_texto(item.texto, nivel + 1, ambiente, item.ambiente,
+                                         item.mesmo_shell)
 
 
 def main():

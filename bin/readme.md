@@ -72,12 +72,18 @@ mexer em `hook.*` da configuração, que liga os hooks do `git-revisao` e do
 `git-assunto-merge`, em `core.hooksPath` (ou na seção `core`), que desliga
 os hooks do repositório, ou em `include.*`, que traz outra configuração;
 trocar a configuração global pelo ambiente (`GIT_CONFIG_GLOBAL`,
-`GIT_CONFIG_COUNT`, `HOME`), atribuída no começo de um comando, solta ou
-com `export`, `declare -x`, `env` ou `env -S`, ou tirada com `env -u`,
-antes de um git que commita, junta, puxa ou envia, que desliga os da
-configuração; tirar `CLAUDECODE` do ambiente (`unset`, `env -u`, `env
-CLAUDECODE=`, `env -i`, `export -n`); escrever `refs/notes/revisao` sem o
-`git revisao`; e o merge pelo GitHub (`gh pr merge`, a API REST ou a
+`GIT_CONFIG_COUNT`, `HOME`), atribuída no começo de um comando (também
+com `+=`), solta ou com `export`, `declare -x`, `env`, `env -S`, `printf
+-v`, `read`, `mapfile`, `getopts`, `let`, o `set` do fish (`set HOME
+/x`, `set -x`, com índice ou não) ou o `set home=` e o `setenv` do csh,
+ou tirada com `env -u`, `set -e` ou `set -u`, antes de um git que
+commita, junta, puxa ou envia, que desliga os da configuração; tirar
+`CLAUDECODE` do ambiente (`unset`, `env -u`, `env CLAUDECODE=`, `env
+-i`, `export -n`, `set -e`, `unsetenv`); escrever `refs/notes/revisao`
+sem o `git revisao`, com a ref que o git usaria (o último `--ref` antes
+do subcomando, que se expande; senão o `GIT_NOTES_REF`; senão o último
+`core.notesRef` do `-c` ou da configuração pelo ambiente, que o git só
+aceita inteiros); e o merge pelo GitHub (`gh pr merge`, a API REST ou a
 GraphQL), que não passa pelo pre-push. Ler a configuração (`get`,
 `list`, `--get*`, `--list`, a chave sozinha) passa, também com
 redirecionamento.
@@ -86,36 +92,69 @@ O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não
 corta o comando, o `#` no começo de uma palavra abre um comentário, a
 barra no fim da linha, fora de comentário, a junta à seguinte, e os
-redirecionamentos saem. Todas as regras leem essas palavras. Cada chamada
-do git se lê palavra por palavra: a opção longa abreviada (`--unset-a`,
-`--no-verif`) conta como a inteira, e o argumento de uma opção (`-m`,
-`-o`, `-t`) não conta como opção. O texto de `sh -c`, `bash -c`, `bash
-<<<`, `eval`, da substituição de comando (`` `...` `` e `$(...)`, também
-entre aspas duplas, não entre simples), do heredoc que um shell lê (`bash
-<<'EOF'`) e do alias de um `-c alias.<nome>=` usado como subcomando se
-confere como mais um comando, com o ambiente que ele recebe; e `env` (com
-`-S`), `command`, `exec`, `nohup`, `time`, `sudo`, `nice`, `timeout`,
-`xargs` e as palavras do shell (`if`, `then`, `do`, `{`, `!`) na frente
-do git não o escondem. O corpo de heredoc mandado a outro programa é
-texto: com o delimitador entre aspas (`<<'EOF'`), o shell não o expande;
-sem aspas, só o `$(...)` dele roda, e só ele se confere. Antes de `git
-revisao excecao`, pergunta ao autor.
+redirecionamentos saem, também colados, com descritor ou antes do
+comando (`git<<<x push`, `git 0<<< x push`, `git {fd}>x push`, `git >| x
+push` são `git push`). Todas as regras leem essas palavras. Cada chamada
+do git se lê palavra por palavra, com a configuração que o ambiente lhe
+dá (`GIT_CONFIG_COUNT`, `GIT_CONFIG_PARAMETERS`) antes dos `-c`: as
+opções globais que levam argumento (`-C`, `-c`, `--attr-source`...) saem
+com ele, a que só imprime e sai (`--exec-path`, `--version`,
+`--list-cmds=`) não deixa subcomando, e a que o guarda não conhece se lê
+das duas formas, levando ou não a palavra seguinte; a opção longa
+abreviada (`--unset-a`, `--no-verif`) conta como a inteira, e o argumento
+de uma opção (`-m`, `-o`, `-t`) não conta como opção. O texto
+que um shell roda se confere como mais um comando, com o ambiente que
+ele recebe: o do `-c` em qualquer lugar entre as opções (`bash -c -x
+'...'`, `bash -o pipefail -c`, `sh -c - '...'`, `tcsh -cf '...'`) dos
+shells do POSIX (`sh`, `bash`, `dash`, `zsh`, `ksh`, `mksh`, `osh`,
+`ysh`...) e do `csh`, e o do `-c`, `--command` ou `-C` dos outros
+(`fish`, `rc`, `elvish`, `xonsh`, `nu`), com o mesmo ambiente para os
+vários `-c` de um shell; o do here-string (`bash <<< '...'`); o da
+substituição de comando (`` `...` `` e `$(...)`, também entre aspas
+duplas, não entre simples); o do heredoc que um shell lê (`bash
+<<'EOF'`); e o do alias de um `-c alias.<nome>=` usado como subcomando.
+O `eval` (também `eval --`) e o `source` ou `.` de um heredoc ou
+here-string (`source /dev/stdin <<'EOF'`, também `<<EOF source
+/dev/stdin`) rodam no shell de agora, na ordem da linha, e o ambiente
+que trocam vale para os comandos seguintes. O git, o gh, o
+`git-revisao`, os shells e os prefixos (`env`, `sudo`, `nohup`, `nice`,
+`timeout`, `xargs`, `time`) se conferem onde
+estiverem nas palavras de um comando, sem aspas nem barra, e nenhum
+programa que os roda numa palavra própria (`setsid git`, `stdbuf git`,
+`watch git`, `find -exec git`, `distrobox-host-exec git`) os esconde; nem
+`command`, `exec`, `builtin` e as palavras do shell (`if`, `then`, `do`,
+`{`, `!`, e o `and`, o `or` e o `not` do fish). O comando achado assim
+pode nem rodar: ele não troca o ambiente dos seguintes, e o git se lê
+como o git o leria, que, com uma opção global que não conhece, recusa
+sem rodar nada (`grep -e git -e commit -n` passa). O corpo de heredoc
+mandado a outro programa é texto: com o delimitador entre aspas
+(`<<'EOF'`), o shell não o expande; sem aspas, só o `$(...)` dele roda,
+e só ele se confere. Antes de `git revisao excecao`, pergunta ao autor.
 
 São as formas diretas. Passam por todas: um script gravado em arquivo e
-depois executado, o git chamado por uma variável (`$G config`) e os
-argumentos ou o comando que chegam por um pipe ao `xargs` ou a um shell
-(`printf ... | bash`). Passam também, por ora, formas que a revisão
-achou e que o guarda ainda não lê: o `-c` que não vem logo depois das
-opções do shell (`bash -c -x '...'`), outros shells (`fish -c`, `ksh
--c`), opções globais do git que ele não conhece (`--attr-source`), o
-ambiente que um `eval` exporta para os comandos seguintes, prefixos fora
-da lista (`setsid`, `stdbuf`, `builtin`), o `source` ou `.` de um
-heredoc, o `<<<` antes do subcomando do git e a ordem de precedência
-entre `GIT_NOTES_REF`, `-c core.notesRef` e `--ref`. Do outro lado, ele
-recusa a mais em dois casos: a troca de ambiente dentro de um subshell
-(`( HOME=/x; ...)`) vale para os comandos de fora, e a substituição de
-comando se confere com o ambiente do fim do comando. O portão que segura
-é o pre-push do push, que é do autor.
+depois executado, o git chamado por uma variável (`$G config`), os
+argumentos ou o comando que chegam por um pipe ao `xargs`, a um shell ou
+ao `source` (`printf ... | bash`, `source <(...)`), e o comando que um
+programa recebe como um texto só e passa a um shell (`watch '...'`,
+`script -c`, `su -c`, `tmux new '...'`, `ssh`, o `pwsh`). Passam também
+o programa que o guarda lê escrito entre aspas ou com barra (`setsid
+'git' push`, `setsid \git push`); a troca de ambiente que um programa
+faz por opção (`flatpak-spawn --env=HOME=/x git`, `systemd-run
+--setenv=`), a do laço (`for HOME in /x; do git push; done`) e a que os
+shells de fora do POSIX, além do fish e do csh, fazem pelo jeito deles
+(o `$env.HOME` do `nu`); e o resto do comando depois de um `$(...)` que
+traz um heredoc com apóstrofo (`git commit -m "$(cat <<'EOF'` ... `it's`
+... `EOF` `)" --no-verify`), porque a busca do `)` que fecha o `$(` não
+pula o corpo do heredoc. Do outro lado, ele recusa a mais em quatro
+casos: a troca de ambiente dentro de um subshell (`( HOME=/x; ...)`)
+vale para os comandos de fora; o git, o gh, o shell ou o prefixo sem
+aspas como argumento de outro programa conta como comando (`echo git
+commit -n`, `printf '%s\n' git push --no-verify`); o `set` do bash que
+traz um nome depois das opções (`set -e HOME`) conta como o do fish; e o
+heredoc ou here-string dado ao `source` ou ao `.` de um arquivo (`.
+./env.sh <<< '...'`), ou a um shell com um script (`bash x.sh <<EOF`),
+se lê como script, embora seja só a entrada dele. O portão que segura é
+o pre-push do push, que é do autor.
 
 ### Testes
 

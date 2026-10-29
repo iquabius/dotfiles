@@ -283,7 +283,8 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		'git config --list --show-origin' 'git config list' \
 		'git log --grep hook.x' 'git config user.name Fulano' \
 		'git config --ge hook.revisao-push.command' \
-		'git commit -m "nota: git config hook.x y; git push --no-verify"'; do
+		'git commit -m "nota: git config hook.x y; git push --no-verify"' \
+		"git config --unset alias.x 'commit -n'"; do
 		run guarda "$c"
 		[ -z "$output" ]
 	done
@@ -384,4 +385,186 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	run sh -c 'echo "{\"tool_name\":\"Edit\",\"tool_input\":{}}" | "$0"' "$SCRIPT"
 	[ "$status" -eq 0 ]
 	[ -z "$output" ]
+}
+
+@test "o -c depois de outras opções do shell também se confere" {
+	for c in "bash -c -x 'git commit -n -m x'" "bash -o pipefail -c 'git push --no-verify'" \
+		"sh -c -- 'git commit -n -m x'" "bash --rcfile /dev/null -c 'git push --no-verify'" \
+		"zsh +x -c 'git push --no-verify'" "bash -O extglob -xc 'git commit -n -m x'" \
+		"bash -c -o pipefail 'git push --no-verify'" "bash -c - 'git commit -n -m x'" \
+		"sh -c - 'git push --no-verify'" "bash --init-file x -c 'git push --no-verify'" \
+		"zsh -c --emulate sh 'git push --no-verify'" "ksh -cR /tmp/x 'git commit -n -m x'"; do
+		run guarda "$c"
+		recusa
+	done
+	for c in "bash -o pipefail -c 'git log'" 'bash -x script.sh' "bash -c -x 'git push'"; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "outros shells também se conferem, com o jeito deles de exportar" {
+	for c in "fish -c 'git commit -n -m x'" "fish --command='git push --no-verify'" \
+		"fish --command 'git push --no-verify'" "fish -C 'git push --no-verify'" \
+		"ksh -c 'git commit -n -m x'" "mksh -c 'git push --no-verify'" \
+		"tcsh -c 'git push --no-verify'" "/usr/bin/fish -ic 'git push --no-verify'" \
+		"fish -c 'set -gx HOME /x; git push'" "fish -c 'set --export HOME /x; git commit -m x'" \
+		"fish -c 'set -e CLAUDECODE'" "csh -c 'setenv HOME /x; git push'" \
+		"tcsh -c 'unsetenv CLAUDECODE'" $'fish <<\'EOF\'\ngit push --no-verify\nEOF' \
+		"osh -c 'git push --no-verify'" "rc -c 'git commit -n -m x'" \
+		"elvish -c 'git push --no-verify'" "xonsh -c 'git push --no-verify'" \
+		"nu -c 'git push --no-verify'" "nu --commands 'git push --no-verify'" \
+		"fish -c 'set HOME /x; git push'" "fish -c 'set -u CLAUDECODE 1'" \
+		"fish -c 'set --unexport CLAUDECODE'" "tcsh -c 'set home=/x; git push'" \
+		"tcsh -c 'set home = /x; git push'" "fish -c 'set --erase CLAUDECODE[1]; git commit -m x'" \
+		"fish -c 'set HOME[1] /x; git push'" "fish -c 'true; and set -gx HOME /x; and git push'" \
+		"fish -c 'not set -gx HOME /x; git push'" "fish -c 'false; or set -gx HOME /x; git push'" \
+		"tcsh -cf 'git push --no-verify'" "ysh -c 'git push --no-verify'" \
+		"hush -c 'git commit -n -m x'" "lksh -c 'git push --no-verify'" \
+		"fish -c 'set -gx HOME /x' -c 'git push'"; do
+		run guarda "$c"
+		recusa
+	done
+	# O set -q, -S e -n do fish só leem.
+	for c in "fish -c 'set -gx PATH /x \$PATH; git push'" 'set -euo pipefail; git push' \
+		"fish -c 'git log'" "csh -c 'setenv EDITOR vi; git commit -m x'" \
+		"fish -c 'set -q HOME; git push'" "fish -c 'set -S HOME; git push'"; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "opção global do git que leva argumento não esconde o subcomando" {
+	for c in 'git --attr-source HEAD push --no-verify' 'git --attr-source HEAD commit -n -m x' \
+		'git --namespace x commit -n -m x' 'git --opcao-nova valor push --no-verify' \
+		'git --attr-source HEAD -c hook.x.command=true commit -m x'; do
+		run guarda "$c"
+		recusa
+	done
+	# O --attr-source conhecido leva a palavra seguinte: ali, commit é a árvore;
+	# o --no-pager e o -P conhecidos não levam, e commit é argumento do log; o
+	# --exec-path sozinho imprime o diretório e sai, sem rodar o push.
+	for c in 'git --attr-source HEAD log' 'git --exec-path' 'git --opcao-nova push' \
+		'git --exec-path push --no-verify' \
+		'git --attr-source commit log -n 3' 'git --no-pager log commit -n 3' \
+		'git -P log commit -n 3' 'git --list-cmds=main push --no-verify' \
+		'git --shallow-file commit log -n 3' 'git -v push --no-verify' 'git -h commit -n' \
+		'git --html-path push --no-verify'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "o ambiente que um eval troca vale para os comandos seguintes" {
+	for c in 'eval export HOME=/x; git push' "eval 'GIT_CONFIG_GLOBAL=/dev/null'; git commit -m x" \
+		'builtin eval "export XDG_CONFIG_HOME=/x"; git merge t' \
+		"eval 'eval export HOME=/x'; git push" 'eval -- export HOME=/x; git push' \
+		'eval -- unset CLAUDECODE' 'eval HOME+=/x; git push' 'HOME+=/x git push' \
+		'export HOME+=/x; git push' 'printf -v HOME /x; git push' \
+		'read HOME <<< /x; git push' 'read -r -p x HOME; git push' 'printf -vHOME /x; git push' \
+		'read -a HOME; git push' 'mapfile HOME < /tmp/x; git push' "eval 'mapfile HOME'; git push" \
+		'readarray -t HOME < /tmp/x; git push' 'getopts ab HOME; git push' \
+		'let HOME=0; git commit -m x' 'eval let HOME+=1; git push'; do
+		run guarda "$c"
+		recusa
+	done
+	# A substituição de comando roda antes da troca de ambiente que vem depois dela.
+	for c in 'eval export FOO=1; git push' "bash -c 'export HOME=/x'; git push" \
+		'eval "git log"; git push' 'read -r linha; git push' "printf -v x '%s' y; git push" \
+		'echo "$(git push)"; export HOME=/x' 'mapfile -t linhas < /tmp/x; git push'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "programa que roda outro comando não esconde o git, o gh nem o shell" {
+	for c in 'setsid git push --no-verify' 'stdbuf -oL git commit -n -m x' \
+		'builtin export HOME=/x; git push' 'setsid -w env HOME=/x git push' \
+		'watch -n 1 git push --no-verify' 'find . -exec git commit -n -m x \;' \
+		"stdbuf -oL bash -c 'git push --no-verify'" 'unbuffer gh pr merge 3' \
+		'distrobox-host-exec git push --no-verify' 'HOME=/x setsid git push' \
+		$'setsid bash <<\'EOF\'\ngit push --no-verify\nEOF'; do
+		run guarda "$c"
+		recusa
+	done
+	# O git achado no meio das palavras é lido como o git o leria: com a opção
+	# global que ele não conhece, ele recusa e não roda nada.
+	# A palavra entre aspas não conta como programa: é texto que se imprime ou
+	# procura. O que se acha no meio das palavras não troca o ambiente de fora.
+	for c in 'setsid git push' 'sudo zypper install git gh fish' 'which git bash' \
+		'echo "git push --no-verify"' "git grep -e 'git' -e 'commit' -n" \
+		'rg -e git -e commit -n' "printf '%s\n' 'git' 'push' '--no-verify'" \
+		'echo env HOME=/x; git push' "printf '%s\n' env HOME=/x; git push" \
+		'rg git --type=py commit -n'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "source ou . de um heredoc ou here-string se confere, no mesmo shell" {
+	for c in $'source /dev/stdin <<\'EOF\'\ngit push --no-verify\nEOF' \
+		$'. /dev/stdin <<EOF\ngit commit -n -m x\nEOF' \
+		"source /dev/stdin <<< 'git push --no-verify'" \
+		$'source /dev/stdin <<\'EOF\'\nexport HOME=/x\nEOF\ngit push' \
+		"source /dev/stdin <<< 'export HOME=/x'; git push" \
+		$'<<EOF source /dev/stdin\ngit push --no-verify\nEOF' \
+		$'source /dev/stdin <<EOF; git push\nexport HOME=/x\nEOF' \
+		$'. /dev/stdin <<EOF && git push\nexport HOME=/x\nEOF' \
+		$'0<<EOF source /dev/stdin\ngit push --no-verify\nEOF' \
+		$'. /dev/stdin 0<<EOF\ngit commit -n -m x\nEOF'; do
+		run guarda "$c"
+		recusa
+	done
+	for c in 'source ~/.bashrc' '. ./env.sh && git log' \
+		$'bash <<\'EOF\'\nexport HOME=/x\nEOF\ngit push' \
+		$'bash <<EOF; git push\nexport HOME=/x\nEOF' $'cat <<EOF; git push\nexport HOME=/x\nEOF'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+@test "o here-string antes do subcomando do git não o esconde" {
+	for c in 'git <<< x push --no-verify' 'git <<<x commit -n -m x' '<<< x git push --no-verify' \
+		"git -C . <<< 'x y' commit -n -m z" 'git<<<x push --no-verify' \
+		'git 0<<< x push --no-verify' "bash<<<'git commit -n -m x'" \
+		"bash 0<<< 'git commit -n -m x'" 'git <> x push --no-verify' \
+		'git >| x push --no-verify' 'git 2>|x commit -n -m y' 'git {fd}<<<x push --no-verify' \
+		'git {fd}>/dev/null commit -n -m x' 'git {fd}<x push --no-verify'; do
+		run guarda "$c"
+		recusa
+	done
+	# Tirado o redirecionamento, o -n é o texto do -m.
+	run guarda 'git commit -m <<< x -n'
+	[ -z "$output" ]
+}
+
+@test "a ref das notas segue a precedência do git: --ref, GIT_NOTES_REF, o último -c" {
+	for c in 'GIT_NOTES_REF=refs/notes/revisao git -c core.notesRef=refs/notes/x notes add -m y' \
+		'git -c core.notesRef=refs/notes/x -c core.notesRef=refs/notes/revisao notes add -m y' \
+		'export GIT_NOTES_REF=refs/notes/x; GIT_NOTES_REF=refs/notes/revisao git notes add -m y' \
+		'GIT_NOTES_REF=refs/notes/x git notes --ref=x --ref=revisao add -m y' \
+		'V=refs/notes/revisao git --config-env=core.notesRef=V notes add -m y' \
+		'git --config-env core.notesRef=VAR notes add -m y' \
+		'git notes --ref=refs/notes/revisao add -m --ref=x HEAD' \
+		'git notes --ref notes/revisao add -m y' \
+		'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.notesRef GIT_CONFIG_VALUE_0=refs/notes/revisao git notes add -m y' \
+		"GIT_CONFIG_PARAMETERS=\"'core.notesRef'='refs/notes/revisao'\" git notes add -m y" \
+		"GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.notesRef GIT_CONFIG_VALUE_0=refs/notes/x GIT_CONFIG_PARAMETERS=\"'core.notesRef'='refs/notes/revisao'\" git notes add -m y"; do
+		run guarda "$c"
+		recusa
+	done
+	# O --ref depois do subcomando é argumento dele; revisao-local é outra ref. Só o
+	# --ref se expande: o git recusa o GIT_NOTES_REF e o core.notesRef fora de
+	# refs/notes/. O -c da linha vence o GIT_CONFIG_COUNT.
+	for c in 'git -c core.notesRef=refs/notes/revisao -c core.notesRef=refs/notes/x notes add -m y' \
+		'GIT_NOTES_REF=revisao git notes add -m y' 'git -c core.notesRef=revisao notes add -m y' \
+		'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.notesRef GIT_CONFIG_VALUE_0=refs/notes/revisao git -c core.notesRef=refs/notes/x notes add -m y' \
+		'git notes --ref=x add -m --ref=revisao' 'git notes --ref=revisao-local add -m y' \
+		'GIT_NOTES_REF=refs/notes/x git -c core.notesRef=refs/notes/revisao notes add -m y' \
+		'git notes --ref=revisao --ref=x add -m y' \
+		'V=refs/notes/x git --config-env=core.notesRef=V notes add -m y' \
+		'GIT_NOTES_REF=refs/notes/revisao git notes show'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
 }
