@@ -153,7 +153,7 @@ wanted=$(clean $files | sort -u)
 casas=
 for s in $wanted; do
     case $s in
-    *[!A-Za-z0-9._-]* | .*) die "nome de skill inválido no perfil: '$s'" ;;
+    *[!A-Za-z0-9._-]* | .* | -*) die "nome de skill inválido no perfil: '$s'" ;;
     esac
     casa=
     for r in $repos; do
@@ -233,8 +233,10 @@ owned() (
     return 1
 )
 
+# O -e protege o nome que começa com hífen: o do perfil já foi recusado, mas
+# o de um link achado no alvo não passa por aquela validação.
 in_list() {
-    printf '%s\n' "$2" | grep -qxF "$1"
+    printf '%s\n' "$2" | grep -qxF -e "$1"
 }
 
 # --- desligar ----------------------------------------------------------------
