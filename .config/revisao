@@ -3,6 +3,9 @@
 # curinga termina em /*. Esta lista também é código.
 .config/revisao
 .githooks/
+Makefile
+bin/.local/bin/
+tests/
 *.el
 *.fish
 *.sh
