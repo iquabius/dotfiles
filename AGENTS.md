@@ -1,10 +1,11 @@
 # Instruções para agentes: dotfiles
 
 Configuração pessoal em pacotes GNU Stow, em português: cada diretório da
-raiz espelha o `$HOME` (`readme.md`). O `skills-sync`, que liga as skills
-de agente, e os perfis dele estão aqui, no pacote `bin` e em `profiles/`.
-A identidade do git, o `git-revisao`, que guarda o processo abaixo, e as
-skills de agente vêm da camada privada, instalada à parte.
+raiz espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
+processo abaixo, o `git-assunto-merge`, o `claude-revisao-guarda` e o
+`skills-sync`, que liga as skills de agente, estão aqui, no pacote `bin`,
+com os hooks do git no pacote `git`. A identidade do git e as skills de
+agente vêm da camada privada, instalada à parte.
 
 ## Ciclo: ramo, revisão, merge
 
@@ -22,7 +23,7 @@ história dele se condensa antes do merge (passo 5).
    check` passa (ver *Testes*).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
    `.config/revisao`: hooks, Emacs Lisp, fish, scripts de shell, o
-   `Makefile`, o `bin/` e as suítes de `tests/`), rode a
+   `Makefile`, o `bin/`, o `scripts/` e as suítes de `tests/`), rode a
    skill `linus-review` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
    só de texto ou de configuração simples (readme, `settings.json` dos
    editores, `.gitconfig`, `tmux.conf`, `latexmkrc`) dispensa a revisão,
@@ -46,14 +47,18 @@ história dele se condensa antes do merge (passo 5).
    pelo mesmo `git diff` vazio. Com a árvore igual à revisada, só o eixo
    History da `linus-review` roda de novo, sobre a série nova; com outra
    árvore, a revisão do ramo inteiro.
-6. **Marque a ponta**: `git revisao pronto`. Achado que o autor decide
-   deixar de pé: `git revisao excecao -m "<motivo do autor>"`. O agente
-   não decide isso sozinho.
+6. **Marque a ponta**: `git revisao pronto`, da ponta, sem código mudado
+   fora do commit. Ele roda antes o teste da linha `teste:` do
+   `.config/revisao` (`scripts/testes-da-revisao`, que escolhe as suítes
+   pelo diff do ramo) e não marca se o teste falha. Achado que o autor
+   decide deixar de pé: `git revisao excecao -m "<motivo do autor>"`. O
+   agente não decide isso sozinho.
 7. **Merge no main**, sem rebase nem squash na hora do merge:
 
    ```sh
    git switch main
-   git merge --ff-only <tarefa> || git merge --no-ff <tarefa>
+   git merge --ff-only <tarefa> ||
+       git merge --no-ff -m "Junta o ramo <tarefa>: <o que o ramo traz>" <tarefa>
    git revisao pendente   # tem de dizer "nada pendente"
    git branch -d <tarefa>
    ```
@@ -67,7 +72,7 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 
 ## Portões
 
-- **pre-push** (`git-revisao`, hook global da camada privada): recusa
+- **pre-push** (`git-revisao`, hook global do pacote `git`): recusa
   commit que mexe em caminho de `.config/revisao` e chega ao `main` sem a
   marca de `git revisao pronto` (ou `excecao`) que o cubra. A marca é uma
   nota local em `refs/notes/revisao` e não vai para o GitHub.
@@ -76,11 +81,18 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   o que eles levarem ao `main` só o pre-push pega. O `.githooks/pre-commit`
   deste repositório continua recusando caminho absoluto de home nas linhas
   novas.
-- **Hook do Claude**: recusa as formas diretas de pular os hooks (`git
-  commit --no-verify` ou `-n`, `git push --no-verify`, mexer em
-  `core.hooksPath` ou `hook.*`, trocar a configuração global pelo
-  ambiente num commit, merge ou push, tirar `CLAUDECODE` do ambiente,
-  pelo qual o pre-commit reconhece o agente), escrever as notas da
+- **commit-msg** (`git-assunto-merge`, hook global do pacote `git`):
+  recusa no commit de merge o assunto "Merge branch '<ramo>'", que o git
+  escreve quando o merge vem sem `-m`, e o "Junta o ramo <ramo>:" que não
+  diz o que o ramo traz.
+- **Hook do Claude** (`claude-revisao-guarda`, registrado no
+  `~/.claude/settings.json` pelo pacote `claude` ou pelo da camada
+  privada): recusa as formas diretas de pular os hooks (`git
+  commit --no-verify` ou `-n`, `git push`, `merge` ou `pull` com
+  `--no-verify`, também num alias gravado, mexer em `core.hooksPath`,
+  `hook.*` ou `include.*`, trocar a configuração global pelo
+  ambiente num commit, merge, pull ou push, tirar `CLAUDECODE` do
+  ambiente, pelo qual o pre-commit reconhece o agente), escrever as notas da
   revisão à mão e o merge pelo GitHub;
   pergunta ao autor antes de `git revisao excecao`. O portão que segura é
   o pre-push do push do autor.
@@ -104,10 +116,14 @@ distrobox-host-exec sh -c 'cd ~/.dotfiles && make check'
 ```
 
 Roda no host: ShellCheck e `shfmt -i 4` nos `SCRIPTS` do `Makefile`
-(script de shell novo entra nessa lista) e o bats em `tests/`. Caso de
-borda novo vira teste antes da correção, e todo teste novo é conferido
-contra uma cópia sabotada do script, que ele tem de reprovar
-(`SKILLS_SYNC_SCRIPT` e `POST_MERGE_SCRIPT` trocam o script testado).
+(script de shell novo entra nessa lista) e o bats em `tests/` e em
+`bin/.local/bin/`, onde as suítes moram ao lado dos scripts. Caso de borda
+novo vira teste antes da correção, e todo teste novo é conferido contra
+uma cópia sabotada do script, que ele tem de reprovar: cada suíte diz a
+variável que troca o script testado (`SKILLS_SYNC_SCRIPT`,
+`GIT_REVISAO_SCRIPT`...). Durante o trabalho, `GIT_REVISAO_BASE=$(git
+merge-base main HEAD) scripts/testes-da-revisao` roda só as suítes do que
+o ramo mudou, as mesmas que o `git revisao pronto` vai rodar.
 
 ## Commits
 

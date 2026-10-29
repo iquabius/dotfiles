@@ -18,7 +18,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | --- | --- |
 | `fish` | `~/.config/fish` (config, plugins) |
 | `emacs` | `~/.config/emacs` (precisa do crafted-emacs clonado à parte — ver nota) |
-| `git` | `~/.gitconfig` (sem identidade — ver nota) |
+| `git` | `~/.gitconfig` (sem identidade — ver nota), com os hooks do `git-revisao` e do `git-assunto-merge` |
 | `tmux` | `~/.tmux.conf` |
 | `ssh` | `~/.ssh/rc` |
 | `vscode` | `~/.config/Code/User` (fonte única dos ajustes de editor) |
@@ -28,7 +28,8 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `asdf` | `~/.tool-versions` (versões globais de nodejs, pnpm, yarn, deno, erlang e elixir) |
 | `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
 | `openwhispr` | `~/.config/autostart/openwhispr-fontconfig.desktop` e `~/.config/open-whispr/fonts.conf` **(Linux)** |
-| `bin` | `~/.local/bin/skills-sync`, que liga as skills de agente do perfil da máquina (ver *Skills de agente*) |
+| `bin` | `~/.local/bin/`: `skills-sync`, que liga as skills de agente do perfil da máquina (ver *Skills de agente*); `git-revisao`, que guarda o ciclo de ramo, revisão e merge do `AGENTS.md`; `git-assunto-merge`, que exige o assunto do commit de merge em português; e `claude-revisao-guarda`, o hook do Claude Code que recusa pular os hooks do git |
+| `claude` | `~/.claude/settings.json`, que registra o `claude-revisao-guarda`; **só na máquina sem a camada privada**, que liga o dela |
 
 Detalhes que valem saber:
 
@@ -78,6 +79,8 @@ Detalhes que valem saber:
   que pedem revisão do ramo antes do `main`; o ciclo está no `AGENTS.md`.
 - **`profiles/` também não.** Os perfis de skills de agente, lidos pelo
   `skills-sync` (ver *Skills de agente*).
+- **`scripts/` também não.** Scripts do repositório que não vão para o
+  `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda.
 - **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
@@ -134,7 +137,9 @@ rodar o `skills-sync` à mão.
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-**(macOS)** Instalar git, Stow e o GitHub CLI:
+**(macOS)** Instalar git, Stow e o GitHub CLI. Os hooks do pacote `git`
+(`[hook "..."]`) pedem o git 2.54 ou mais novo: confira com `git
+--version` que o do Homebrew vem antes no `PATH`:
 
 ```bash
 brew install git stow gh
@@ -192,11 +197,15 @@ Instale só os pacotes que fizerem sentido na máquina:
 cd ~/.dotfiles && stow fish emacs git tmux ssh latexmk ytdlp asdf
 cd ~/.dotfiles && stow --no-folding vscode vscode-oss vscodium cursor
 mkdir -p ~/.local/bin && cd ~/.dotfiles && stow bin
+mkdir -p ~/.claude && cd ~/.dotfiles && stow claude   # só sem a camada privada
 ```
 
 O `mkdir` vem antes do `stow bin`: sem `~/.local/bin`, o Stow faz dele um
 symlink para dentro deste repo, e todo script que outro pacote ligasse ali
-cairia aqui dentro.
+cairia aqui dentro. O mesmo vale para o `~/.claude`, onde o Claude Code
+grava histórico e projetos. Na máquina com a camada privada, o
+`~/.claude/settings.json` vem do pacote dela, que registra também os
+guardas de lá, e o `claude` daqui fica sem ligar.
 
 Os editores exigem `--no-folding`. Sem ele, numa máquina onde
 `~/.config/Code` (ou `Cursor`) ainda não existe, o Stow cria o diretório
