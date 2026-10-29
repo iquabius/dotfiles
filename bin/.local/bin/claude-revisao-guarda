@@ -13,7 +13,8 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   HOME...) antes de um git que commita, junta, puxa ou envia, porque é a
   global que liga os hooks do git-revisao; tirar CLAUDECODE do ambiente,
   pelo qual o pre-commit reconhece o agente; e escrever as notas da
-  revisão sem o git revisao, que forjaria uma marca;
+  revisão sem o git revisao, ou apontar a elas o core.notesRef ou o
+  notes.rewriteRef, que forjaria uma marca;
 - recusa o merge pelo GitHub (gh pr merge, a API REST ou a GraphQL), que
   leva código ao main sem passar pelo pre-push;
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
@@ -41,6 +42,7 @@ import shlex
 import sys
 from collections import namedtuple
 from dataclasses import dataclass, field
+from fnmatch import fnmatchcase
 
 # A variável que troca a configuração global do git: o arquivo, as chaves
 # do ambiente, ou o HOME e o XDG_CONFIG_HOME, onde o git a procura.
@@ -59,6 +61,9 @@ CLAUDECODE = "Recusado: CLAUDECODE é como o pre-commit do git-revisao reconhece
 GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; junte no "
             "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
 NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"
+REF_DAS_NOTAS = ("Recusado: o core.notesRef ou o notes.rewriteRef apontado às notas da "
+                 "revisão grava nelas ou copia a marca para um commit reescrito, que "
+                 "ninguém revisou.")
 EXCECAO = ("git revisao excecao deixa código ir ao main sem o veredito "
            "Ready to merge; confirme que a decisão e o motivo são do autor.")
 
@@ -744,6 +749,13 @@ def notas_da_revisao(args, pares, ambiente):
         ["add"], ["append"], ["edit"], ["copy"], ["merge"], ["remove"], ["prune"])
 
 
+def pega_a_revisao(valor):
+    """Se o valor do notes.rewriteRef ou do GIT_NOTES_REWRITE_REF (refs ou
+    padrões, separados por dois-pontos no segundo) pega a ref da revisão;
+    None é o valor que o guarda não sabe, e conta."""
+    return valor is None or any(fnmatchcase(REF_DA_REVISAO, r) for r in valor.split(":"))
+
+
 def par_gravado(args):
     """(chave, valor) que o git config grava (git config alias.x 'commit -n'),
     ou None. Só o set, o --add e o --replace-all gravam um valor; no --unset,
@@ -1005,7 +1017,20 @@ def decisoes_do_git(pares, sub, args, nivel, ambiente):
             texto = valor[1:] if valor.startswith("!") else "git " + valor
             yield from decisoes_do_texto(" ".join([texto] + [shlex.quote(a) for a in args]),
                                          nivel + 1, ambiente)
+    # O git copia, no commit --amend e no rebase, as notas das refs que o
+    # notes.rewriteRef (ou o GIT_NOTES_REWRITE_REF) lista: a marca da revisão
+    # iria para um commit que ninguém revisou. O core.notesRef gravado faria o
+    # git notes seguinte escrever nelas. O git config não reescreve nada: o -c
+    # dele só vale para ele.
     gravado = par_gravado(args) if sub == "config" else None
+    reescreve = [v for c, v in pares if c.lower() == "notes.rewriteref"]
+    if (v := valor_no_ambiente(ambiente, "GIT_NOTES_REWRITE_REF")) is not None:
+        reescreve.append(v)
+    chave_gravada = gravado[0].lower() if gravado else ""
+    if ((sub != "config" and any(pega_a_revisao(v) for v in reescreve))
+            or (chave_gravada == "notes.rewriteref" and pega_a_revisao(gravado[1]))
+            or (chave_gravada == "core.notesref" and gravado[1] == REF_DA_REVISAO)):
+        yield "deny", REF_DAS_NOTAS
     nomes = [(chave, False) for chave, _ in pares]
     if sub == "config":
         gravados = config_grava(args)
