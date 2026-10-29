@@ -593,3 +593,18 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		[ -z "$output" ]
 	done
 }
+
+@test "tudo o que vem depois da chave no git config é valor, também o que começa com -" {
+	for c in "git config alias.y '-c notes.rewriteRef=refs/notes/revisao commit --amend'" \
+		"git config alias.y '-c hook.x.command=true commit -m x'" \
+		"git config --global alias.y '--no-pager commit -n -m x'" \
+		'git config core.hooksPath --get' 'git config set core.hooksPath --unset'; do
+		run guarda "$c"
+		recusa
+	done
+	for c in "git config alias.y '-c color.ui=never log'" 'git config alias.z foo --local' \
+		'git config --global --get alias.y'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}

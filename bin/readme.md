@@ -104,7 +104,9 @@ com ele, a que só imprime e sai (`--exec-path`, `--version`,
 `--list-cmds=`) não deixa subcomando, e a que o guarda não conhece se lê
 das duas formas, levando ou não a palavra seguinte; a opção longa
 abreviada (`--unset-a`, `--no-verif`) conta como a inteira, e o argumento
-de uma opção (`-m`, `-o`, `-t`) não conta como opção. O texto
+de uma opção (`-m`, `-o`, `-t`) não conta como opção. No `git config`,
+tudo o que vem depois da chave é o valor, como o git lê (`git config
+alias.y '-c x=y commit'`, `git config core.hooksPath --get`). O texto
 que um shell roda se confere como mais um comando, com o ambiente que
 ele recebe: o do `-c` em qualquer lugar entre as opções (`bash -c -x
 '...'`, `bash -o pipefail -c`, `sh -c - '...'`, `tcsh -cf '...'`) dos

@@ -685,12 +685,18 @@ def config_grava(args):
 
 
 def config_nomes(args):
-    """(operação que grava, [nomes depois dela]) do git config, ou None se lê."""
+    """(operação que grava, [nomes depois dela]) do git config, ou None se lê.
+
+    Depois da chave (na forma nova, do subcomando e da chave), tudo é valor,
+    como o git 2.56 lê: git config alias.y '-c x=y commit' grava o alias, e
+    git config core.hooksPath --get grava "--get"."""
     opcoes, posicionais = [], []
-    pular = False
+    pular = so_valores = False
     for j, a in enumerate(args):
         if pular:
             pular = False
+        elif so_valores:
+            posicionais.append(a)
         elif a == "--":
             posicionais += args[j + 1:]  # o -- encerra as opções
             break
@@ -708,6 +714,7 @@ def config_nomes(args):
             opcoes.append(o)
         else:
             posicionais.append(a)
+            so_valores = len(posicionais) > 1 or a not in CONFIG_SUB_LE | CONFIG_SUB_GRAVA
     if posicionais and posicionais[0] in CONFIG_SUB_LE | CONFIG_SUB_GRAVA:
         sub, posicionais = posicionais[0], posicionais[1:]
         return None if sub in CONFIG_SUB_LE else (sub, posicionais)
