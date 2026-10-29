@@ -1,10 +1,13 @@
 # Caminhos de código: mudar um deles pede a revisão do ramo antes do main
 # (o ciclo está no AGENTS.md). Um pathspec do git por linha; diretório com
-# curinga termina em /*. Esta lista também é código.
+# curinga termina em /*. Esta lista também é código. A linha "teste:" é o
+# teste que o git revisao pronto roda antes de marcar, escolhido pelo diff:
+teste: scripts/testes-da-revisao
 .config/revisao
 .githooks/
 Makefile
 bin/.local/bin/
+scripts/
 tests/
 *.el
 *.fish
