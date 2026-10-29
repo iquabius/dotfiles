@@ -1,20 +1,28 @@
 #!/bin/sh
 # skills-sync — deixa as skills ligadas no $HOME iguais ao perfil da máquina.
 #
-# Lê .profile.local (um perfil por linha), junta os profiles/<perfil>.pkgs e o
-# .pkgs.local (skills só desta máquina, opcional) e então:
+# As skills vêm de dois repositórios: este (~/.dotfiles, público) e, quando
+# existe, a camada privada (~/.dotfiles-private). Cada um tem a sua stow dir
+# skills/ e os seus profiles/<perfil>.pkgs; um perfil é a união dos .pkgs de
+# mesmo nome nos dois, e cada skill mora num repositório só.
+#
+# Lê o .profile.local deste repositório (um perfil por linha), junta os
+# .pkgs dos perfis e o .pkgs.local (skills só desta máquina, opcional) e
+# então:
 #   - liga, com stow, cada skill do perfil que ainda não chega pelos três
 #     diretórios (~/.agents/skills, ~/.claude/skills, ~/.cursor/skills);
-#   - desliga cada link nosso cuja skill saiu do perfil ou sumiu do repo.
+#   - desliga cada link nosso cuja skill saiu do perfil, sumiu dos
+#     repositórios ou mudou de repositório.
 #
-# "Nosso" é o link que resolve para <repo>/skills/<nome>/.<agente>/skills/<nome>.
-# O resto do diretório (skills não versionadas, links de outras origens) não é
-# tocado. Desligar é rm direto, não stow -D: o stow -D não acha pacote que um
-# pull já apagou, e aí o link ficava pendurado. Pelo rm, os dois casos (saiu
-# do perfil, saiu do repo) são o mesmo caso.
+# "Nosso" é o link que resolve para <repo>/skills/<nome>/.<agente>/skills/<nome>
+# num dos dois repositórios. O resto do diretório (skills não versionadas,
+# links de outras origens) não é tocado. Desligar é rm direto, não stow -D: o
+# stow -D não acha pacote que um pull já apagou, e aí o link ficava pendurado.
+# Pelo rm, os casos (saiu do perfil, saiu do repo, mudou de repo) são o mesmo.
 #
 # Uso: skills-sync [-n|--dry-run]
-# Ambiente (para os testes): SKILLS_SYNC_REPO, SKILLS_SYNC_TARGET.
+# Ambiente (para os testes): SKILLS_SYNC_REPO, SKILLS_SYNC_PRIVADO,
+# SKILLS_SYNC_TARGET.
 
 set -eu
 
@@ -31,7 +39,7 @@ usage() {
 Uso: $me [-n|--dry-run]
 
 Liga as skills do perfil desta máquina (.profile.local) e desliga as que
-saíram do perfil ou do repositório. Sem -n, aplica; com -n, só mostra.
+saíram do perfil ou dos repositórios. Sem -n, aplica; com -n, só mostra.
 EOF
 }
 
@@ -62,8 +70,36 @@ fi
 repo=$(cd "$repo" && pwd -P) || die "repositório não encontrado: $repo"
 target=${SKILLS_SYNC_TARGET:-$HOME}
 target=$(cd "$target" && pwd -P) || die "alvo não encontrado: $target"
-pkgdir=$repo/skills
-[ -d "$pkgdir" ] || die "não há $pkgdir"
+
+# fisico <caminho> — o caminho com os links resolvidos, mesmo que o fim dele
+# já não exista: resolve o maior começo que existe e devolve o resto como
+# está. Serve ao link pendurado para a camada privada que saiu da máquina.
+fisico() (
+    p=$1
+    resto=
+    until d=$(cd "$p" 2>/dev/null && pwd -P); do
+        case $p in
+        */*) ;;
+        *) return 1 ;;
+        esac
+        resto=/${p##*/}$resto
+        p=${p%/*}
+        [ -n "$p" ] || p=/
+    done
+    printf '%s%s\n' "${d%/}" "$resto"
+)
+
+# A camada privada é opcional: a máquina de trabalho só tem este repositório.
+# A stow dir dela entra em stowdirs mesmo quando ela não existe, para que o
+# link que ficou apontando para lá seja reconhecido como nosso e desligado.
+repos=$repo
+stowdirs=$repo/skills
+privado=$(fisico "${SKILLS_SYNC_PRIVADO:-$HOME/.dotfiles-private}") ||
+    die "caminho da camada privada inválido"
+if [ "$privado" != "$repo" ]; then
+    stowdirs="$stowdirs $privado/skills"
+    [ -d "$privado" ] && repos="$repos $privado"
+fi
 
 # --- perfil ------------------------------------------------------------------
 
@@ -77,6 +113,16 @@ clean() {
         grep -v '^$' || true
 }
 
+# O .profile.local e o .pkgs.local moravam na camada privada; o que ficou lá
+# seria ignorado em silêncio, e as skills do .pkgs.local esquecido, desligadas.
+for r in $repos; do
+    [ "$r" = "$repo" ] && continue
+    for f in .profile.local .pkgs.local; do
+        [ -f "$r/$f" ] &&
+            die "o $f mudou para $repo: mv $r/$f $repo/ (ou junte ao de lá, se já houver)"
+    done
+done
+
 [ -f "$repo/.profile.local" ] ||
     die "falta $repo/.profile.local (um perfil por linha, ex.: comum e pessoal)"
 
@@ -85,9 +131,14 @@ profiles=$(clean "$repo/.profile.local")
 
 files=
 for p in $profiles; do
-    f=$repo/profiles/$p.pkgs
-    [ -f "$f" ] || die "perfil desconhecido: $p (não há profiles/$p.pkgs)"
-    files="$files $f"
+    achou=0
+    for r in $repos; do
+        f=$r/profiles/$p.pkgs
+        [ -f "$f" ] || continue
+        files="$files $f"
+        achou=1
+    done
+    [ "$achou" -eq 1 ] || die "perfil desconhecido: $p (não há profiles/$p.pkgs)"
 done
 
 # Skills só desta máquina, fora de qualquer perfil (não versionado). Sem isso,
@@ -97,13 +148,29 @@ done
 # shellcheck disable=SC2086 # $files é lista de caminhos sem espaço, separada de propósito
 wanted=$(clean $files | sort -u)
 
+# casas: uma linha "<skill> <stow dir>" por skill do perfil, com a stow dir
+# do repositório em que ela mora.
+casas=
 for s in $wanted; do
     case $s in
     *[!A-Za-z0-9._-]* | .*) die "nome de skill inválido no perfil: '$s'" ;;
     esac
-    [ -f "$pkgdir/$s/.agents/skills/$s/SKILL.md" ] ||
-        die "skill do perfil não existe no repo: $s"
+    casa=
+    for r in $repos; do
+        [ -f "$r/skills/$s/.agents/skills/$s/SKILL.md" ] || continue
+        [ -z "$casa" ] ||
+            die "skill nos dois repositórios: $s ($casa e $r/skills); tire de um"
+        casa=$r/skills
+    done
+    [ -n "$casa" ] || die "skill do perfil não existe nos repositórios: $s"
+    casas="$casas
+$s $casa"
 done
+
+# casa_de <skill> — a stow dir em que mora a skill do perfil; vazio fora dele.
+casa_de() {
+    printf '%s\n' "$casas" | awk -v s="$1" '$1 == s { print $2 }'
+}
 
 # --- alvo --------------------------------------------------------------------
 
@@ -134,9 +201,10 @@ done
 
 # --- o que está ligado -------------------------------------------------------
 
-# Imprime o nome da skill se $1 for um link nosso; falha se não for. Funciona
-# com link pendurado: o que se resolve é o diretório skills/ do repo, não a
-# skill, que pode já ter sumido. Corpo em subshell: sh POSIX não tem local.
+# Imprime a stow dir de que $1 é link nosso; falha se não for. Funciona com
+# link pendurado: o que se resolve é o diretório skills/ do repo, não a
+# skill, que pode já ter sumido, e o fisico resolve até a stow dir da camada
+# privada que saiu da máquina. Corpo em subshell: sh POSIX não tem local.
 owned() (
     link=$1
     [ -L "$link" ] || return 1
@@ -155,8 +223,14 @@ owned() (
     /*) ;;
     *) base=$dir/$base ;;
     esac
-    [ "$(cd "$base" 2>/dev/null && pwd -P)" = "$pkgdir" ] || return 1
-    printf '%s\n' "$name"
+    base=$(fisico "$base") || return 1
+    for sd in $stowdirs; do
+        if [ "$base" = "$sd" ]; then
+            printf '%s\n' "$base"
+            return 0
+        fi
+    done
+    return 1
 )
 
 in_list() {
@@ -165,12 +239,15 @@ in_list() {
 
 # --- desligar ----------------------------------------------------------------
 
+# Sai o link de skill fora do perfil e o que aponta para o repositório de que
+# a skill saiu (ela mudou de um repositório ao outro).
 removed=
 for a in $agents; do
     [ -d "$target/$a/skills" ] || continue
     for link in "$target/$a/skills"/* "$target/$a/skills"/.[!.]*; do
-        name=$(owned "$link") || continue
-        in_list "$name" "$wanted" && continue
+        base=$(owned "$link") || continue
+        name=${link##*/}
+        [ "$base" = "$(casa_de "$name")" ] && continue
         run rm "$link"
         in_list "$name" "$removed" || removed="$removed
 $name"
@@ -179,33 +256,49 @@ done
 
 # --- ligar -------------------------------------------------------------------
 
-# Skill que já chega pelos três caminhos fica de fora: o stow não precisa
-# dela, e a saída mostra só o que mudou.
+# Skill que já chega pelos três caminhos, da stow dir em que mora, fica de
+# fora: o stow não precisa dela, e a saída mostra só o que mudou.
 missing=
 for s in $wanted; do
+    casa=$(casa_de "$s")
     for a in $agents; do
-        if ! owned "$target/$a/skills/$s" >/dev/null 2>&1; then
-            missing="$missing $s"
+        if [ "$(owned "$target/$a/skills/$s" 2>/dev/null)" != "$casa" ]; then
+            missing="$missing
+$s"
             break
         fi
     done
 done
 
-if [ -n "$missing" ]; then
+# Um stow por stow dir. No dry-run, a skill que mudou de repositório ainda tem
+# o link antigo no caminho (o rm acima só foi mostrado), e o stow -n acusaria
+# conflito: ela entra no relatório sem passar pelo stow -n.
+for r in $repos; do
+    pkgs=
+    for s in $missing; do
+        [ "$(casa_de "$s")" = "$r/skills" ] || continue
+        [ "$dry" -eq 1 ] && in_list "$s" "$removed" && continue
+        pkgs="$pkgs $s"
+    done
+    [ -n "$pkgs" ] || continue
     # shellcheck disable=SC2086 # nomes validados acima, sem espaço
     if [ "$dry" -eq 1 ]; then
-        stow -n -d "$pkgdir" -t "$target" $missing
+        stow -n -d "$r/skills" -t "$target" $pkgs
     else
-        stow -d "$pkgdir" -t "$target" $missing
+        stow -d "$r/skills" -t "$target" $pkgs
     fi
-fi
+done
 
 # --- relatório ---------------------------------------------------------------
 
+# A skill que mudou de repositório sai e volta: aparece só como "liga".
 prefix=
 [ "$dry" -eq 1 ] && prefix='(dry-run) '
 for s in $missing; do printf '%sliga:     %s\n' "$prefix" "$s"; done
-for s in $removed; do printf '%sdesliga:  %s\n' "$prefix" "$s"; done
+for s in $removed; do
+    in_list "$s" "$missing" && continue
+    printf '%sdesliga:  %s\n' "$prefix" "$s"
+done
 if [ -z "$missing" ] && [ -z "$removed" ]; then
     printf 'nada a fazer: %s skill(s) do perfil já ligada(s)\n' \
         "$(printf '%s\n' "$wanted" | grep -c . || true)"
