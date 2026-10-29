@@ -1,0 +1,472 @@
+#!/usr/bin/env python3
+"""git-revisao — o código só chega ao main depois da revisão do ramo.
+
+Os caminhos de código de um repositório ficam em .config/revisao, um
+pathspec do git por linha (# comenta); repositório sem esse arquivo fica de
+fora. O main é o ramo main ou, na falta dele, o master. Uma linha
+"teste: <comando>" no mesmo arquivo declara o teste que o pronto roda; se a
+ponta não a tem, vale a do main, para que tirar a linha não pule o teste.
+
+O git chama este script pelos hooks da configuração global (pacote
+git-local, git 2.54 ou mais novo):
+
+    git-revisao pre-push <remoto> <url>   recusa código sem revisão no main do remoto
+    git-revisao pre-commit                recusa commit de agente no main que
+                                          mexa no código
+
+e a pessoa, ou o agente, depois da linus-review do ramo:
+
+    git revisao pronto [<ponta>]          marca a ponta: o veredito foi Ready to merge,
+                                          depois de o teste declarado passar
+    git revisao excecao -m <motivo> [<ponta>]
+                                          marca a ponta que vai sem o Ready, e por quê
+    git revisao pendente [<ponta>]        lista o código sem revisão que um push
+                                          da ponta levaria ao main (sai com 1 se houver)
+
+A marca é uma nota em refs/notes/revisao na ponta, com o veredito, a base
+(o merge-base com o main) e a data; ela cobre os commits de base..ponta. Um
+commit de código chega ao main se alguma marca o cobre, ou se tem a mesma
+árvore e as mesmas árvores dos pais de um commit coberto: o reescrito só nas
+datas ou na mensagem, como por um rebase que só as refaz, herda a marca,
+mesmo quando o original já está no main do remoto e o push é forçado. Um
+merge só precisa de marca se a resolução de conflito mexeu no código (o
+diff --cc dele).
+
+O pronto roda o teste sempre que há um declarado: da raiz, pelo sh, com
+GIT_REVISAO_BASE (vazia sem base) e GIT_REVISAO_PONTA no ambiente. O comando
+escolhe pelo diff o que conferir, inclusive o que a lista não conta como
+código, e sai com 0 quando nada pede conferência. O teste roda no checkout,
+então a ponta tem de ser o HEAD, sem mudança nos caminhos de código fora do
+commit; falhou, não marca. A exceção não roda o teste.
+
+As notas ficam no clone: o pre-push recusa enviá-las. Agente é quem roda
+com CLAUDECODE no ambiente, como o Bash do Claude Code.
+"""
+
+import datetime as dt
+import os
+import subprocess
+import sys
+
+NOTAS = "refs/notes/revisao"
+ARQUIVO = ".config/revisao"
+TESTE = "teste:"
+PRINCIPAIS = ("main", "master")
+VEREDITOS = ("pronto", "exceção")
+
+
+# Git -------------------------------------------------------------------------
+
+def git(*args, entrada=None, ok=(0,)):
+    p = subprocess.run(["git", *args], input=entrada, capture_output=True)
+    if p.returncode not in ok:
+        sys.stderr.write(p.stderr.decode(errors="replace"))
+        raise SystemExit(f"git-revisao: falhou: git {' '.join(args)}")
+    return p.stdout
+
+
+def git_s(*args, **kw):
+    return git(*args, **kw).decode().rstrip("\n")
+
+
+def resolver(rev):
+    """O sha do commit `rev`, ou None se não existe."""
+    return git_s("rev-parse", "-q", "--verify", f"{rev}^{{commit}}", ok=(0, 1)) or None
+
+
+def ramo_principal():
+    for nome in PRINCIPAIS:
+        if resolver(f"refs/heads/{nome}"):
+            return nome
+    return None
+
+
+def config(rev):
+    """([pathspecs], teste ou None) do .config/revisao de `rev`.
+
+    `rev` é um commit ou "" para o índice; sem o arquivo, ([], None).
+    """
+    texto = git("show", f"{rev}:{ARQUIVO}", ok=(0, 128)).decode()
+    specs, teste = [], None
+    for linha in texto.splitlines():
+        linha = linha.strip()
+        if linha.startswith(TESTE):
+            teste = linha.removeprefix(TESTE).strip() or None
+        elif linha and not linha.startswith("#"):
+            specs.append(linha)
+    return specs, teste
+
+
+def caminhos(*revs):
+    """Os pathspecs de código, juntando o .config/revisao de cada rev.
+
+    Juntar a versão nova e a velha impede que um push estreite a lista e
+    passe com o que ela deixou de fora. `rev` None não conta.
+    """
+    specs = []
+    for rev in revs:
+        if rev is not None:
+            specs += [s for s in config(rev)[0] if s not in specs]
+    return specs
+
+
+def teste_de(*revs):
+    """O teste da primeira rev que declara um, ou None.
+
+    A ponta vem antes e o main depois: o ramo pode trocar o teste, mas
+    tirar a linha não o pula.
+    """
+    for rev in revs:
+        teste = config(rev)[1] if rev is not None else None
+        if teste:
+            return teste
+    return None
+
+
+# Marcas ----------------------------------------------------------------------
+
+def ler_nota(texto):
+    campos = {}
+    for linha in texto.splitlines():
+        chave, sep, valor = linha.partition(":")
+        if sep:
+            campos[chave.strip()] = valor.strip()
+    return campos
+
+
+def existentes(shas):
+    """Os objetos de `shas` que existem neste clone, numa chamada só."""
+    if not shas:
+        return set()
+    saida = git_s("cat-file", "--batch-check=%(objectname)",
+                  entrada="\n".join(shas).encode() + b"\n")
+    return {l for l in saida.splitlines() if not l.endswith(" missing")}
+
+
+def marcas():
+    """[(ponta, base ou None)] das notas válidas.
+
+    Vale a nota com veredito conhecido cuja ponta e cuja base existem. Um
+    commit reescrito some com o gc, e a nota fica apontando para o nada:
+    sem a ponta, não há o que cobrir; sem a base, a marca cobriria a
+    história inteira, então também não vale.
+    """
+    pares = [l.split() for l in git_s("notes", f"--ref={NOTAS}", "list").splitlines()]
+    if not pares:
+        return []
+    # Os textos das notas num cat-file --batch só: "<sha> blob <n>\n<texto>\n".
+    saida = git("cat-file", "--batch", entrada="\n".join(n for n, _ in pares).encode() + b"\n")
+    lista, i = [], 0
+    for _, ponta in pares:
+        fim = saida.index(b"\n", i)
+        tamanho = int(saida[i:fim].split()[2])
+        campos = ler_nota(saida[fim + 1:fim + 1 + tamanho].decode(errors="replace"))
+        i = fim + 2 + tamanho
+        if campos.get("revisao") in VEREDITOS:
+            lista.append((ponta, campos.get("base") or None))
+    ha = existentes([sha for par in lista for sha in par if sha])
+    return [(p, b) for p, b in lista if p in ha and (b is None or b in ha)]
+
+
+def cobertos(lista, excluir):
+    """Os commits fora de `excluir` que as marcas de `lista` cobrem.
+
+    Cada marca cobre base..ponta. As marcas se acumulam a cada ramo; a que
+    o main do remoto já tem inteira não cobre nada novo e sai da conta,
+    numa chamada só, e cada intervalo para no que o remoto tem. Assim o
+    custo segue o que falta enviar, e não a idade do clone. Sem `excluir`,
+    é tudo o que as marcas cobrem, inclusive o que o remoto já tem, ao
+    custo de um rev-list por marca sobre a história inteira.
+    """
+    if excluir and lista:
+        entrada = "\n".join([p for p, _ in lista] + ["--not"] + excluir) + "\n"
+        novos = set(git_s("rev-list", "--stdin", entrada=entrada.encode()).split())
+        lista = [(p, b) for p, b in lista if p in novos]
+    shas = set()
+    for ponta, base in lista:
+        nao = [base] if base else []
+        shas.update(git_s("rev-list", ponta, "--not", *nao, *excluir).split())
+    return shas
+
+
+def codigos(shas):
+    """{sha: (árvore, árvores dos pais)} dos commits de `shas`.
+
+    Dois commits com a mesma chave têm o mesmo código e o mesmo diff, até
+    o --cc de um merge: o que a revisão de um viu vale para o outro. É o que
+    sobra de um commit reescrito só nas datas ou na mensagem, como os do
+    rebase que só refaz as datas ou as mensagens.
+    """
+    if not shas:
+        return {}
+    linhas = git_s("log", "--no-walk=unsorted", "--stdin", "--format=%H %T %P",
+                   entrada="\n".join(shas).encode() + b"\n").splitlines()
+    commits = [l.split() for l in linhas]
+    arvores = {sha: arvore for sha, arvore, *_ in commits}
+    pais = sorted({p for _, _, *ps in commits for p in ps} - arvores.keys())
+    if pais:
+        saida = git_s("cat-file", "--batch-check=%(objectname)",
+                      entrada="".join(f"{p}^{{tree}}\n" for p in pais).encode())
+        arvores.update(zip(pais, saida.splitlines()))
+    return {sha: (arvore, tuple(arvores[p] for p in ps)) for sha, arvore, *ps in commits}
+
+
+# Código tocado ---------------------------------------------------------------
+
+def codigo_tocado(lista, specs):
+    """{sha: [arquivos de código]} dos commits de `lista` que mexem no código.
+
+    `lista` é [(sha, pais)]. Commit comum conta pelo que muda; merge, só
+    pelo diff --cc, que fica vazio quando nenhum conflito foi resolvido à
+    mão (o --name-only listaria até o arquivo que se juntou sozinho).
+    """
+    tocados = {}
+    simples = [sha for sha, pais in lista if len(pais) < 2]
+    if simples:
+        saida = git("diff-tree", "--stdin", "--root", "-r", "--name-only", "-z",
+                    "--", *specs, entrada="\n".join(simples).encode() + b"\n")
+        atual, esperados = None, set(simples)
+        for campo in saida.decode().split("\0"):
+            if campo in esperados:
+                atual = campo
+            elif campo and atual:
+                tocados.setdefault(atual, []).append(campo)
+    for sha, pais in lista:
+        if len(pais) < 2:
+            continue
+        patch = git_s("-c", "core.quotePath=false", "diff-tree", "--cc", "-r",
+                      "--no-commit-id", sha, "--", *specs)
+        arquivos = [l.removeprefix("diff --cc ") for l in patch.splitlines()
+                    if l.startswith("diff --cc ")]
+        if arquivos:
+            tocados[sha] = arquivos
+    return tocados
+
+
+def descobertos(ponta, excluir, specs):
+    """[(sha, arquivos)] do código em ponta --not excluir sem marca que cubra."""
+    if not specs:
+        return []
+    lista = []
+    for linha in git_s("rev-list", "--reverse", "--topo-order", "--parents",
+                       ponta, "--not", *excluir).splitlines():
+        sha, *pais = linha.split()
+        lista.append((sha, pais))
+    tocados = codigo_tocado(lista, specs)
+    if not tocados:
+        return []
+    notas = marcas()
+    ok = cobertos(notas, excluir)
+    faltam = [sha for sha, _ in lista if sha in tocados and sha not in ok]
+    if faltam:
+        # O commit reescrito sem mudar o código conta como o revisado. O
+        # original pode estar no main do remoto, atrás de `excluir` (o
+        # push forçado do rebase que só refaz mensagens), então entra tudo
+        # o que as marcas cobrem; só com o que conferir, pelo custo.
+        revisados = set(codigos(cobertos(notas, [])).values())
+        ok.update(sha for sha, chave in codigos(faltam).items() if chave in revisados)
+    return [(sha, tocados[sha]) for sha in faltam if sha not in ok]
+
+
+def mostrar(achados):
+    for sha, arquivos in achados[:30]:
+        assunto = git_s("log", "-1", "--format=%s", sha)
+        extra = f" e mais {len(arquivos) - 3}" if len(arquivos) > 3 else ""
+        print(f"  {sha[:9]} {assunto[:60]}", file=sys.stderr)
+        print(f"      {', '.join(arquivos[:3])}{extra}", file=sys.stderr)
+    if len(achados) > 30:
+        print(f"  ... e mais {len(achados) - 30}", file=sys.stderr)
+
+
+COMO_MARCAR = """\
+Revise o ramo (linus-review sobre $(git merge-base main HEAD)...HEAD) e,
+com o veredito Ready to merge, marque a ponta: git revisao pronto
+Para levar sem o Ready, com o motivo: git revisao excecao -m "motivo\""""
+
+
+# pre-push --------------------------------------------------------------------
+
+def recusas_do_push(remoto, linhas):
+    """([(ref, sha, arquivos)], [problemas de notas]) que impedem o push."""
+    notas = resolver(NOTAS)
+    achados, outros = [], []
+    for linha in linhas:
+        partes = linha.split()
+        if len(partes) != 4:
+            continue
+        ref_local, local_sha, ref_remota, remoto_sha = partes
+        # Pelo nome dos dois lados e pelo commit: enviar as notas com outro
+        # nome no remoto (refs/notes/revisao:refs/notes/x) também as publica.
+        if NOTAS in (ref_local, ref_remota) or (notas and local_sha == notas):
+            outros.append(f"{NOTAS} fica no clone, não vai para o remoto")
+            continue
+        # Só zeros (40 em SHA-1, 64 em SHA-256): o push apaga a ref.
+        if set(local_sha) == {"0"} or ref_remota not in [f"refs/heads/{n}" for n in PRINCIPAIS]:
+            continue
+        velho = resolver(remoto_sha)
+        # O que o main do remoto já tem; não o remoto inteiro, porque um
+        # ramo de tarefa enviado sem revisão não pode entrar no main por ele.
+        rastreio = resolver(f"refs/remotes/{remoto}/{ref_remota.removeprefix('refs/heads/')}")
+        excluir = [velho or rastreio] if velho or rastreio else []
+        specs = caminhos(local_sha, velho)
+        for sha, arquivos in descobertos(local_sha, excluir, specs):
+            achados.append((ref_remota, sha, arquivos))
+    return achados, outros
+
+
+def cmd_pre_push(args):
+    remoto = args[0] if args else ""
+    achados, outros = recusas_do_push(remoto, sys.stdin.read().splitlines())
+    for o in outros:
+        print(f"pre-push: recusado: {o}.", file=sys.stderr)
+    if achados:
+        ramo = achados[0][0].removeprefix("refs/heads/")
+        print(f"pre-push: recusado, código sem revisão no {ramo}:", file=sys.stderr)
+        mostrar([(sha, arquivos) for _, sha, arquivos in achados])
+        print(COMO_MARCAR, file=sys.stderr)
+    return 1 if achados or outros else 0
+
+
+# pre-commit ------------------------------------------------------------------
+
+def cmd_pre_commit(_args):
+    if not os.environ.get("CLAUDECODE"):
+        return 0
+    ramo = git_s("symbolic-ref", "--short", "-q", "HEAD", ok=(0, 1))
+    if ramo not in PRINCIPAIS or resolver("MERGE_HEAD"):
+        return 0
+    specs = caminhos("HEAD" if resolver("HEAD") else None, "")
+    if not specs:
+        return 0
+    arquivos = git("diff", "--cached", "--name-only", "-z", "--", *specs).decode()
+    arquivos = [a for a in arquivos.split("\0") if a]
+    if not arquivos:
+        return 0
+    print(f"pre-commit: recusado, commit de agente no {ramo} com código:", file=sys.stderr)
+    for a in arquivos[:10]:
+        print(f"  {a}", file=sys.stderr)
+    print("Abra um ramo antes (git switch -c <tarefa>; as mudanças vão junto) e siga\n"
+          "o ciclo do AGENTS.md: commit, linus-review, correções, merge.", file=sys.stderr)
+    return 1
+
+
+# Marcar e listar -------------------------------------------------------------
+
+def base_de(ponta):
+    """O merge-base da ponta com o main; na própria linha do main, com o remoto."""
+    principal = ramo_principal()
+    if principal:
+        base = git_s("merge-base", principal, ponta, ok=(0, 1))
+        if base and base != ponta:
+            return base
+        remoto = resolver(f"{principal}@{{upstream}}")
+        if remoto:
+            return git_s("merge-base", remoto, ponta, ok=(0, 1)) or None
+    return None
+
+
+def marcar(veredito, sha, base, motivo=None):
+    agora = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+    nota = f"revisao: {veredito}\nbase: {base or ''}\ndata: {agora}\n"
+    if motivo:
+        nota += f"motivo: {' '.join(motivo.split())}\n"
+    git("notes", f"--ref={NOTAS}", "add", "-f", "-F", "-", sha, entrada=nota.encode())
+    nao = ["--not", base] if base else []
+    n = len(git_s("rev-list", sha, *nao).split())
+    desde = f"desde {base[:9]}" if base else "desde a raiz"
+    print(f"git revisao: {sha[:9]} {veredito}, cobre {n} commit(s) {desde}")
+    return 0
+
+
+def testar(sha, base):
+    """Roda o teste declarado para a ponta `sha`; True se passou ou não cabe."""
+    principal = ramo_principal()
+    referencias = [sha] + ([principal, f"{principal}@{{upstream}}"] if principal else [])
+    referencias = [resolver(r) for r in referencias]
+    comando = teste_de(*referencias)
+    if not comando:
+        return True
+    specs = caminhos(*referencias)
+    # O teste roda no checkout: o que ele vê tem de ser a ponta.
+    if sha != resolver("HEAD"):
+        print(f"git revisao: o teste roda no checkout, e {sha[:9]} não é o HEAD;\n"
+              f"troque para a ponta (git switch) e marque de lá", file=sys.stderr)
+        return False
+    soltos = git_s("-c", "core.quotePath=false", "status", "--porcelain",
+                   "--untracked-files=all", "--", *specs).splitlines() if specs else []
+    if soltos:
+        print("git revisao: código mudado fora do commit; o teste não veria a ponta:",
+              file=sys.stderr)
+        for linha in soltos[:10]:
+            print(f"  {linha}", file=sys.stderr)
+        return False
+    print(f"git revisao: teste: {comando}", file=sys.stderr)
+    ambiente = dict(os.environ, GIT_REVISAO_BASE=base or "", GIT_REVISAO_PONTA=sha)
+    feito = subprocess.run(["sh", "-c", comando], env=ambiente)
+    if feito.returncode != 0:
+        print(f"git revisao: o teste falhou (saída {feito.returncode}); "
+              f"{sha[:9]} fica sem marca", file=sys.stderr)
+        return False
+    return True
+
+
+def ponta_e_base(ponta):
+    """(sha, base) da ponta a marcar, ou None se ela não é um commit."""
+    sha = resolver(ponta)
+    if not sha:
+        print(f"git revisao: {ponta} não é um commit", file=sys.stderr)
+        return None
+    return sha, base_de(sha)
+
+
+def cmd_pronto(args):
+    alvo = ponta_e_base(args[0] if args else "HEAD")
+    if not alvo:
+        return 2
+    if not testar(*alvo):
+        return 1
+    return marcar("pronto", *alvo)
+
+
+def cmd_excecao(args):
+    if "-m" not in args or args.index("-m") + 1 >= len(args):
+        print('git revisao excecao: diga o motivo com -m "motivo"', file=sys.stderr)
+        return 2
+    i = args.index("-m")
+    motivo, resto = args[i + 1], args[:i] + args[i + 2:]
+    if not motivo.strip():
+        print("git revisao excecao: o motivo não pode ser vazio", file=sys.stderr)
+        return 2
+    alvo = ponta_e_base(resto[0] if resto else "HEAD")
+    return marcar("exceção", *alvo, motivo) if alvo else 2
+
+
+def cmd_pendente(args):
+    ponta = args[0] if args else "HEAD"
+    principal = ramo_principal()
+    remoto = resolver(f"{principal}@{{upstream}}") if principal else None
+    achados = descobertos(ponta, [remoto] if remoto else [], caminhos(ponta, remoto))
+    if not achados:
+        print("git revisao: nada pendente")
+        return 0
+    print("git revisao: código sem revisão:", file=sys.stderr)
+    mostrar(achados)
+    return 1
+
+
+def main():
+    comandos = {"pre-push": cmd_pre_push, "pre-commit": cmd_pre_commit,
+                "pronto": cmd_pronto, "excecao": cmd_excecao,
+                "pendente": cmd_pendente}
+    if len(sys.argv) < 2 or sys.argv[1] not in comandos:
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    # Os pathspecs valem a partir da raiz, de onde quer que se chame.
+    raiz = git_s("rev-parse", "--show-toplevel", ok=(0, 128))
+    if raiz:
+        os.chdir(raiz)
+    return comandos[sys.argv[1]](sys.argv[2:])
+
+
+if __name__ == "__main__":
+    sys.exit(main())

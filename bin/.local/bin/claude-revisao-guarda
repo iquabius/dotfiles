@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""claude-revisao-guarda — hook PreToolUse (Bash) do Claude Code.
+
+Fecha, do lado do agente, as saídas que o git-revisao não vê:
+
+- recusa o que desligaria os hooks do git: git commit com --no-verify ou
+  -n; mexer em core.hooksPath, que desliga os hooks do repositório; trocar
+  a configuração global pelo ambiente (GIT_CONFIG_GLOBAL, GIT_CONFIG_COUNT,
+  HOME...) antes de um git que commita, junta ou envia, porque é a global
+  que liga os hooks do git-revisao; tirar CLAUDECODE do ambiente, pelo qual o
+  pre-commit reconhece o agente; e escrever as notas da revisão sem o git
+  revisao, que forjaria uma marca;
+- recusa o merge pelo GitHub (gh pr merge, a API REST ou a GraphQL), que
+  leva código ao main sem passar pelo pre-push;
+- pergunta ao autor antes de git revisao excecao: deixar um achado da
+  revisão de pé é decisão dele.
+
+O push sem revisão fica com o pre-push. Estas regras pegam as formas diretas;
+um script gravado em arquivo e depois executado passa por elas, e o
+portão que segura de fato é o pre-push do push, que é do autor.
+
+Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
+a decisão na saída padrão; sem nada a dizer, sai calado com 0.
+"""
+
+import json
+import re
+import shlex
+import sys
+
+# Começo de um comando (início de linha ou depois de ; & | ( $( ), com
+# atribuições de variável opcionais; assim "git commit" no meio de uma linha
+# de texto, como numa mensagem de commit, não conta. Linha de heredoc que
+# comece com o comando conta: o script quebra comandos por linha também.
+COMECO = r"(?:^|[;&|(\n]|\$\()[ \t]*"
+# Uma atribuição (VAR=valor) e o espaço depois dela, sem sair da linha.
+ATRIB = r"\w+=\S*[ \t]+"
+# O que roda o comando seguinte: command, exec, nohup, time e env, este com
+# opções e atribuições.
+PREFIXO = r"(?:(?:command|exec|nohup|time|env(?:[ \t]+-\S+)*)[ \t]+(?:" + ATRIB + r")*)*"
+INICIO = COMECO + r"(?:" + ATRIB + r")*" + PREFIXO
+# git, opções globais (-c chave=valor, -C dir, --git-dir dir, --opção, -P)
+# e o subcomando; GIT exige o começo de um comando antes.
+GIT_OPCOES = (r"git(?:\s+-[cC]\s*\S+|\s+--(?:git-dir|work-tree|namespace|exec-path"
+              r"|config-env|super-prefix)[=\s]\S+|\s+--[\w-]+(?:=\S+)?|\s+-[a-zA-Z])*\s+")
+GIT = INICIO + GIT_OPCOES
+# Até o fim do comando: ; & | ou fim de linha.
+RESTO = r"[^;&|\n]*"
+
+BURLAS = [
+    (r"(?i)" + INICIO + r"git\b" + RESTO
+     + r"(?:-c\s*|\bconfig\b(?![^;&|\n]*\s--(?:get|list|show))" + RESTO + r")core\.hooksPath\b",
+     "mexer em core.hooksPath desliga os hooks do repositório"),
+    (r"(?:^|[;&|(\n]|\$\(|\bexport)\s*(?:\w+=\S*\s+)*CLAUDECODE=(?!1(?:\s|$))"
+     r"|" + INICIO + r"unset\b" + RESTO + r"\bCLAUDECODE\b"
+     r"|" + INICIO + r"env\b" + RESTO + r"(?:\s-u\s*|--unset[= ]|\sCLAUDECODE=)"
+     r"|" + INICIO + r"env\s+(?:-\w*i\b|--ignore-environment\b)",
+     "CLAUDECODE é como o pre-commit do git-revisao reconhece o agente"),
+    (GIT + r"notes\b(?=" + RESTO + r"revisao)" + RESTO
+     + r"\s(?:add|append|edit|copy|merge|remove|prune)(?=\s|$)"
+     r"|" + GIT + r"update-ref\b" + RESTO + r"refs/notes/revisao\b",
+     "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"),
+    (INICIO + r"gh\s+pr\s+merge\b"
+     r"|" + INICIO + r"gh\s+api\b" + RESTO + r"/(?:pulls/\d+/merge|merges)\b"
+     r"|" + INICIO + r"gh\s+api\s+graphql\b[\s\S]*(?:mergePullRequest|enablePullRequestAutoMerge)",
+     "o merge pelo GitHub leva código ao main sem o pre-push; junte no clone "
+     "(git merge --ff-only, ou --no-ff) e deixe o push para o autor"),
+]
+
+# Configuração do git trocada pelo ambiente, e o que ela desligaria.
+CONFIG_DO_GIT = (r"(?:GIT_CONFIG_(?:GLOBAL|SYSTEM|COUNT|KEY_\d+|VALUE_\d+|PARAMETERS)"
+                 r"|HOME|XDG_CONFIG_HOME)=")
+GRAVA = GIT_OPCOES + r"(?:commit|merge|push|cherry-pick|revert|am)\b"
+# Atribuída no começo de um comando (solta, com export, declare -x ou env):
+# vale para o git que ela prefixa ("HOME=/x git commit") e, como o HOME já
+# vem exportado, para todo git que grava depois ("HOME=/x && git push").
+# São duas buscas, e não uma expressão com [\s\S]* no meio, que retrocede
+# por todo o resto do comando a cada atribuição.
+ATRIBUI_CONFIG = (COMECO + r"(?:export[ \t]+|declare[ \t]+-\w+[ \t]+|env(?:[ \t]+-\S+)*[ \t]+)?"
+                  r"(?:" + ATRIB + r")*" + CONFIG_DO_GIT + r"[^\s;&|]*")
+GRAVA_EM_SEGUIDA = r"[ \t]+(?:" + ATRIB + r")*" + PREFIXO + GRAVA
+
+# Corpo de heredoc de delimitador entre aspas (<<'FIM' ... FIM): o shell
+# não o expande, então é só texto para um arquivo ou programa. Sem aspas,
+# o $(...) do corpo roda neste shell, e o corpo se confere. O (?<!<) deixa
+# de fora o here-string (<<<).
+HEREDOC = r"(?<!<)<<-?\s*(['\"])(\w+)\1[^\n]*\n[\s\S]*?^\s*\2\s*$"
+
+# Um shell dentro do comando (sh -c '...', bash -lc "..."), cujo texto se
+# confere como mais um comando.
+SHELL = INICIO + r"(?:\S*/)?(?:ba|da|z)?sh\s+(?:-\w+\s+)*?-\w*c\s+(.*)"
+
+
+def comandos(cmd):
+    """O comando e, um nível por vez, o texto de cada shell que ele abre.
+
+    Sai sem os corpos de heredoc entre aspas; o shell que lê o comando
+    de um desses (bash <<'FIM') passa por aqui, como um script gravado em
+    arquivo.
+    """
+    cmd = re.sub(HEREDOC, "<<heredoc", cmd, flags=re.M)
+    yield cmd
+    for m in re.finditer(SHELL, cmd):
+        try:
+            texto = shlex.split(m[1])[0]
+        except (ValueError, IndexError):
+            continue
+        yield from comandos(texto)
+
+
+# Opções curtas do git commit que levam o argumento na palavra seguinte
+# (ou colado), e as que só o aceitam colado (-uno, -Schave).
+COMMIT_COM_ARGUMENTO = set("mFCct")
+COMMIT_ARGUMENTO_COLADO = set("uS")
+
+
+def pula_hooks(resto):
+    """O git commit cujas opções em `resto` incluem --no-verify ou -n."""
+    try:
+        palavras = shlex.split(resto)
+    except ValueError:
+        palavras = resto.split()
+    pular = False
+    for p in palavras:
+        if pular:
+            pular = False
+        elif p == "--":
+            return False
+        elif len(p) > 5 and "--no-verify".startswith(p):
+            return True  # o git aceita a opção abreviada, como --no-verif
+        elif p.startswith("-") and not p.startswith("--"):
+            for i, letra in enumerate(p[1:]):
+                if letra == "n":
+                    return True
+                if letra in COMMIT_COM_ARGUMENTO:
+                    pular = i == len(p) - 2  # -m sozinho: o texto vem depois
+                    break
+                if letra in COMMIT_ARGUMENTO_COLADO:
+                    break
+        elif p.startswith("--") and "=" not in p and p in (
+                "--message", "--file", "--reuse-message", "--reedit-message",
+                "--template", "--author", "--date", "--fixup", "--squash",
+                "--trailer", "--cleanup"):
+            pular = True
+    return False
+
+
+def decidir(decisao, motivo):
+    json.dump({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": decisao,
+        "permissionDecisionReason": motivo,
+    }}, sys.stdout)
+    return 0
+
+
+def conferir(cmd):
+    """("deny" ou "ask", motivo) para um comando, ou None."""
+    for padrao, motivo in BURLAS:
+        if re.search(padrao, cmd):
+            return "deny", f"Recusado: {motivo}."
+    m = re.search(ATRIBUI_CONFIG, cmd)
+    if m and (re.match(GRAVA_EM_SEGUIDA, cmd[m.end():])
+              or re.search(INICIO + GRAVA, cmd[m.end():])):
+        return "deny", ("Recusado: trocar a configuração global do git pelo ambiente "
+                        "desliga os hooks do git-revisao. Para um "
+                        "repositório de teste, use uma suíte bats ou um script.")
+    for m in re.finditer(GIT + r"commit\b(" + RESTO + ")", cmd):
+        if pula_hooks(m[1]):
+            return "deny", ("Recusado: git commit com --no-verify ou -n pula o "
+                            "pre-commit, que guarda o main do commit de agente.")
+    if re.search(GIT + r"revisao\s+excecao\b|" + INICIO + r"\S*git-revisao\s+excecao\b", cmd):
+        return "ask", ("git revisao excecao deixa código ir ao main sem o veredito "
+                       "Ready to merge; confirme que a decisão e o motivo são do autor.")
+    return None
+
+
+def main():
+    dados = json.load(sys.stdin)
+    if dados.get("tool_name") != "Bash":
+        return 0
+    decisoes = [d for c in comandos(dados.get("tool_input", {}).get("command", ""))
+                if (d := conferir(c))]
+    if not decisoes:
+        return 0
+    # Recusa vence pergunta, venha de que nível vier.
+    return decidir(*min(decisoes, key=lambda d: d[0] != "deny"))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

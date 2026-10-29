@@ -13,4 +13,4 @@ fmt:
 	shfmt -i 4 -w $(SCRIPTS)
 
 test:
-	bats tests/
+	bats tests/ bin/.local/bin/

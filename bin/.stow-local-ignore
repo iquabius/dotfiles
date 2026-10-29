@@ -1,0 +1,5 @@
+# Este arquivo substitui a lista padrão do stow, então o readme volta aqui.
+# Os testes moram ao lado dos scripts, mas não vão para o ~/.local/bin. O stow
+# ancora cada padrão no nome inteiro, daí o .* no começo.
+^/readme.*
+.*\.test\.bats
