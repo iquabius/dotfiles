@@ -2,10 +2,12 @@
 # Testes do .githooks/post-merge.
 #
 # Cada teste monta um remoto e um clone de brinquedo em $BATS_TEST_TMPDIR,
-# que faz de $HOME: o clone fica em ~/.dotfiles-private, onde o hook roda o
-# stow. O hook entra pelo .git/hooks do clone, e o skills-sync do clone é um
-# falso que só anota em $SYNC_LOG que foi chamado. O stow é o de verdade, e o
-# bin do clone ainda não foi ligado em ~/.local/bin.
+# que faz de $HOME: o clone fica em ~/.dotfiles, onde o hook roda o stow. O
+# hook entra pelo .git/hooks do clone, e o skills-sync do clone é um falso
+# que só anota em $SYNC_LOG que foi chamado. O stow é o de verdade, e o bin
+# do clone ainda não foi ligado em ~/.local/bin. Os testes da camada privada
+# montam, com privado, um segundo remoto e o clone dele em
+# ~/.dotfiles-private.
 
 # POST_MERGE_SCRIPT troca o hook testado (útil para conferir, com uma cópia
 # sabotada, que o teste de fato pega a falha).
@@ -29,12 +31,31 @@ setup() {
 	echo texto >up/leia.org
 	git -C up add .
 	git -C up commit -qm raiz
-	git clone -q up .dotfiles-private
-	cd .dotfiles-private
+	git clone -q up .dotfiles
+	cd .dotfiles
 	git config pull.rebase false
 	printf '#!/bin/sh\nexec "%s" "$@"\n' "$SCRIPT" >.git/hooks/post-merge
 	chmod +x .git/hooks/post-merge
 	echo base >.profile.local
+}
+
+# privado — monta o remoto up-privado e o clone dele em ~/.dotfiles-private,
+# com o mesmo hook, e entra nele. Sem skills-sync próprio: o hook chama o do
+# ~/.dotfiles.
+privado() {
+	cd "$BATS_TEST_TMPDIR"
+	git init -q -b main up-privado
+	mkdir -p up-privado/bin/.local/bin up-privado/skills/p up-privado/profiles
+	echo fica >up-privado/bin/.local/bin/fica
+	echo p >up-privado/skills/p/SKILL.md
+	echo texto >up-privado/leia.org
+	git -C up-privado add .
+	git -C up-privado commit -qm raiz
+	git clone -q up-privado .dotfiles-private
+	cd .dotfiles-private
+	git config pull.rebase false
+	printf '#!/bin/sh\nexec "%s" "$@"\n' "$SCRIPT" >.git/hooks/post-merge
+	chmod +x .git/hooks/post-merge
 }
 
 # muda <repo> <arquivo> — acrescenta uma linha e commita.
@@ -141,7 +162,7 @@ nao_sincronizou() {
 	muda ../up skills/b/SKILL.md
 	run git pull -q
 	[ "$status" -eq 0 ]
-	[[ $output == *"sem .profile.local"* ]]
+	[[ $output == *"sem $HOME/.dotfiles/.profile.local; pulei o skills-sync"* ]]
 	nao_sincronizou
 }
 
@@ -201,18 +222,104 @@ nao_sincronizou() {
 	muda ../up bin/.local/bin/novo
 	run git pull -q
 	[ "$status" -eq 0 ]
-	[[ $output == *"stow -R bin falhou"* ]]
+	[[ $output == *"stow -R bin de $HOME/.dotfiles falhou"* ]]
 	[ "$(cat "$HOME/.local/bin/novo")" = meu ]
 	[ -f bin/.local/bin/novo ]
 }
 
-@test "merge numa worktree que traz script novo não roda o stow" {
+@test "merge numa worktree que traz script e skill não roda o stow nem o sync" {
 	git worktree add -q -b tarefa ../wt
 	muda ../up bin/.local/bin/novo
+	muda ../up skills/b/SKILL.md
 	git fetch -q
 	run git -C ../wt merge -q origin/main
 	[ "$status" -eq 0 ]
 	[ -z "$output" ]
 	[ -f ../wt/bin/.local/bin/novo ]
 	[ ! -e "$HOME/.local/bin/novo" ]
+	nao_sincronizou
+}
+
+@test "clone fora de ~/.dotfiles e ~/.dotfiles-private não roda o stow nem o sync" {
+	cd "$BATS_TEST_TMPDIR"
+	git clone -q up outro
+	cd outro
+	git config pull.rebase false
+	cp ../.dotfiles/.git/hooks/post-merge .git/hooks/post-merge
+	muda ../up bin/.local/bin/novo
+	muda ../up skills/b/SKILL.md
+	run git pull -q
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+	[ ! -e "$HOME/.local/bin/novo" ]
+	nao_sincronizou
+}
+
+@test "pull no privado que traz skill roda o skills-sync do ~/.dotfiles" {
+	privado
+	muda ../up-privado skills/q/SKILL.md
+	git pull -q
+	sincronizou
+}
+
+@test "pull no privado que traz script novo em bin o liga do privado" {
+	privado
+	muda ../up-privado bin/.local/bin/pnovo
+	git pull -q
+	[ -L "$HOME/.local/bin/pnovo" ]
+	[ "$(readlink -f "$HOME/.local/bin/pnovo")" = "$(readlink -f bin/.local/bin/pnovo)" ]
+}
+
+@test "pull no privado que só muda texto não roda nada" {
+	privado
+	muda ../up-privado leia.org
+	run git pull -q
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+	nao_sincronizou
+}
+
+# aponta_para <script> <checkout> — o link em ~/.local/bin resolve para o
+# script daquele checkout.
+aponta_para() {
+	[ "$(readlink -f "$HOME/.local/bin/$1")" = "$(readlink -f "$2/bin/.local/bin/$1")" ]
+}
+
+@test "script que passa do privado ao público, com o público puxado antes" {
+	privado
+	muda ../up-privado bin/.local/bin/x
+	git pull -q
+	aponta_para x "$HOME/.dotfiles-private"
+	muda ../up bin/.local/bin/x
+	run git -C "$HOME/.dotfiles" pull -q
+	[ "$status" -eq 0 ]
+	[[ $output == *"stow -R bin de $HOME/.dotfiles falhou"* ]]
+	git -C ../up-privado rm -q bin/.local/bin/x
+	git -C ../up-privado commit -qm "x sai"
+	git pull -q
+	aponta_para x "$HOME/.dotfiles"
+}
+
+@test "script que passa do privado ao público, com o privado puxado antes" {
+	privado
+	muda ../up-privado bin/.local/bin/x
+	git pull -q
+	git -C ../up-privado rm -q bin/.local/bin/x
+	git -C ../up-privado commit -qm "x sai"
+	git pull -q
+	[ ! -e "$HOME/.local/bin/x" ]
+	muda ../up bin/.local/bin/x
+	git -C "$HOME/.dotfiles" pull -q
+	aponta_para x "$HOME/.dotfiles"
+}
+
+@test ".profile.local ainda no privado: o aviso manda movê-lo, e o sync não roda" {
+	privado
+	rm "$HOME/.dotfiles/.profile.local"
+	echo base >.profile.local
+	muda ../up-privado skills/q/SKILL.md
+	run git pull -q
+	[ "$status" -eq 0 ]
+	[[ $output == *"o .profile.local mudou para $HOME/.dotfiles: mv "* ]]
+	nao_sincronizou
 }
