@@ -47,6 +47,31 @@
 [init]
 	defaultBranch = main
 
+# Hooks da configuração (git 2.54 ou mais novo), que rodam junto com os do
+# repositório, inclusive o core.hooksPath local. Chamam o script pelo caminho
+# no repositório, e não pelo link de ~/.local/bin: este arquivo e os scripts
+# chegam juntos em qualquer pull ou reset, e o hook não fica apontando para
+# um link que o stow bin ainda não criou. Por isso o clone fica em ~/.dotfiles,
+# como manda o readme.md.
+#
+# Código só chega ao main (ou master) depois da revisão do ramo (git-revisao,
+# pacote bin): o pre-push recusa código sem a marca de `git revisao pronto`,
+# e o pre-commit, o commit de agente no main que mexe no código. Vale só no
+# repositório que lista os caminhos de código em .config/revisao.
+[hook "revisao-push"]
+	event = pre-push
+	command = "$HOME/.dotfiles/bin/.local/bin/git-revisao pre-push"
+[hook "revisao-commit"]
+	event = pre-commit
+	command = "$HOME/.dotfiles/bin/.local/bin/git-revisao pre-commit"
+
+# O merge de um ramo diz em português o que ele traz: "Junta o ramo <ramo>:
+# ...", e não o "Merge branch" do git (git-assunto-merge, pacote bin). Vale
+# em todo repositório; um sai com `git config hook.assunto-merge.enabled false`.
+[hook "assunto-merge"]
+	event = commit-msg
+	command = "$HOME/.dotfiles/bin/.local/bin/git-assunto-merge commit-msg"
+
 # Identidade e credenciais ficam na camada privada (~/.dotfiles-private → ~/.gitconfig.local)
 [include]
 	path = ~/.gitconfig.local
