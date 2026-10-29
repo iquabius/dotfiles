@@ -133,7 +133,10 @@ como o git o leria, que, com uma opção global que não conhece, recusa
 sem rodar nada (`grep -e git -e commit -n` passa). O corpo de heredoc
 mandado a outro programa é texto: com o delimitador entre aspas
 (`<<'EOF'`), o shell não o expande; sem aspas, só o `$(...)` dele roda,
-e só ele se confere. Antes de `git revisao excecao`, pergunta ao autor.
+e só ele se confere. A substituição de processo (`<(...)`, `>(...)`)
+vira uma palavra, o caminho que o comando recebe, e o texto dela se
+confere como o do `$(...)`. Antes de `git revisao excecao`, pergunta ao
+autor.
 
 São as formas diretas. Passam por todas: um script gravado em arquivo e
 depois executado, o git chamado por uma variável (`$G config`), os

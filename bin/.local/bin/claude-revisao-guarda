@@ -232,8 +232,9 @@ def valores(palavras):
                 entrada = True
             continue
         # O operador nunca está entre aspas; o destino pode estar
-        # (2>"/dev/null"). A palavra que começa com aspas não é redirecionamento.
-        m = REDIRECIONA.fullmatch(bruta)
+        # (2>"/dev/null"). A palavra que começa com aspas não é redirecionamento,
+        # nem a substituição de processo (<(...), >(...)), que é um caminho.
+        m = None if bruta.startswith(("<(", ">(")) else REDIRECIONA.fullmatch(bruta)
         if m:
             pular = not m[1]
             continue
@@ -346,6 +347,13 @@ def analisar(texto):
             fim = texto.find("\n", i)
             fim = len(texto) if fim < 0 else fim
             i = fim
+        elif texto.startswith(("<(", ">("), i):
+            # A substituição de processo roda o texto dela e vira uma palavra
+            # (o caminho de um arquivo), como o $(...) vira o texto que imprime.
+            j = fecha(texto, i + 1, "(", ")")
+            itens.append(Texto(texto[i + 2:j - 1], [], False))
+            cru.append(texto[i:j])
+            i = j
         elif texto.startswith("<<<", i):
             # O here-string, inteiro: o <<< não é heredoc. Colado (git<<<x),
             # começa outra palavra; o descritor (0<<<, {fd}<<<) fica com ele.
