@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""git-assunto-merge — o merge de um ramo diz em português o que ele traz.
+
+O git chama este script pelo hook commit-msg da configuração global (pacote
+git-local, git 2.54 ou mais novo), no git commit e no git merge:
+
+    git-assunto-merge commit-msg <arquivo da mensagem>
+
+Recusa o assunto "Merge branch '<ramo>'" (com ou sem " into <ramo>") que o
+git escreve sozinho quando o merge vem sem -m, e o "Junta o ramo <ramo>:"
+que não diz o que o ramo traz. O merge recusado fica por concluir, e a
+recusa dá o git commit -m que o conclui; no --amend de um merge já feito,
+dá o --amend -m. O merge de um pull ("Merge branch '<ramo>' of <url>"),
+o de um ramo remoto ("Merge remote-tracking branch"), o de vários ramos,
+o de um commit e o de uma tag passam. Um repositório sai com
+`git config hook.assunto-merge.enabled false`.
+"""
+
+import re
+import subprocess
+import sys
+
+MERGE_DO_GIT = re.compile(r"^Merge branch '([^']+)'(?: into \S+)?$")
+JUNTA = re.compile(r"^Junta o ramo \S+:(.*)$")
+RESUMO = "<o que o ramo traz>"
+
+
+def assunto(texto, comentario):
+    """A primeira linha que não é comentário nem vazia, sem espaço nas pontas."""
+    for linha in texto.splitlines():
+        if linha.strip() and not linha.startswith(comentario):
+            return linha.strip()
+    return ""
+
+
+def caractere_de_comentario():
+    p = subprocess.run(["git", "config", "core.commentChar"],
+                       capture_output=True, text=True)
+    c = p.stdout.strip()
+    return c if len(c) == 1 else "#"
+
+
+def existe(rev):
+    return subprocess.run(["git", "rev-parse", "-q", "--verify", rev],
+                          capture_output=True).returncode == 0
+
+
+def recusa(texto):
+    print("✗ git-assunto-merge: commit recusado", file=sys.stderr)
+    print(texto, file=sys.stderr)
+    return 1
+
+
+def cmd_commit_msg(args):
+    with open(args[0], encoding="utf-8", errors="replace") as f:
+        s = assunto(f.read(), caractere_de_comentario())
+    m = MERGE_DO_GIT.match(s)
+    if m:
+        # O hook não sabe se veio de um --amend: com MERGE_HEAD, há merge em
+        # curso; sem ele e com o HEAD sendo merge, é a emenda dele.
+        if existe("MERGE_HEAD"):
+            estado, comando = "O merge ficou por concluir", "git commit"
+        elif existe("HEAD^2"):
+            estado, comando = "O merge do HEAD ficou como estava", "git commit --amend"
+        else:
+            estado, comando = "O commit não foi feito", "git commit"
+        return recusa(
+            f'  "{s}" é o assunto que o git escreve sozinho; o merge diz em\n'
+            f"  português o que o ramo traz. {estado}:\n"
+            f'  $ {comando} -m "Junta o ramo {m[1]}: {RESUMO}"')
+    m = JUNTA.match(s)
+    if m and (not m[1].strip() or RESUMO in m[1]):
+        return recusa(
+            f'  "{s}" não diz o que o ramo traz: troque {RESUMO} por ele.')
+    return 0
+
+
+def main():
+    if len(sys.argv) < 3 or sys.argv[1] != "commit-msg":
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    return cmd_commit_msg(sys.argv[2:])
+
+
+if __name__ == "__main__":
+    sys.exit(main())
