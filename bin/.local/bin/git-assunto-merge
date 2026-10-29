@@ -2,7 +2,7 @@
 """git-assunto-merge — o merge de um ramo diz em português o que ele traz.
 
 O git chama este script pelo hook commit-msg da configuração global (pacote
-git-local, git 2.54 ou mais novo), no git commit e no git merge:
+git, git 2.54 ou mais novo), no git commit e no git merge:
 
     git-assunto-merge commit-msg <arquivo da mensagem>
 

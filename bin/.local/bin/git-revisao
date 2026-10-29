@@ -8,7 +8,7 @@ fora. O main é o ramo main ou, na falta dele, o master. Uma linha
 ponta não a tem, vale a do main, para que tirar a linha não pule o teste.
 
 O git chama este script pelos hooks da configuração global (pacote
-git-local, git 2.54 ou mais novo):
+git, git 2.54 ou mais novo):
 
     git-revisao pre-push <remoto> <url>   recusa código sem revisão no main do remoto
     git-revisao pre-commit                recusa commit de agente no main que
