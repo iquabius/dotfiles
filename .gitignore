@@ -1,3 +1,7 @@
 /.backup/
 *.silverbullet.db*
 .DS_Store
+
+# Perfil e skills desta máquina, que o skills-sync lê; não versionados.
+/.profile.local
+/.pkgs.local
