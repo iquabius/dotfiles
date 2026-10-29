@@ -1,0 +1,212 @@
+#!/bin/sh
+# skills-sync — deixa as skills ligadas no $HOME iguais ao perfil da máquina.
+#
+# Lê .profile.local (um perfil por linha), junta os profiles/<perfil>.pkgs e o
+# .pkgs.local (skills só desta máquina, opcional) e então:
+#   - liga, com stow, cada skill do perfil que ainda não chega pelos três
+#     diretórios (~/.agents/skills, ~/.claude/skills, ~/.cursor/skills);
+#   - desliga cada link nosso cuja skill saiu do perfil ou sumiu do repo.
+#
+# "Nosso" é o link que resolve para <repo>/skills/<nome>/.<agente>/skills/<nome>.
+# O resto do diretório (skills não versionadas, links de outras origens) não é
+# tocado. Desligar é rm direto, não stow -D: o stow -D não acha pacote que um
+# pull já apagou, e aí o link ficava pendurado. Pelo rm, os dois casos (saiu
+# do perfil, saiu do repo) são o mesmo caso.
+#
+# Uso: skills-sync [-n|--dry-run]
+# Ambiente (para os testes): SKILLS_SYNC_REPO, SKILLS_SYNC_TARGET.
+
+set -eu
+
+me=skills-sync
+agents='.agents .claude .cursor'
+
+die() {
+    printf '%s: %s\n' "$me" "$*" >&2
+    exit 1
+}
+
+usage() {
+    cat <<EOF
+Uso: $me [-n|--dry-run]
+
+Liga as skills do perfil desta máquina (.profile.local) e desliga as que
+saíram do perfil ou do repositório. Sem -n, aplica; com -n, só mostra.
+EOF
+}
+
+dry=0
+case "${1:-}" in
+'') ;;
+-n | --dry-run) dry=1 ;;
+-h | --help)
+    usage
+    exit 0
+    ;;
+*)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+command -v stow >/dev/null 2>&1 || die "stow não encontrado no PATH"
+
+# O script mora em <repo>/bin/.local/bin/ e costuma ser chamado pelo symlink
+# que o stow põe em ~/.local/bin, daí o readlink -f.
+if [ -n "${SKILLS_SYNC_REPO:-}" ]; then
+    repo=$SKILLS_SYNC_REPO
+else
+    self=$(readlink -f "$0") || die "não consegui resolver o caminho de $0"
+    repo=$(dirname "$self")/../../..
+fi
+repo=$(cd "$repo" && pwd -P) || die "repositório não encontrado: $repo"
+target=${SKILLS_SYNC_TARGET:-$HOME}
+target=$(cd "$target" && pwd -P) || die "alvo não encontrado: $target"
+pkgdir=$repo/skills
+[ -d "$pkgdir" ] || die "não há $pkgdir"
+
+# --- perfil ------------------------------------------------------------------
+
+# Tira comentário (#…), espaço nas pontas e linha vazia. O CR de arquivo vindo
+# do Windows sai junto, porque [[:space:]] o inclui (\r no sed não é
+# portável: sed BSD antigo lê como "r"). Linha vazia virando argumento vazio
+# faz o stow tratar a stow dir inteira como pacote, em silêncio: por isso ela
+# nunca chega lá.
+clean() {
+    sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$@" |
+        grep -v '^$' || true
+}
+
+[ -f "$repo/.profile.local" ] ||
+    die "falta $repo/.profile.local (um perfil por linha, ex.: comum e pessoal)"
+
+profiles=$(clean "$repo/.profile.local")
+[ -n "$profiles" ] || die ".profile.local não lista nenhum perfil"
+
+files=
+for p in $profiles; do
+    f=$repo/profiles/$p.pkgs
+    [ -f "$f" ] || die "perfil desconhecido: $p (não há profiles/$p.pkgs)"
+    files="$files $f"
+done
+
+# Skills só desta máquina, fora de qualquer perfil (não versionado). Sem isso,
+# uma skill ligada à mão seria desligada no próximo sync.
+[ -f "$repo/.pkgs.local" ] && files="$files $repo/.pkgs.local"
+
+# shellcheck disable=SC2086 # $files é lista de caminhos sem espaço, separada de propósito
+wanted=$(clean $files | sort -u)
+
+for s in $wanted; do
+    case $s in
+    *[!A-Za-z0-9._-]* | .*) die "nome de skill inválido no perfil: '$s'" ;;
+    esac
+    [ -f "$pkgdir/$s/.agents/skills/$s/SKILL.md" ] ||
+        die "skill do perfil não existe no repo: $s"
+done
+
+# --- alvo --------------------------------------------------------------------
+
+# Diretório-alvo que é symlink significa que o stow já dobrou ele para dentro
+# de um pacote; ligar ou desligar em cima disso espalha o estrago.
+for a in $agents; do
+    for d in "$target/$a" "$target/$a/skills"; do
+        [ -L "$d" ] && die "$d é symlink (dobra do stow); desfaça à mão antes"
+    done
+done
+
+run() {
+    if [ "$dry" -eq 1 ]; then
+        printf '  (dry-run) %s\n' "$*"
+    else
+        "$@"
+    fi
+}
+
+# Âncoras: sem um arquivo que não seja do stow no diretório, o stow dobra o
+# diretório inteiro quando sobra uma skill só (inclusive no desligar).
+for a in $agents; do
+    [ -d "$target/$a/skills" ] || run mkdir -p "$target/$a/skills"
+done
+for a in .agents .cursor; do
+    [ -e "$target/$a/skills/.keep" ] || run touch "$target/$a/skills/.keep"
+done
+
+# --- o que está ligado -------------------------------------------------------
+
+# Imprime o nome da skill se $1 for um link nosso; falha se não for. Funciona
+# com link pendurado: o que se resolve é o diretório skills/ do repo, não a
+# skill, que pode já ter sumido. Corpo em subshell: sh POSIX não tem local.
+owned() (
+    link=$1
+    [ -L "$link" ] || return 1
+    name=${link##*/}
+    dir=${link%/*}
+    agent=${dir%/skills}
+    agent=${agent##*/}
+    value=$(readlink "$link") || return 1
+    suffix=/$name/$agent/skills/$name
+    case $value in
+    *"$suffix") ;;
+    *) return 1 ;;
+    esac
+    base=${value%"$suffix"}
+    case $base in
+    /*) ;;
+    *) base=$dir/$base ;;
+    esac
+    [ "$(cd "$base" 2>/dev/null && pwd -P)" = "$pkgdir" ] || return 1
+    printf '%s\n' "$name"
+)
+
+in_list() {
+    printf '%s\n' "$2" | grep -qxF "$1"
+}
+
+# --- desligar ----------------------------------------------------------------
+
+removed=
+for a in $agents; do
+    [ -d "$target/$a/skills" ] || continue
+    for link in "$target/$a/skills"/* "$target/$a/skills"/.[!.]*; do
+        name=$(owned "$link") || continue
+        in_list "$name" "$wanted" && continue
+        run rm "$link"
+        in_list "$name" "$removed" || removed="$removed
+$name"
+    done
+done
+
+# --- ligar -------------------------------------------------------------------
+
+# Skill que já chega pelos três caminhos fica de fora: o stow não precisa
+# dela, e a saída mostra só o que mudou.
+missing=
+for s in $wanted; do
+    for a in $agents; do
+        if ! owned "$target/$a/skills/$s" >/dev/null 2>&1; then
+            missing="$missing $s"
+            break
+        fi
+    done
+done
+
+if [ -n "$missing" ]; then
+    # shellcheck disable=SC2086 # nomes validados acima, sem espaço
+    if [ "$dry" -eq 1 ]; then
+        stow -n -d "$pkgdir" -t "$target" $missing
+    else
+        stow -d "$pkgdir" -t "$target" $missing
+    fi
+fi
+
+# --- relatório ---------------------------------------------------------------
+
+prefix=
+[ "$dry" -eq 1 ] && prefix='(dry-run) '
+for s in $missing; do printf '%sliga:     %s\n' "$prefix" "$s"; done
+for s in $removed; do printf '%sdesliga:  %s\n' "$prefix" "$s"; done
+if [ -z "$missing" ] && [ -z "$removed" ]; then
+    printf 'nada a fazer: %s skill(s) do perfil já ligada(s)\n' \
+        "$(printf '%s\n' "$wanted" | grep -c . || true)"
+fi
