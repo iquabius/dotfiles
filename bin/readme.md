@@ -83,10 +83,12 @@ commita, junta, puxa ou envia, que desliga os da configuração; tirar
 sem o `git revisao`, com a ref que o git usaria (o último `--ref` antes
 do subcomando, que se expande; senão o `GIT_NOTES_REF`; senão o último
 `core.notesRef` do `-c` ou da configuração pelo ambiente, que o git só
-aceita inteiros); e o merge pelo GitHub (`gh pr merge`, a API REST ou a
-GraphQL), que não passa pelo pre-push. Ler a configuração (`get`,
-`list`, `--get*`, `--list`, a chave sozinha) passa, também com
-redirecionamento.
+aceita inteiros), ou apontar a ela o `core.notesRef` gravado ou o
+`notes.rewriteRef` (também por glob ou pelo `GIT_NOTES_REWRITE_REF`),
+que copiaria a marca para o commit reescrito por um `--amend` ou um
+rebase; e o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
+que não passa pelo pre-push. Ler a configuração (`get`, `list`, `--get*`,
+`--list`, a chave sozinha) passa, também com redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não

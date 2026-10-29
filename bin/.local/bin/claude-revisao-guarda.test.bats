@@ -568,3 +568,28 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		[ -z "$output" ]
 	done
 }
+
+@test "apontar core.notesRef ou notes.rewriteRef às notas da revisão é recusado" {
+	for c in 'git config core.notesRef refs/notes/revisao' \
+		'git -c notes.rewriteRef=refs/notes/revisao commit --amend --no-edit' \
+		"git -c 'notes.rewriteRef=refs/notes/*' rebase -i main" \
+		'git config --add notes.rewriteRef refs/notes/revisao' \
+		'GIT_NOTES_REWRITE_REF=refs/notes/revisao git commit --amend --no-edit' \
+		'GIT_NOTES_REWRITE_REF=refs/notes/commits:refs/notes/revisao git rebase main' \
+		'git --config-env=notes.rewriteRef=V commit --amend --no-edit' \
+		'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=notes.rewriteRef GIT_CONFIG_VALUE_0=refs/notes/revisao git rebase main'; do
+		run guarda "$c"
+		recusa
+	done
+	# O core.notesRef não é padrão, e o git recusa o que não começa por
+	# refs/notes/; o -c do git config só vale para ele, que não reescreve nada.
+	for c in 'git config core.notesRef refs/notes/commits' 'git config --get core.notesRef' \
+		'git -c notes.rewriteRef=refs/notes/commits commit --amend --no-edit' \
+		'git -c notes.rewriteRef=refs/notes/revisao config --get user.name' \
+		"git config core.notesRef 'refs/notes/*'" 'git config core.notesRef revisao' \
+		'git config --unset core.notesRef refs/notes/revisao' \
+		'git config --unset-all notes.rewriteRef refs/notes/revisao'; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
