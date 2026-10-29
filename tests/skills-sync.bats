@@ -495,3 +495,24 @@ snapshot() {
 	[ "$status" -eq 2 ]
 	[[ "$output" == *"Uso:"* ]]
 }
+
+@test "nome de skill começando com hífen é recusado" {
+	profile comum '-x'
+	use comum
+	sync
+	[ "$status" -eq 1 ]
+	[[ "$output" == *"nome de skill inválido"* ]]
+}
+
+@test "link nosso de nome com hífen inicial é desligado sem erro do grep" {
+	mkskill a
+	profile comum a
+	use comum
+	mkdir -p "$T/.claude/skills"
+	ln -s "../../../repo/skills/-x/.claude/skills/-x" "$T/.claude/skills/-x"
+	sync
+	[ "$status" -eq 0 ]
+	[ ! -L "$T/.claude/skills/-x" ]
+	[[ "$output" == *"desliga:  -x"* ]]
+	[[ "$output" != *"grep"* ]]
+}
