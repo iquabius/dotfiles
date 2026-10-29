@@ -2,16 +2,21 @@
 # Depois de um pull (ou merge), deixa os links do pacote bin iguais ao
 # repositório e as skills ligadas iguais ao perfil.
 #
+# Serve aos dois repositórios: a este (~/.dotfiles) pelo core.hooksPath, e à
+# camada privada (~/.dotfiles-private) pelo post-merge de lá, que só chama
+# este. O skills-sync que ele roda é sempre o daqui, que liga as skills dos
+# dois.
+#
 # Script novo em bin/.local/bin vira link em ~/.local/bin pelo stow -R bin, e
 # o link de script que o pull apagou sai. Sem isso, a configuração que chama
 # um script novo pelo link (o ssh, os guardas do claude-local) vale no pull, e
 # o script só depois de um stow à mão. Sem ~/.local/bin, só avisa: o stow
-# dobraria o diretório para dentro do repositório. Só no checkout em
-# ~/.dotfiles-private, não numa worktree (ver abaixo).
+# dobraria o diretório para dentro do repositório. Só nos checkouts em
+# ~/.dotfiles e ~/.dotfiles-private, não numa worktree (ver abaixo).
 #
 # Skill nova vira link, e skill que o pull apagou tem os links pendurados
-# removidos. Numa máquina sem .profile.local, só avisa: o pull não falha
-# por causa disso.
+# removidos. Numa máquina sem o .profile.local daqui, só avisa: o pull não
+# falha por causa disso.
 #
 # O git chama o post-merge depois de todo merge sem conflito, sem filtro por
 # caminho, e o resultado do skills-sync só depende de skills/, de profiles/ e
@@ -40,26 +45,47 @@ mudou() {
     ! git -C "$repo" diff --quiet ORIG_HEAD -- "$@" 2>/dev/null
 }
 
-# Os links de ~/.local/bin são do checkout em ~/.dotfiles-private, o mesmo
-# caminho que os hooks do git-local chamam. Numa worktree (o core.hooksPath
-# vale em todas), o stow -d dela brigaria com esses links, ou ligaria o
-# script novo à worktree: ali o hook não mexe nos links.
-casa=$(cd "$HOME/.dotfiles-private" 2>/dev/null && pwd -P)
+# Os links de ~/.local/bin e das skills são dos checkouts em ~/.dotfiles e
+# ~/.dotfiles-private, os caminhos que os hooks chamam. Numa worktree (o
+# core.hooksPath vale em todas), o stow -d dela brigaria com esses links, ou
+# ligaria o script novo à worktree, e o que ela mudou não está em casa: ali o
+# hook não faz nada.
+publico=$HOME/.dotfiles
+privado=$HOME/.dotfiles-private
+aqui=$(cd "$repo" && pwd -P)
+em_casa=0
+for c in "$publico" "$privado"; do
+    [ "$aqui" = "$(cd "$c" 2>/dev/null && pwd -P)" ] && em_casa=1
+done
+[ "$em_casa" -eq 1 ] || exit 0
 
-if [ "$(cd "$repo" && pwd -P)" = "$casa" ] && mudou bin; then
+# O bin dos dois checkouts, o privado primeiro: o script que passa de um
+# repositório ao outro sai do ~/.local/bin pelo stow do privado e volta pelo
+# do público, qualquer que seja o repositório que o pull trouxe antes. No
+# pull que chega primeiro, o stow do outro repositório falha ou não muda
+# nada; no segundo, os dois acertam.
+if mudou bin; then
     if [ ! -d "$HOME/.local/bin" ]; then
         echo "post-merge: sem ~/.local/bin; pulei o stow -R bin" >&2
-    elif ! stow -d "$repo" -t "$HOME" -R bin; then
-        echo "post-merge: stow -R bin falhou (erro acima); rode-o à mão" >&2
+    else
+        for c in "$privado" "$publico"; do
+            [ -d "$c/bin" ] || continue
+            stow -d "$c" -t "$HOME" -R bin ||
+                echo "post-merge: stow -R bin de $c falhou (erro acima); rode-o à mão" >&2
+        done
     fi
 fi
 
 mudou skills profiles bin/.local/bin/skills-sync || exit 0
 
-if [ ! -f "$repo/.profile.local" ]; then
-    echo "post-merge: sem .profile.local; pulei o skills-sync" >&2
+if [ ! -f "$publico/.profile.local" ]; then
+    if [ -f "$privado/.profile.local" ]; then
+        echo "post-merge: o .profile.local mudou para $publico: mv $privado/.profile.local $publico/" >&2
+    else
+        echo "post-merge: sem $publico/.profile.local; pulei o skills-sync" >&2
+    fi
     exit 0
 fi
 
-"$repo/bin/.local/bin/skills-sync" ||
+"$publico/bin/.local/bin/skills-sync" ||
     echo "post-merge: skills-sync falhou; rode-o à mão para ver o erro" >&2
