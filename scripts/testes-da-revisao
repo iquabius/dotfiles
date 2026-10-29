@@ -1,0 +1,110 @@
+#!/bin/sh
+# O teste que o git revisao pronto roda (linha "teste:" do .config/revisao),
+# escolhido pelo diff de GIT_REVISAO_BASE a GIT_REVISAO_PONTA nos caminhos
+# de código do .config/revisao:
+#
+# - nada, quando nenhum caminho de código mudou;
+# - o lint;
+# - a suíte que mudou, se ela ainda existe;
+# - de cada script que mudou (bin/.local/bin/<n>, scripts/<n>,
+#   .githooks/<n>), a bin/.local/bin/<n>.test.bats, a tests/<n>.bats e toda
+#   suíte que cita <n>, como a do pre-commit de um repositório pode citar o
+#   script que ele chama;
+# - a unittest da skill cujos scripts ou testes mudaram, no repositório que
+#   guarda skills com scripts, como a camada privada (a skill sem testes
+#   fica no lint, que é tudo o que o make check de lá daria a ela);
+# - tudo (make check) sem base, quando muda o que todas usam (Makefile,
+#   .config/revisao, um auxiliar de tests/), quando um script muda sem
+#   suíte que o confira ou quando muda um caminho de código que este script
+#   não conhece.
+#
+# Roda no host, onde estão as dependências de todas as suítes (AGENTS.md,
+# "Testes"): dentro de um distrobox, sobe pelo distrobox-host-exec.
+set -eu
+
+if [ -e "${REVISAO_CONTAINERENV:-/run/.containerenv}" ]; then
+    # shellcheck disable=SC2016 # o $1 e o $2 são do sh -c, no host
+    exec distrobox-host-exec env \
+        GIT_REVISAO_BASE="${GIT_REVISAO_BASE:-}" \
+        GIT_REVISAO_PONTA="${GIT_REVISAO_PONTA:-HEAD}" \
+        REVISAO_CONTAINERENV=/nenhum \
+        sh -c 'cd "$1" && exec "$2"' sh "$PWD" "$0"
+fi
+
+base=${GIT_REVISAO_BASE:-}
+ponta=${GIT_REVISAO_PONTA:-HEAD}
+[ -n "$base" ] || exec make check
+
+# Os pathspecs do .config/revisao da base e da ponta, um por linha, sem
+# espaço: viram os argumentos do git diff, sem que o shell expanda os
+# curingas deles. Juntar as linhas das duas listas, como o git-revisao faz,
+# impede que o ramo tire uma linha e passe com o que ela cobria; uma
+# exclusão nova (:!) ainda estreita a lista, aqui e no git-revisao.
+set -f
+# shellcheck disable=SC2046
+set -- $({
+    git show "$base:.config/revisao" 2>/dev/null || true
+    git show "$ponta:.config/revisao" 2>/dev/null || true
+} | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' |
+    grep -v -e '^#' -e '^teste:' -e '^$' | sort -u)
+set +f
+mudados=$(git -c core.quotePath=false diff --name-only "$base" "$ponta" -- "$@")
+if [ -z "$mudados" ]; then
+    echo "testes da revisão: nenhum caminho de código mudou" >&2
+    exit 0
+fi
+todas=$(ls bin/.local/bin/*.test.bats tests/*.bats 2>/dev/null || true)
+
+suites=
+skills=
+while IFS= read -r f; do
+    case $f in
+    '') continue ;;
+    Makefile | .config/revisao) exec make check ;;
+    skills/*/.agents/skills/*/scripts/* | skills/*/.agents/skills/*/tests/*)
+        raiz=${f%/scripts/*}
+        raiz=${raiz%/tests/*}
+        [ ! -d "$raiz/tests" ] || skills="$skills
+$raiz"
+        ;;
+    bin/.local/bin/*.test.bats | tests/*.bats)
+        # A suíte apagada não tem o que rodar.
+        [ ! -e "$f" ] || suites="$suites
+$f"
+        ;;
+    bin/.local/bin/* | scripts/* | .githooks/*)
+        n=${f##*/}
+        # As suítes do nome e as que citam o script como palavra; sem
+        # nenhuma, só o make check inteiro o confere. A citação, e não o
+        # caminho: a suíte que põe o diretório no PATH e roda um script que
+        # chama outro pelo nome só se liga ao segundo pela citação dele. O
+        # custo é a suíte que só fala do script, como a do git-revisao fala
+        # do pre-commit, rodar a mais.
+        achadas=$(
+            for s in "bin/.local/bin/$n.test.bats" "tests/$n.bats"; do
+                [ ! -e "$s" ] || echo "$s"
+            done
+            # shellcheck disable=SC2086 # um caminho por linha, sem espaço
+            [ -z "$todas" ] || grep -lwF -- "$n" $todas || true
+        )
+        [ -n "$achadas" ] || exec make check
+        suites="$suites
+$achadas"
+        ;;
+    *) exec make check ;;
+    esac
+done <<EOF
+$mudados
+EOF
+
+make lint
+suites=$(printf '%s\n' "$suites" | sed '/^$/d' | sort -u)
+skills=$(printf '%s\n' "$skills" | sed '/^$/d' | sort -u)
+if [ -n "$suites" ]; then
+    # shellcheck disable=SC2086 # um caminho por linha, sem espaço
+    bats $suites
+fi
+for raiz in $skills; do
+    echo "unittest $raiz/tests"
+    (cd "$raiz" && python3 -B -m unittest discover -s tests -q)
+done
