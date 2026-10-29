@@ -1,9 +1,10 @@
 # Instruções para agentes: dotfiles
 
 Configuração pessoal em pacotes GNU Stow, em português: cada diretório da
-raiz espelha o `$HOME` (`readme.md`). A identidade do git, o `git-revisao`,
-que guarda o processo abaixo, e as skills de agente vêm da camada privada,
-instalada à parte.
+raiz espelha o `$HOME` (`readme.md`). O `skills-sync`, que liga as skills
+de agente, e os perfis dele estão aqui, no pacote `bin` e em `profiles/`.
+A identidade do git, o `git-revisao`, que guarda o processo abaixo, e as
+skills de agente vêm da camada privada, instalada à parte.
 
 ## Ciclo: ramo, revisão, merge
 
@@ -17,9 +18,11 @@ história dele se condensa antes do merge (passo 5).
    junto, e o que não é da tarefa fica fora do índice. Uma tarefa por
    ramo, com um nome que a diga, de horas a dois dias.
 2. **Primeira versão commitada** assim que funciona: o Emacs abre sem
-   erro, o fish carrega num terminal novo, o script roda.
+   erro, o fish carrega num terminal novo, o script roda e o `make
+   check` passa (ver *Testes*).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
-   `.config/revisao`: hooks, Emacs Lisp, fish, scripts de shell), rode a
+   `.config/revisao`: hooks, Emacs Lisp, fish, scripts de shell, o
+   `Makefile`, o `bin/` e as suítes de `tests/`), rode a
    skill `linus-review` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
    só de texto ou de configuração simples (readme, `settings.json` dos
    editores, `.gitconfig`, `tmux.conf`, `latexmkrc`) dispensa a revisão,
@@ -89,7 +92,22 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 Os pacotes stow apontam para a árvore de trabalho: o que o ramo muda já
 vale na máquina. Arquivo novo num pacote só chega ao `$HOME` depois do
 `stow` do pacote, e o checkout não volta ao `main` antes do merge, ou o
-link fica pendurado.
+link fica pendurado. Script novo em `bin/.local/bin/` chega ao `PATH` pelo
+`stow -R bin`, que o `post-merge` roda, aqui e na camada privada, depois
+de todo merge sem conflito no `~/.dotfiles` ou no `~/.dotfiles-private`
+que muda o `bin/`, e não numa worktree.
+
+## Testes
+
+```sh
+distrobox-host-exec sh -c 'cd ~/.dotfiles && make check'
+```
+
+Roda no host: ShellCheck e `shfmt -i 4` nos `SCRIPTS` do `Makefile`
+(script de shell novo entra nessa lista) e o bats em `tests/`. Caso de
+borda novo vira teste antes da correção, e todo teste novo é conferido
+contra uma cópia sabotada do script, que ele tem de reprovar
+(`SKILLS_SYNC_SCRIPT` e `POST_MERGE_SCRIPT` trocam o script testado).
 
 ## Commits
 
