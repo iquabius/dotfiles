@@ -608,3 +608,17 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		[ -z "$output" ]
 	done
 }
+
+@test "a substituição de processo é uma palavra, e o que ela roda se confere" {
+	for c in 'git commit -F <(echo msg) --no-verify' 'git push -o <(true) --no-verify' \
+		'cat <(git push --no-verify)' 'diff <(git commit -n -m x) /dev/null' \
+		'git commit -m x >(cat) -n'; do
+		run guarda "$c"
+		recusa
+	done
+	for c in 'diff <(git log) <(git log main)' 'mapfile -t linhas < <(git status)' \
+		"echo '<(git push --no-verify)'"; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
