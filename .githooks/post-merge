@@ -1,0 +1,65 @@
+#!/bin/sh
+# Depois de um pull (ou merge), deixa os links do pacote bin iguais ao
+# repositório e as skills ligadas iguais ao perfil.
+#
+# Script novo em bin/.local/bin vira link em ~/.local/bin pelo stow -R bin, e
+# o link de script que o pull apagou sai. Sem isso, a configuração que chama
+# um script novo pelo link (o ssh, os guardas do claude-local) vale no pull, e
+# o script só depois de um stow à mão. Sem ~/.local/bin, só avisa: o stow
+# dobraria o diretório para dentro do repositório. Só no checkout em
+# ~/.dotfiles-private, não numa worktree (ver abaixo).
+#
+# Skill nova vira link, e skill que o pull apagou tem os links pendurados
+# removidos. Numa máquina sem .profile.local, só avisa: o pull não falha
+# por causa disso.
+#
+# O git chama o post-merge depois de todo merge sem conflito, sem filtro por
+# caminho, e o resultado do skills-sync só depende de skills/, de profiles/ e
+# do próprio script (o .profile.local e o .pkgs.local não são versionados, e
+# merge não os muda). Merge que não mexeu ali sai calado.
+# A comparação é do ORIG_HEAD, o HEAD de antes do merge, com a árvore de
+# trabalho, e não com o HEAD: o merge --squash deixa o HEAD onde estava e põe
+# a mudança só no índice. Sem ORIG_HEAD, ou se o diff falhar por outro motivo,
+# roda como antes, para não deixar de ligar uma skill nova. Arquivo rastreado
+# com mudança local nesses caminhos também faz rodar, o que só custa um sync a
+# mais; arquivo não rastreado, como uma skill nova ainda sem git add, não.
+#
+# O merge seguinte, se não mexer nesses caminhos, não compensa um sync ou um
+# stow que não aconteceu: nem o que falhou (o aviso pede para rodá-lo à mão),
+# nem o de um merge com conflito, que o git conclui no git commit sem chamar o
+# post-merge. Nos dois casos é skills-sync, ou stow -R bin, à mão.
+#
+# Não roda no pull --rebase que reaplica commits locais (o git chama
+# post-rewrite; o que só avança o ramo chama o post-merge) nem em reset (que
+# não o chama); aí é stow -R bin e skills-sync à mão.
+
+repo=$(git rev-parse --show-toplevel)
+
+# mudou <caminho>... — o merge mexeu ali, ou o diff falhou (sem ORIG_HEAD).
+mudou() {
+    ! git -C "$repo" diff --quiet ORIG_HEAD -- "$@" 2>/dev/null
+}
+
+# Os links de ~/.local/bin são do checkout em ~/.dotfiles-private, o mesmo
+# caminho que os hooks do git-local chamam. Numa worktree (o core.hooksPath
+# vale em todas), o stow -d dela brigaria com esses links, ou ligaria o
+# script novo à worktree: ali o hook não mexe nos links.
+casa=$(cd "$HOME/.dotfiles-private" 2>/dev/null && pwd -P)
+
+if [ "$(cd "$repo" && pwd -P)" = "$casa" ] && mudou bin; then
+    if [ ! -d "$HOME/.local/bin" ]; then
+        echo "post-merge: sem ~/.local/bin; pulei o stow -R bin" >&2
+    elif ! stow -d "$repo" -t "$HOME" -R bin; then
+        echo "post-merge: stow -R bin falhou (erro acima); rode-o à mão" >&2
+    fi
+fi
+
+mudou skills profiles bin/.local/bin/skills-sync || exit 0
+
+if [ ! -f "$repo/.profile.local" ]; then
+    echo "post-merge: sem .profile.local; pulei o skills-sync" >&2
+    exit 0
+fi
+
+"$repo/bin/.local/bin/skills-sync" ||
+    echo "post-merge: skills-sync falhou; rode-o à mão para ver o erro" >&2
