@@ -1,0 +1,6 @@
+# Skills que valem em toda máquina, de trabalho e pessoal.
+#
+# Uma por linha; linha vazia e linha com # são ignoradas pelo skills-sync. O
+# nome é o do pacote em skills/, daqui ou da camada privada. O comum.pkgs do
+# ~/.dotfiles-private soma a este as skills que só as máquinas pessoais
+# ligam.
