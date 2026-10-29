@@ -28,6 +28,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `asdf` | `~/.tool-versions` (versões globais de nodejs, pnpm, yarn, deno, erlang e elixir) |
 | `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
 | `openwhispr` | `~/.config/autostart/openwhispr-fontconfig.desktop` e `~/.config/open-whispr/fonts.conf` **(Linux)** |
+| `bin` | `~/.local/bin/skills-sync`, que liga as skills de agente do perfil da máquina (ver *Skills de agente*) |
 
 Detalhes que valem saber:
 
@@ -75,6 +76,8 @@ Detalhes que valem saber:
   `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
 - **`.config/` também não.** O `.config/revisao` lista os caminhos de código
   que pedem revisão do ramo antes do `main`; o ciclo está no `AGENTS.md`.
+- **`profiles/` também não.** Os perfis de skills de agente, lidos pelo
+  `skills-sync` (ver *Skills de agente*).
 - **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
@@ -86,6 +89,40 @@ Detalhes que valem saber:
   ```
 - **O `fish_plugins` não instala nada sozinho.** O fisher não vem versionado
   aqui; enquanto não for instalado à mão, o arquivo fica inerte (passo 5).
+
+## Skills de agente
+
+As skills de agente (Claude Code, Codex, Cursor) vêm de dois repositórios:
+este e a camada privada, em `~/.dotfiles-private`, que só as máquinas
+pessoais têm. Cada um tem a sua stow dir `skills/`, com um pacote por skill,
+e os seus `profiles/<perfil>.pkgs`; por ora, todas as skills estão na camada
+privada. O `skills-sync` liga em `~/.agents/skills`, `~/.claude/skills` e
+`~/.cursor/skills` as skills dos perfis que o `.profile.local` daqui lista, e
+desliga as que saíram do perfil, sumiram dos repositórios ou mudaram de um ao
+outro.
+
+- Um perfil é a união dos `.pkgs` de mesmo nome nos dois repositórios: o
+  `comum.pkgs` daqui lista o que vale em toda máquina, e o da camada privada
+  soma o que só as máquinas pessoais ligam.
+- Cada skill mora num repositório só; a skill do perfil que está nos dois é
+  erro, antes de mexer em qualquer link.
+- O `.profile.local` e o `.pkgs.local` que ficaram na camada privada também
+  são erro: o `skills-sync` diz o `mv` que os traz.
+- O `.pkgs.local` daqui liga skills só nesta máquina. Ele e o
+  `.profile.local` ficam fora do git.
+- Na máquina de onde a camada privada saiu, os links que apontavam para ela
+  saem no sync seguinte.
+
+```bash
+printf 'comum\ntrabalho\n' > ~/.dotfiles/.profile.local   # ou 'comum\npessoal\n', com a camada privada
+skills-sync        # aplica
+skills-sync -n     # só mostra o que faria
+```
+
+O `post-merge` dos dois repositórios o roda depois do pull que muda as
+skills ou os perfis. O `pull --rebase` que reaplica commits locais, o pull
+com conflito e o `git reset` para o remoto não chamam o `post-merge`: aí é
+rodar o `skills-sync` à mão.
 
 ## Reconfigurar num sistema novo (ou formatado)
 
@@ -141,7 +178,11 @@ O `pre-commit` recusa `/home/<user>/` e `/Users/<user>/` nas linhas
 adicionadas: caminho absoluto de home entrega o nome da conta da máquina que
 escreveu a linha, e três já tinham entrado aqui desse jeito. Só as linhas
 novas são olhadas, e `git commit --no-verify` passa por cima quando for
-mesmo o caso.
+mesmo o caso. O `post-merge` roda o `stow -R bin`, daqui e da camada
+privada, depois de todo pull que muda o pacote `bin` de um dos dois, e o
+`skills-sync` depois de todo pull que muda as skills, os perfis ou o próprio
+`skills-sync` (ver *Skills de agente*); numa worktree ou num clone fora do
+`~/.dotfiles`, nada.
 
 ### 3. Aplicar os symlinks
 
@@ -150,7 +191,12 @@ Instale só os pacotes que fizerem sentido na máquina:
 ```bash
 cd ~/.dotfiles && stow fish emacs git tmux ssh latexmk ytdlp asdf
 cd ~/.dotfiles && stow --no-folding vscode vscode-oss vscodium cursor
+mkdir -p ~/.local/bin && cd ~/.dotfiles && stow bin
 ```
+
+O `mkdir` vem antes do `stow bin`: sem `~/.local/bin`, o Stow faz dele um
+symlink para dentro deste repo, e todo script que outro pacote ligasse ali
+cairia aqui dentro.
 
 Os editores exigem `--no-folding`. Sem ele, numa máquina onde
 `~/.config/Code` (ou `Cursor`) ainda não existe, o Stow cria o diretório
