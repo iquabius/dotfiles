@@ -4,6 +4,7 @@
 # nome é o do pacote em skills/, daqui ou da camada privada. O comum.pkgs do
 # ~/.dotfiles-private soma a este as skills que só as máquinas pessoais
 # ligam.
+mensagem-de-commit
 caveman-distillate
 
 # A checagem adversarial de fatos e de lógica; cada cartucho mora na skill
