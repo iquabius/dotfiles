@@ -5,10 +5,12 @@
 # ~/.dotfiles-private soma a este as skills que só as máquinas pessoais
 # ligam.
 mensagem-de-commit
+revisao-rigorosa
 caveman-distillate
 
-# A checagem adversarial de fatos e de lógica; cada cartucho mora na skill
-# do registro dele, em cartuchos-de-fatos/.
+# A checagem adversarial de fatos e de lógica, que a mensagem-de-commit e
+# a revisao-rigorosa reaproveitam; cada cartucho mora na skill do registro
+# dele, em cartuchos-de-fatos/.
 checagem-de-fatos
 
 # Mapa de tickets de decisão para trabalho maior que uma sessão
