@@ -4,8 +4,9 @@ Configuração pessoal em pacotes GNU Stow, em português: cada diretório da
 raiz espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
 processo abaixo, o `git-assunto-merge`, o `claude-revisao-guarda` e o
 `skills-sync`, que liga as skills de agente, estão aqui, no pacote `bin`,
-com os hooks do git no pacote `git`. A identidade do git e as skills de
-agente vêm da camada privada, instalada à parte.
+com os hooks do git no pacote `git`. As skills de agente moram em
+`skills/`, daqui e da camada privada; a identidade do git vem da camada
+privada, instalada à parte.
 
 ## Ciclo: ramo, revisão, merge
 
