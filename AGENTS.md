@@ -24,11 +24,12 @@ história dele se condensa antes do merge (passo 5).
    check` passa (ver *Testes*).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
    `.config/revisao`: hooks, Emacs Lisp, fish, scripts de shell, o
-   `Makefile`, o `bin/`, o `scripts/` e as suítes de `tests/`), rode a
-   skill `revisao-rigorosa` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
-   só de texto ou de configuração simples (readme, `settings.json` dos
-   editores, `.gitconfig`, `tmux.conf`, `latexmkrc`) dispensa a revisão,
-   mas não o ramo.
+   `Makefile`, o `bin/`, o `scripts/`, as suítes de `tests/`, o
+   `git/.gitconfig`, que liga os hooks do ciclo, e o `claude/`, que
+   registra o guarda), rode a skill `revisao-rigorosa` sobre
+   `$(git merge-base main HEAD)...HEAD`. Ramo só de texto ou de
+   configuração simples (readme, `settings.json` dos editores,
+   `tmux.conf`, `latexmkrc`) dispensa a revisão, mas não o ramo.
 4. **Cada achado vira um conserto** no ramo: `git commit --fixup=<commit
    que ele corrige>`, ou commit novo quando ele não corrige um commit só.
    Revise de novo até o veredito **Pronto para o merge**.
@@ -76,7 +77,14 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 - **pre-push** (`git-revisao`, hook global do pacote `git`): recusa
   commit que mexe em caminho de `.config/revisao` e chega ao `main` sem a
   marca de `git revisao pronto` (ou `excecao`) que o cubra. A marca é uma
-  nota local em `refs/notes/revisao` e não vai para o GitHub.
+  nota local em `refs/notes/revisao` e não vai para o GitHub. O
+  `git/.gitconfig` que liga este hook e o `claude/` que registra o guarda
+  são caminhos revisados, mas o stow os liga à árvore de trabalho do
+  `~/.dotfiles`: a mudança vale assim que chega a esse checkout, pela
+  edição ou pelo merge. O ramo que apaga o `[hook "revisao-push"]` faz
+  então o push sem o pre-push, e só a revisão do passo 3 o segura; o que
+  tira o guarda do `settings.json` (na máquina sem a camada privada) o
+  desliga antes do push, que o pre-push ainda confere.
 - **pre-commit** (`git-revisao`): recusa commit de agente no `main` que
   mexa no código. O git não o chama em `cherry-pick`, `revert` nem `am`:
   o que eles levarem ao `main` só o pre-push pega. O `.githooks/pre-commit`
