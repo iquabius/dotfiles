@@ -98,9 +98,10 @@ Detalhes que valem saber:
 As skills de agente (Claude Code, Codex, Cursor) vêm de dois repositórios:
 este e a camada privada, em `~/.dotfiles-private`, que só as máquinas
 pessoais têm. Cada um tem a sua stow dir `skills/`, com um pacote por skill,
-e os seus `profiles/<perfil>.pkgs`; por ora, todas as skills estão na camada
-privada. O `skills-sync` liga em `~/.agents/skills`, `~/.claude/skills` e
-`~/.cursor/skills` as skills dos perfis que o `.profile.local` daqui lista, e
+e os seus `profiles/<perfil>.pkgs`; a maior parte mora aqui, e as que ficam
+privadas moram na camada privada. O `skills-sync` liga em `~/.agents/skills`,
+`~/.claude/skills` e `~/.cursor/skills` as skills dos perfis que o
+`.profile.local` daqui lista, e
 desliga as que saíram do perfil, sumiram dos repositórios ou mudaram de um ao
 outro.
 
