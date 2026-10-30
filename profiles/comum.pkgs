@@ -4,3 +4,22 @@
 # nome é o do pacote em skills/, daqui ou da camada privada. O comum.pkgs do
 # ~/.dotfiles-private soma a este as skills que só as máquinas pessoais
 # ligam.
+mensagem-de-commit
+revisao-rigorosa
+caveman-distillate
+
+# A checagem adversarial de fatos e de lógica, que a mensagem-de-commit e
+# a revisao-rigorosa reaproveitam; cada cartucho mora na skill do registro
+# dele, em cartuchos-de-fatos/.
+checagem-de-fatos
+
+# Mapa de tickets de decisão para trabalho maior que uma sessão
+# (mattpocock/skills, MIT), com as skills que a wayfinder chama. A
+# setup-matt-pocock-skills escreve o doc do rastreador de cada repositório,
+# onde a wayfinder lê como guardar o mapa e os tickets.
+wayfinder
+research
+prototype
+grilling
+domain-modeling
+setup-matt-pocock-skills

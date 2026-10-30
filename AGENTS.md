@@ -4,8 +4,9 @@ Configuração pessoal em pacotes GNU Stow, em português: cada diretório da
 raiz espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
 processo abaixo, o `git-assunto-merge`, o `claude-revisao-guarda` e o
 `skills-sync`, que liga as skills de agente, estão aqui, no pacote `bin`,
-com os hooks do git no pacote `git`. A identidade do git e as skills de
-agente vêm da camada privada, instalada à parte.
+com os hooks do git no pacote `git`. As skills de agente moram em
+`skills/`, daqui e da camada privada; a identidade do git vem da camada
+privada, instalada à parte.
 
 ## Ciclo: ramo, revisão, merge
 
@@ -24,17 +25,17 @@ história dele se condensa antes do merge (passo 5).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
    `.config/revisao`: hooks, Emacs Lisp, fish, scripts de shell, o
    `Makefile`, o `bin/`, o `scripts/` e as suítes de `tests/`), rode a
-   skill `linus-review` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
+   skill `revisao-rigorosa` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
    só de texto ou de configuração simples (readme, `settings.json` dos
    editores, `.gitconfig`, `tmux.conf`, `latexmkrc`) dispensa a revisão,
    mas não o ramo.
 4. **Cada achado vira um conserto** no ramo: `git commit --fixup=<commit
    que ele corrige>`, ou commit novo quando ele não corrige um commit só.
-   Revise de novo até o veredito **Ready to merge**.
-5. **Condense o ramo** antes de marcar (passo 7 da `linus-review`): cada
+   Revise de novo até o veredito **Pronto para o merge**.
+5. **Condense o ramo** antes de marcar (passo 7 da `revisao-rigorosa`): cada
    conserto entra no commit que ele corrige, e a série fica com uma
    mudança lógica por commit, com as mensagens escritas a partir da
-   árvore (skill `commit-message`), sem as rodadas da revisão:
+   árvore (skill `mensagem-de-commit`), sem as rodadas da revisão:
 
    ```sh
    revisada=$(git rev-parse HEAD)
@@ -45,7 +46,7 @@ história dele se condensa antes do merge (passo 5).
 
    A série refeita à mão (juntar, dividir, reescrever mensagens) passa
    pelo mesmo `git diff` vazio. Com a árvore igual à revisada, só o eixo
-   History da `linus-review` roda de novo, sobre a série nova; com outra
+   História da `revisao-rigorosa` roda de novo, sobre a série nova; com outra
    árvore, a revisão do ramo inteiro.
 6. **Marque a ponta**: `git revisao pronto`, da ponta, sem código mudado
    fora do commit. Ele roda antes o teste da linha `teste:` do
