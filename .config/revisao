@@ -13,3 +13,5 @@ tests/
 *.fish
 *.sh
 ssh/.ssh/rc
+git/.gitconfig
+claude/
