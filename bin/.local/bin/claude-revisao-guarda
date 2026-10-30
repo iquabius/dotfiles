@@ -55,7 +55,7 @@ GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; 
             "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
 NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"
 EXCECAO = ("git revisao excecao deixa código ir ao main sem o veredito "
-           "Ready to merge; confirme que a decisão e o motivo são do autor.")
+           "Pronto para o merge; confirme que a decisão e o motivo são do autor.")
 
 SHELLS = {"sh", "bash", "dash", "zsh"}
 # Até quantos níveis de texto que roda (eval, sh -c, $(...)) o guarda confere:

@@ -7,7 +7,7 @@ Comandos que o stow liga em `~/.local/bin`. O `skills-sync` está no
 ## git-revisao e claude-revisao-guarda
 
 Código só chega ao `main` (ou `master`) de um ramo revisado com a skill
-`linus-review`. O ciclo inteiro, de ramo a merge, está no
+`revisao-rigorosa`. O ciclo inteiro, de ramo a merge, está no
 [AGENTS.md](../AGENTS.md); a decisão é de 2026-10-07. Duas peças o guardam.
 
 ### git-revisao
@@ -21,7 +21,7 @@ estreitá-la também passe pela revisão; e o pre-push junta a lista do remoto
 fora.
 
 - `git revisao pronto [<ponta>]`: marca a ponta revisada com o veredito
-  *Ready to merge*, depois de o teste do repositório passar. O teste é a
+  *Pronto para o merge*, depois de o teste do repositório passar. O teste é a
   linha `teste: <comando>` do `.config/revisao` da ponta, ou do `main` se o
   ramo a tirou; roda sempre que há um declarado, da raiz, pelo `sh`, com
   `GIT_REVISAO_BASE` e `GIT_REVISAO_PONTA` no ambiente. O comando escolhe
@@ -37,8 +37,8 @@ fora.
   sem remoto configurado (`main@{upstream}`), a marca cobre desde a raiz, e
   a saída diz isso. Vale a marca cuja ponta e cuja base existem no clone.
 - `git revisao excecao -m <motivo> [<ponta>]`: a mesma marca, para o que vai
-  sem o *Ready*: um achado que o autor deixou de pé, um teste que não dá
-  para rodar, ou commits anteriores a esta regra. Não roda o teste.
+  sem o *Pronto para o merge*: um achado que o autor deixou de pé, um
+  teste que não dá para rodar, ou commits anteriores a esta regra. Não roda o teste.
 - `git revisao pendente [<ponta>]`: lista o código que um push da ponta
   levaria ao `main` sem marca que o cubra; sai com 1 se houver.
 - **pre-push** (`[hook "revisao-push"]` do pacote `git`): recusa o push ao

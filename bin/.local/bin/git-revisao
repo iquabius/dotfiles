@@ -14,12 +14,12 @@ git, git 2.54 ou mais novo):
     git-revisao pre-commit                recusa commit de agente no main que
                                           mexa no código
 
-e a pessoa, ou o agente, depois da linus-review do ramo:
+e a pessoa, ou o agente, depois da revisao-rigorosa do ramo:
 
-    git revisao pronto [<ponta>]          marca a ponta: o veredito foi Ready to merge,
+    git revisao pronto [<ponta>]          marca a ponta: o veredito foi Pronto para o merge,
                                           depois de o teste declarado passar
     git revisao excecao -m <motivo> [<ponta>]
-                                          marca a ponta que vai sem o Ready, e por quê
+                                          marca a ponta que vai sem esse veredito, e por quê
     git revisao pendente [<ponta>]        lista o código sem revisão que um push
                                           da ponta levaria ao main (sai com 1 se houver)
 
@@ -279,9 +279,9 @@ def mostrar(achados):
 
 
 COMO_MARCAR = """\
-Revise o ramo (linus-review sobre $(git merge-base main HEAD)...HEAD) e,
-com o veredito Ready to merge, marque a ponta: git revisao pronto
-Para levar sem o Ready, com o motivo: git revisao excecao -m "motivo\""""
+Revise o ramo (revisao-rigorosa sobre $(git merge-base main HEAD)...HEAD) e,
+com o veredito Pronto para o merge, marque a ponta: git revisao pronto
+Para levar sem esse veredito, com o motivo: git revisao excecao -m "motivo\""""
 
 
 # pre-push --------------------------------------------------------------------
@@ -346,7 +346,7 @@ def cmd_pre_commit(_args):
     for a in arquivos[:10]:
         print(f"  {a}", file=sys.stderr)
     print("Abra um ramo antes (git switch -c <tarefa>; as mudanças vão junto) e siga\n"
-          "o ciclo do AGENTS.md: commit, linus-review, correções, merge.", file=sys.stderr)
+          "o ciclo do AGENTS.md: commit, revisao-rigorosa, correções, merge.", file=sys.stderr)
     return 1
 
 
