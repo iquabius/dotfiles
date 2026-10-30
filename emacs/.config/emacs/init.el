@@ -32,9 +32,9 @@
 (add-to-list 'package-selected-packages 'ergoemacs-mode)
 (add-to-list 'package-selected-packages 'org-roam)
 
-;; org-ref supplies the cite:/textcite:/ref:/label: link types the TCC's org
+;; org-ref supplies the cite:/textcite:/ref:/label: link types a document's org
 ;; sources use. Without it `org-latex-export-to-latex' aborts outright:
-;;   user-error: Org export aborted.  Unable to resolve link: "cite:edwards2009"
+;;   user-error: Org export aborted.  Unable to resolve link: "cite:knuth1984"
 (add-to-list 'package-selected-packages 'org-ref)
 
 ;; Git: Magit for status, staging and history; diff-hl marks changed lines in
@@ -96,7 +96,7 @@
 
 ;; Spelling — Hunspell checks against several dictionaries at once, so English
 ;; terms inside Portuguese text are not flagged; aspell takes one at a time.
-;; The combined name must be registered before a buffer asks for it (the TCC
+;; The combined name must be registered before a buffer asks for it (a project
 ;; does, in .dir-locals.el). The personal dictionary is set explicitly because
 ;; for a combined name Hunspell would otherwise invent one per combination.
 (when (executable-find "hunspell")
@@ -132,14 +132,14 @@
 (setq sentence-end-double-space nil)
 
 ;; M-q in Org refills the paragraph with one sentence per line (semantic line
-;; feeds), the layout of the TCC's sources. ErgoEmacs's M-q fills the paragraph
-;; as one block, joining the sentences. Three places neither end a sentence nor
-;; take a line break, in M-q or in auto-fill:
+;; feeds), the layout of a document's sources. ErgoEmacs's M-q fills the
+;; paragraph as one block, joining the sentences. Three places neither end a
+;; sentence nor take a line break, in M-q or in auto-fill:
 ;;
 ;; - after an abbreviation, as in p. ex.;
-;; - inside a bracket link, or a citation, [[textcite:x][p. 1 e 21]], would be
+;; - inside a bracket link, or a citation, [[textcite:x][p. 8 e 15]], would be
 ;;   split across two lines;
-;; - inside an export snippet, so that the TCC's @@latex:\todo{...}@@ notes
+;; - inside an export snippet, so that @@latex:\todo{...}@@ notes
 ;;   stay on one line. The @@ that closes one also closes a sentence.
 (defconst gambi/abbreviations '("p" "pp" "ex" "al" "cf" "fig" "e.g" "i.e")
   "Words whose final period does not end a sentence.")
@@ -181,8 +181,8 @@
   (keymap-set org-mode-map "<remap> <ergoemacs-compact-uncompact-block>"
               #'gambi/fill-paragraph-sentences))
 
-;; A file:x.org::text link searches the text of x.org, as the TCC's source
-;; matrix (texto/fontes/*.org) links each entry to the start of a paragraph.
+;; A file:x.org::text link searches the text of x.org, as a source matrix (one
+;; Org note per source) links each entry to the start of a paragraph.
 ;; By default Org matches only headlines in an Org file, offers to create
 ;; one named after the text, and then fails with "No match".
 (setq org-link-search-must-match-exact-headline nil)
@@ -201,8 +201,8 @@
 ;; Citation keys pop up as soon as `cite:', `textcite:' or any other org-ref
 ;; cite type is typed, rather than after `corfu-auto-prefix' characters of the
 ;; key. They come from the bibliography org-ref resolves for the buffer, so a
-;; project points `bibtex-completion-bibliography' at its .bib (the TCC does it
-;; in .dir-locals.el).
+;; project points `bibtex-completion-bibliography' at its .bib (in
+;; .dir-locals.el, say).
 (defun my/org-ref-cite-capf ()
   "Complete the citation key at point inside an org-ref cite link."
   (let* ((end (point))
@@ -245,7 +245,7 @@
 ;; Glossary links (`gls:', `glspl:', `Gls:'...) look for the entry only in the
 ;; buffer itself: a `#+name: glossary' table, a `\newglossaryentry' in a
 ;; latex header, or an #+INCLUDE'd file. A project that keeps its entries in a
-;; LaTeX file loaded by the master document (the TCC: latex/siglas.tex) names
+;; LaTeX file loaded by the master document names
 ;; that file in `my/org-ref-glossary-files', from .dir-locals.el; the lookup
 ;; behind the tooltip and the face falls back to it, following the link opens
 ;; the entry there, and the labels complete after the colon like cite keys.
@@ -373,8 +373,8 @@ For the tooltip and the completion annotation, which show the string as is."
             (add-hook 'completion-at-point-functions #'my/org-ref-glossary-capf nil t)
             (add-hook 'post-self-insert-hook #'my/org-ref-cite-after-colon nil t)))
 
-;; Chapter refs (`ref:chap:results') point at labels the LaTeX master defines
-;; (the TCC: `\chapter{Resultados}\label{chap:results}' in latex/tcc.tex), so
+;; Chapter refs (`ref:chap:metodo') point at labels the LaTeX master defines
+;; (`\chapter{Método}\label{chap:metodo}'), so
 ;; org-ref never finds them in the Org source: it paints the link as missing,
 ;; and following it left point at the top of the buffer. A `chap:X' label that
 ;; is not in the buffer stands for X.org beside the current file, when that
@@ -419,21 +419,22 @@ For the tooltip and the completion annotation, which show the string as is."
 ;; without a CUSTOM_ID the key is `org' plus a random number drawn anew on
 ;; each Emacs run (`org-export-new-reference'), so every export of an
 ;; unchanged file rewrote every \label{sec:org...}. A project that lists the
-;; files of its document in `gambi/org-document-files' (the TCC, from
+;; files of its document in `gambi/org-document-files' (from
 ;; .dir-locals.el) gets sec:<title slug> instead, for the titles of the listed
 ;; Org files: a title repeated in the document takes first the slug of its
-;; nearest ancestor whose title is not repeated (sec:contador-concisao), and
+;; nearest ancestor whose title is not repeated (sec:metodo-limitacoes), and
 ;; -2, -3 settle what still collides with another label of the listed files
 ;; (a CUSTOM_ID, a #+NAME, a <<target>>, a \label). The export sets the slug
 ;; as the headline's CUSTOM_ID, which becomes the label only with
-;; `org-latex-prefer-user-labels' on (the TCC sets it); a CUSTOM_ID written in
-;; the file wins. A file that is not in its own list, like the TCC's source
-;; notes under texto/fontes/, where the relative names resolve to nothing, is
-;; left alone. The export finds each headline's label by its titles from the
-;; top and by how many came before with the same ones, as the whole file has
-;; them, less COMMENT trees, the footnotes and the file's #+EXCLUDE_TAGS:
-;; exporting a subtree only falls back to the random label, and #+SELECT_TAGS,
-;; #+FILETAGS and tag groups are not followed.
+;; `org-latex-prefer-user-labels' on, so the project sets that too; a CUSTOM_ID
+;; written in the file wins. A file that is not in its own list, like a note
+;; in a subdirectory that inherits the list from an ancestor's .dir-locals.el,
+;; where the relative names resolve to nothing, is left alone. The export
+;; finds each headline's label by its titles from the top and by how many
+;; came before with the same ones, as the whole file has them, less COMMENT
+;; trees, the footnotes and the file's #+EXCLUDE_TAGS: exporting a subtree
+;; only falls back to the random label, and #+SELECT_TAGS, #+FILETAGS and tag
+;; groups are not followed.
 ;;
 ;; org-ref finds labels only by searching file text, where these slugs are
 ;; not. So its label list (`C-c ]' with `C-u') gets every title of the
@@ -792,7 +793,7 @@ ORIG gets PATH. A `chap:' label that opens a chapter file goes to ORIG."
   (org-defkey org-mode-map (kbd "C-c e") 'my/org-latex-export-body-only))
 
 ;; A `~' right before an em dash is LaTeX's non-breaking space, so that the
-;; dash never starts a line: `diferentes~--- aqui' in the TCC. ox-latex escapes
+;; dash never starts a line: `palavra~--- outra'. ox-latex escapes
 ;; every `~' of plain text to \textasciitilde{}, and the PDF printed a tilde.
 ;; Plain text cannot spell \textasciitilde{} itself, since its `{', `}' and a
 ;; `\' before a letter are escaped too, so \textasciitilde{}--- there comes from
