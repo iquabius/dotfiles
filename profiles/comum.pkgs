@@ -6,6 +6,10 @@
 # ligam.
 caveman-distillate
 
+# A checagem adversarial de fatos e de lógica; cada cartucho mora na skill
+# do registro dele, em cartuchos-de-fatos/.
+checagem-de-fatos
+
 # Mapa de tickets de decisão para trabalho maior que uma sessão
 # (mattpocock/skills, MIT), com as skills que a wayfinder chama. A
 # setup-matt-pocock-skills escreve o doc do rastreador de cada repositório,
