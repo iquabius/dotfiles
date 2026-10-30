@@ -54,7 +54,7 @@ commit:**
   aceitação, motivo do fechamento. Um fato que o corpo dela afirma sobre
   outra coisa (o nome de um autor, uma página, um sha, o que um arquivo
   diz) é cópia, e se confere na fonte dele como qualquer outro;
-- uma fonte citada por autor e ano ("Britton e Kutar (2001, p. 267)"): a
+- uma fonte citada por autor e ano ("Silva e Souza (2015, p. 42)"): a
   entrada da bibliografia do repositório (um arquivo `.bib`: o campo
   `author`, cada sobrenome em ordem, e o `date` ou `year`) e, onde o
   repositório guardar um, o arquivo de trechos dessa chave, para a página
@@ -88,7 +88,7 @@ assunto de um commit (assuntos resumem; o diff decide).
 
 ## 3. Categorias de afirmação
 
-- **sha + o que ele fez**: "X entrou em 0abe102" — o diff de 0abe102 tem
+- **sha + o que ele fez**: "X entrou em `<sha>`" — o diff de `<sha>` tem
   de mostrar X entrando; se ele só tirou um qualificativo, `git log -S`
   acha o commit que acrescentou X. Um sha do **mesmo ramo ainda não
   juntado** é alvo móvel: o rebase que condensa o muda. Depois do rebase,
@@ -97,9 +97,9 @@ assunto de um commit (assuntos resumem; o diff decide).
 - **caminho + o que ele diz ou faz**: o arquivo existe no commit, no pai
   (apagado ou renomeado por este commit) ou no disco (fora do git); o que
   ele "diz" é a frase na árvore do commit;
-- **regra citada ou parafraseada**: o verbo e o escopo ("exige que o Lit
-  tenha os métodos do Web Component" contra "pede que o par difira o
-  mínimo");
+- **regra citada ou parafraseada**: o verbo e o escopo ("exige que uma
+  implementação tenha os métodos da outra" contra "pede que o par difira
+  o mínimo");
 - **contagem**: testes, verificações, interfaces, linhas, commits ("os
   quatro" que eram cinco);
 - **nome, versão, opção, comando**: a opção que existe, o nome do script,
@@ -112,8 +112,8 @@ assunto de um commit (assuntos resumem; o diff decide).
   estava no corpo da tarefa;
 - **o assunto, lido sozinho**: como o `git log --oneline` o imprime, sem
   corpo para qualificá-lo. Um assunto que diz mais do que o commit fez é
-  enganoso mesmo quando o corpo é exato ("Tira as oito dimensões
-  deixadas de fora" para um commit em que as oito ficam na lista);
+  enganoso mesmo quando o corpo é exato ("Tira os N itens deixados de
+  fora" para um commit em que os N ficam na lista);
 - **data, desde, até**: a linha datada, a data do commit;
 - **história**: "introduzido em", "até", "o primeiro", "o único";
 - **afirmação sobre a árvore**: "só comentário", "nenhuma mudança
@@ -339,32 +339,32 @@ ausência mais estreita.
 
 ## Anti-exemplos resolvidos
 
-- **Verbo inflado.** Uma mensagem diz que uma regra "exige" que a versão
-  em Lit mantenha todos os métodos da versão em Web Component. A regra,
-  na árvore do commit, diz que as duas devem "diferir o mínimo além da
-  ligação do estado à tela". Veredito: imprecisa; correção: "para manter
-  o par tão próximo quanto o item pede". O método pode até ficar; o
-  motivo dado para ele não era o da regra.
-- **Atribuição ao commit errado.** Uma mensagem diz "como aconteceu com o
-  Quadro até 0abe102". `git show 0abe102` mostra que esse commit só
-  reescreveu o item (tirou um qualificativo); `git log -S'Quadro' --
-  AGENTS.md` lista 27aca29 como o último commit que mudou quantas vezes
-  "Quadro" aparece no arquivo, e o diff dele é o que acrescenta o Quadro
-  ao item. Veredito: falsa; correção: o sha. A regra do projeto já
-  proibia reescrever então, e a errata foi na próxima mensagem que tocou
-  o item.
+- **Verbo inflado.** Uma mensagem diz que uma regra "exige" que uma das
+  duas implementações de um par mantenha todos os métodos da outra. A
+  regra, na árvore do commit, diz que as duas devem "diferir o mínimo"
+  além do que a tecnologia de cada uma pede. Veredito: imprecisa;
+  correção: "para manter o par tão próximo quanto a regra pede". O
+  método pode até ficar; o motivo dado para ele não era o da regra.
+- **Atribuição ao commit errado.** Uma mensagem diz que um termo entrou
+  num item do arquivo de instruções em `<sha-A>`. `git show <sha-A>`
+  mostra que esse commit só reescreveu o item (tirou um qualificativo);
+  `git log -S'<termo>' -- AGENTS.md` lista `<sha-B>` como o último
+  commit que mudou quantas vezes o termo aparece no arquivo, e o diff
+  dele é o que acrescenta o termo ao item. Veredito: falsa; correção: o
+  sha. A regra do projeto já proibia reescrever então, e a errata foi na
+  próxima mensagem que tocou o item.
 - **Nome como na tarefa, não como na bibliografia.** Uma mensagem de um
-  repositório de texto acadêmico citou "Britton e Jarvis (2001, p. 267)";
-  a entrada da bibliografia diz Britton e Kutar. O texto que o commit
-  mudou citava a fonte só pela chave, e "Britton e Jarvis" já estava no
-  corpo da tarefa em que o commit trabalhou, no pai do commit. A linha
-  "Fontes conferidas" do commit, que lista as fontes declaradas
+  repositório de texto acadêmico citou uma fonte por dois sobrenomes e o
+  ano; a entrada da bibliografia trazia outro segundo autor. O texto que
+  o commit mudou citava a fonte só pela chave, e o par errado já estava
+  no corpo da tarefa em que o commit trabalhou, no pai do commit. A
+  linha "Fontes conferidas" do commit, que lista as fontes declaradas
   conferidas, nomeia só outra. Veredito: falsa; correção: o sobrenome. A
-  mesma série tinha o assunto "Tira da lista as oito dimensões deixadas
-  de fora" para um commit em que as oito ficavam na lista: enganoso, lido
+  mesma série tinha o assunto "Tira da lista os N itens deixados de
+  fora" para um commit em que os N ficavam na lista: enganoso, lido
   sozinho. Os dois chegaram ao ramo principal, que é para o que serve o
   momento 1b.
 - **Contagem.** "os quatro" quando eram cinco (a pasta de especificações
-  lista cinco: `ls implementacoes/openspec/specs | wc -l`). Pego pelo
-  agente autor antes do commit e consertado com um amend; é para isso que
-  serve o momento 1.
+  lista cinco: `ls <pasta-das-especificações> | wc -l`). Pego pelo
+  agente autor antes do commit e consertado com um amend; é para isso
+  que serve o momento 1.
