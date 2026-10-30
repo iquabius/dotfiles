@@ -65,7 +65,7 @@ REF_DAS_NOTAS = ("Recusado: o core.notesRef ou o notes.rewriteRef apontado às n
                  "revisão grava nelas ou copia a marca para um commit reescrito, que "
                  "ninguém revisou.")
 EXCECAO = ("git revisao excecao deixa código ir ao main sem o veredito "
-           "Ready to merge; confirme que a decisão e o motivo são do autor.")
+           "Pronto para o merge; confirme que a decisão e o motivo são do autor.")
 
 # Os shells em que o -c é uma opção sem argumento e o script é a primeira
 # palavra que não é opção (bash -c -x '...', tcsh -cf '...'): os do POSIX e
