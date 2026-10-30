@@ -26,27 +26,33 @@ setup() {
 	export PATH=$BIN:$PATH REVISAO_CONTAINERENV=$BATS_TEST_TMPDIR/nenhum
 	git init -q "$BATS_TEST_TMPDIR/repo"
 	cd "$BATS_TEST_TMPDIR/repo"
-	mkdir -p .config bin/.local/bin tests scripts outro \
+	mkdir -p .config bin/.local/bin tests scripts outro pacote/.config \
 		skills/s/.agents/skills/s/scripts skills/s/.agents/skills/s/tests \
 		skills/t/.agents/skills/t/scripts
 	for f in Makefile bin/.local/bin/a bin/.local/bin/a.test.bats \
 		bin/.local/bin/b scripts/c tests/c.bats tests/ajuda.bash \
 		bin/.local/bin/sobe bin/.local/bin/ação bin/.local/bin/ação.test.bats \
-		bin/.local/bin/fala \
+		bin/.local/bin/fala pacote/.config/liga.conf liga.conf \
 		skills/s/.agents/skills/s/scripts/x.py skills/s/.agents/skills/s/tests/test_x.py \
 		skills/t/.agents/skills/t/scripts/y outro/z leia.org; do
 		echo 0 >"$f"
 	done
 	# Suítes que rodam outro script, pelo caminho, ou por um terceiro que o
-	# acha no PATH e que a suíte cita; e outro/, um caminho de código que o
-	# script não conhece.
+	# acha no PATH e que a suíte cita; uma que cita um arquivo de
+	# configuração de um pacote pelo caminho, cujo nome é também o de um
+	# arquivo da raiz, outra que cita só esse nome, e outra que cita o
+	# auxiliar de tests/; e outro/, um caminho de código que nenhuma suíte
+	# cita.
 	echo 'ln -s "$BATS_TEST_DIRNAME/../bin/.local/bin/sobe" x' >tests/usa.bats
 	echo 'ln -s "$BATS_TEST_DIRNAME/sobe" x' >bin/.local/bin/vizinha.test.bats
 	printf '%s\n' 'export PATH="$BATS_TEST_DIRNAME:$PATH"' \
 		'run liga  # o liga chama o fala, que acha no PATH' \
 		>bin/.local/bin/pelo-path.test.bats
+	echo 'grep -q x "$BATS_TEST_DIRNAME/../pacote/.config/liga.conf"' >tests/liga.bats
+	echo 'echo liga.conf >x' >tests/so-o-nome.bats
+	echo '. "$BATS_TEST_DIRNAME/../../../tests/ajuda.bash"' >bin/.local/bin/a.test.bats
 	printf '# código\nteste: x\n%s\n' .config/revisao Makefile .githooks/ \
-		bin/.local/bin/ scripts/ tests/ outro/ \
+		bin/.local/bin/ scripts/ tests/ outro/ pacote/.config/liga.conf liga.conf \
 		'skills/*/.agents/skills/*/scripts/*' 'skills/*/.agents/skills/*/tests/*' \
 		>.config/revisao
 	git add . && git commit -qm raiz
@@ -142,7 +148,20 @@ bats bin/.local/bin/pelo-path.test.bats" ]
 bats bin/.local/bin/ação.test.bats" ]
 }
 
-@test "caminho de código que o script não conhece roda o make check" {
+@test "arquivo de configuração roda o lint e as suítes que citam o caminho dele" {
+	muda pacote/.config/liga.conf
+	"$SCRIPT"
+	[ "$(cat "$LOG")" = "make lint
+bats tests/liga.bats" ]
+}
+
+@test "arquivo de código da raiz roda o make check, mesmo com uma suíte que cita o nome dele" {
+	muda liga.conf
+	"$SCRIPT"
+	[ "$(cat "$LOG")" = "make check" ]
+}
+
+@test "caminho de código que nenhuma suíte cita roda o make check" {
 	muda outro/z
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make check" ]
