@@ -10,13 +10,16 @@
 #   .githooks/<n>), a bin/.local/bin/<n>.test.bats, a tests/<n>.bats e toda
 #   suíte que cita <n>, como a do pre-commit de um repositório pode citar o
 #   script que ele chama;
+# - de cada outro arquivo de código que mudou fora da raiz (a configuração
+#   de um pacote, como o git/.gitconfig ou o claude/.claude/settings.json),
+#   toda suíte que cita o caminho dele;
 # - a unittest da skill cujos scripts ou testes mudaram, no repositório que
 #   guarda skills com scripts, como a camada privada (a skill sem testes
 #   fica no lint, que é tudo o que o make check de lá daria a ela);
 # - tudo (make check) sem base, quando muda o que todas usam (Makefile,
-#   .config/revisao, um auxiliar de tests/), quando um script muda sem
-#   suíte que o confira ou quando muda um caminho de código que este script
-#   não conhece.
+#   .config/revisao, um auxiliar de tests/), quando um script ou outro
+#   arquivo de código muda sem suíte que o confira, ou quando muda um
+#   arquivo de código da raiz.
 #
 # Roda no host, onde estão as dependências de todas as suítes (AGENTS.md,
 # "Testes"): dentro de um distrobox, sobe pelo distrobox-host-exec.
@@ -91,6 +94,20 @@ $f"
         suites="$suites
 $achadas"
         ;;
+    # O auxiliar de tests/ (as suítes já saíram acima), que todas usam: no
+    # caso de baixo, só a suíte que o cita pelo caminho rodaria.
+    tests/*) exec make check ;;
+    */*)
+        # As suítes que citam o caminho, e não o nome, que num arquivo de
+        # configuração (settings.json, .gitconfig) é comum demais.
+        # shellcheck disable=SC2086 # um caminho por linha, sem espaço
+        achadas=$([ -z "$todas" ] || grep -lF -- "$f" $todas || true)
+        [ -n "$achadas" ] || exec make check
+        suites="$suites
+$achadas"
+        ;;
+    # O arquivo da raiz não tem diretório que o distinga: o caminho dele é
+    # o nome, e a citação acharia a suíte que fala de outro de mesmo nome.
     *) exec make check ;;
     esac
 done <<EOF
