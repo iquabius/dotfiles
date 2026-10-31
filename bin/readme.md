@@ -87,8 +87,12 @@ aceita inteiros), ou apontar a ela o `core.notesRef` gravado ou o
 `notes.rewriteRef` (também por glob ou pelo `GIT_NOTES_REWRITE_REF`),
 que copiaria a marca para o commit reescrito por um `--amend` ou um
 rebase; e o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
-que não passa pelo pre-push. Ler a configuração (`get`, `list`, `--get*`,
-`--list`, a chave sozinha) passa, também com redirecionamento.
+que não passa pelo pre-push. O merge pelo GitHub se lê com a palavra
+que não começa com `-` depois de cada opção sem `=` como valor dela ou
+como posicional, em todas as leituras (`gh -R o/r pr merge 3`, `gh -b x
+pr merge 3`, `gh -R o/r -ds pr merge 3`), numa passada só pelas
+palavras. Ler a configuração (`get`, `list`, `--get*`, `--list`, a
+chave sozinha) passa, também com redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não
