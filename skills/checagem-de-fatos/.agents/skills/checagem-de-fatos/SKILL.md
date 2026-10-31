@@ -34,7 +34,7 @@ PDFs que ele cita. Essa instância é o precedente mais rico e vive no
 cartucho de um capítulo acadêmico em português, que mora na skill de
 escrita acadêmica. Extraída numa skill sem registro em 2026-10-17, depois que
 dois ramos chegaram a um ramo principal com fatos errados nas mensagens
-de commit, que só o eixo História da revisão pegou, quando reescrever já
+de commit, que só a revisão do ramo pegou, quando reescrever já
 não era permitido.
 
 ## Postura
@@ -314,8 +314,8 @@ dele: cada um se ancoraria no outro. As últimas linhas do preâmbulo não
 são opcionais: o Codex acha sozinho as skills instaladas em
 `~/.agents/skills`, e em 2026-10-26, com um brief que não falava de
 skills, ele abriu o SKILL.md instalado desta skill e o cartucho dela; um
-SKILL.md que manda chamar o Codex faz um laço. Nenhuma chave estável
-desliga essa descoberta.
+SKILL.md que manda chamar o Codex pode fazer um laço. Nenhuma opção
+testada desliga essa descoberta.
 
 **Chamada.** O agente principal escreve o brief de cada lote num arquivo
 no scratchpad da sessão (nunca na árvore do artefato) e, na mensagem que
@@ -360,7 +360,7 @@ portão:
 - a chamada sai com código diferente de zero, o arquivo do `-o` falta ou
   está vazio, ou o bloco dele quebra as regras da etapa 2 (sem json, um
   veredito sem citação, nenhuma linha `exec` no log): a mesma chamada uma
-  vez mais; uma segunda falha a encerra. Um modelo que a conta não serve
+  vez mais; uma segunda falha a encerra. Um nome de modelo que não existe
   sai com 1, com `model_not_found` no log, e não escreve arquivo do `-o`.
 
 Em cada caso a passada segue só com o Claude, e o relatório o diz no
