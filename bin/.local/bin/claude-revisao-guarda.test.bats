@@ -348,7 +348,7 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	for c in 'gh pr merge 12 --squash' 'gh api -X PUT repos/o/r/pulls/3/merge' \
 		'gh api repos/o/r/merges -f base=main -f head=x' \
 		'gh api -X POST repos/o/r/merge-upstream -f branch=main' \
-		'gh repo sync o/r' 'gh repo sync o/r --force' \
+		'gh repo sync o/r' 'gh repo sync o/r --force' 'gh-escrita repo sync o/r' \
 		"gh api graphql -f query='mutation { mergePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { enqueuePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
@@ -357,12 +357,14 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		'gh pr -R o/r merge 3' 'gh -b x pr merge 3' \
 		'gh --verbose pr merge 3' "gh '' pr merge 3" 'gh pr -b x --verbose y merge 3' \
 		'gh -R o/r -ds pr merge 3' 'gh pr -R o/r -ds merge 3' 'gh -R o/r -Ro/r pr merge 3' \
-		'gh -R o/r api -X PUT repos/o/r/pulls/3/merge'; do
+		'gh -R o/r api -X PUT repos/o/r/pulls/3/merge' 'gh-escrita api -X PUT repos/o/r/pulls/3/merge' \
+		"$HOME/.local/bin/gh-escrita api repos/o/r/merges -f base=main -f head=x"; do
 		echo "comando: $c"
 		run guarda "$c"
 		recusa
 	done
 	for c in 'gh pr view 12' 'gh api repos/o/r/pulls/3' 'gh alias list' \
+		'gh-escrita api -X POST repos/o/r/issues -f title=x' \
 		'gh pr view merge' 'gh pr --title=merge view' 'gh search prs merge'; do
 		echo "comando: $c"
 		run guarda "$c"
@@ -376,6 +378,7 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	for c in "gh alias set m 'pr merge'" "gh alias set m -- '-b x pr merge'" \
 		"gh alias set co 'pr checkout'" "gh alias set p 'pr '" "gh alias set t 'auth '" \
 		"gh alias set v 'api \$1 -X PUT'" 'gh alias import a.yml' "gh -R o/r alias set y pr" \
+		"gh-escrita alias set y pr" \
 		"gh alias set t - <<< 'auth token'" 'printf x | gh alias set r -' \
 		"gh '' alias set t 'auth token'" "gh alias '' set t 'auth token'" "gh '' alias import a.yml" \
 		"gh alias set --shell=true t \"eval 'gh auth token'\"" \
@@ -401,7 +404,8 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		'gh auth --hostname status refresh --hostname github.com -s delete_repo' \
 		'gh -h github.com auth token' \
 		'gh --hostname github.com auth refresh -s delete_repo' 'gh -h github.com auth status -t' \
-		'gh -u eu auth switch' 'gh auth -h status novo' \
+		'gh -u eu auth switch' 'gh auth -h status novo' 'gh-escrita auth token' \
+		"$HOME/.local/bin/gh-escrita auth status -t" 'gh-escrita -h x config get oauth_token' \
 		'gh -h github.com -hgithub.com auth token' 'gh --show-token=true auth status' \
 		'gh -at auth status' 'gh auth setup-git -- x --help' 'gh "" auth setup-git' \
 		'gh auth status -h -t' 'gh auth status -- -t' 'gh auth status -hat' \
