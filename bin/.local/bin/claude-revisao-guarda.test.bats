@@ -347,8 +347,12 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 @test "merge pelo GitHub é recusado" {
 	for c in 'gh pr merge 12 --squash' 'gh api -X PUT repos/o/r/pulls/3/merge' \
 		'gh api repos/o/r/merges -f base=main -f head=x' \
+		'gh api -X POST repos/o/r/merge-upstream -f branch=main' \
+		'gh repo sync o/r' 'gh repo sync o/r --force' \
 		"gh api graphql -f query='mutation { mergePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
+		"gh api graphql -f query='mutation { enqueuePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
+		"gh api graphql -f query='mutation { mergeBranch(input: {repositoryId: \"x\", base: \"main\", head: \"y\"}) { clientMutationId } }'" \
 		"'gh' pr merge 12" 'timeout 5 gh pr merge 1' 'if gh pr merge 1; then :; fi' \
 		'gh pr -R o/r merge 3' "gh alias set m 'pr merge'"; do
 		run guarda "$c"

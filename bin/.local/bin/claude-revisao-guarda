@@ -796,15 +796,17 @@ def gh_posicionais(args):
 
 
 def gh_junta(args):
-    """O gh que faz o merge de um pull request: gh pr merge, ou a API REST
-    (/pulls/N/merge, /merges) ou a GraphQL (mergePullRequest)."""
+    """O gh que faz o merge pelo GitHub: gh pr merge, gh repo sync (o
+    merge-upstream num repositório do GitHub), ou a API REST
+    (/pulls/N/merge, /merges, /merge-upstream) ou a GraphQL
+    (mergePullRequest, o auto-merge, a fila de merge, o mergeBranch)."""
     posicionais = gh_posicionais(args)
-    if posicionais[:2] == ["pr", "merge"]:
+    if posicionais[:2] in (["pr", "merge"], ["repo", "sync"]):
         return True
     texto = " ".join(args)
     return posicionais[:1] == ["api"] and bool(
-        re.search(r"/(?:pulls/\d+/merge|merges)\b|mergePullRequest|enablePullRequestAutoMerge",
-                  texto))
+        re.search(r"/(?:pulls/\d+/merge|merges|merge-upstream)\b|mergePullRequest"
+                  r"|enablePullRequestAutoMerge|enqueuePullRequest|mergeBranch", texto))
 
 
 def decidir(decisao, motivo):
