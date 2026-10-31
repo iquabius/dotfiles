@@ -47,8 +47,7 @@ commit:**
   (`AGENTS.md`, `CONTRIBUTING.md`, um guia de estilo): a frase exata no
   arquivo na árvore do commit. O verbo é o fato: "exige", "proíbe",
   "pede", "prefere" são quatro afirmações diferentes;
-- uma tarefa, ticket ou issue por id: o registro dela no rastreador de
-  tarefas (o comando do rastreador que mostra a tarefa pelo id,
+- uma tarefa, ticket ou issue por id: o registro dela (`bd show <id>`,
   `gh issue view <n>`), no campo que a mensagem parafraseia. O registro é
   primário só para o que a própria tarefa é: título, estado, critérios de
   aceitação, motivo do fechamento. Um fato que o corpo dela afirma sobre
@@ -169,7 +168,8 @@ pergunta uma vez.
   a frase dela passa pelo momento 1 como qualquer outra.
 - **Ramo principal, ainda não enviado**: decide a regra do repositório.
   Por padrão não se reescreve, e a errata vai como acima. Um repositório
-  pode abrir uma janela só para a mensagem, com a aprovação do autor; então a
+  pode abrir uma janela só para a mensagem, com a aprovação do autor (um
+  repositório de texto acadêmico faz isso desde 2026-10-26); então a
   reescrita mantém todas as árvores, e o sha velho se procura onde já foi
   citado (o rastreador de tarefas, as notas) e se troca.
 
@@ -221,8 +221,8 @@ ramo principal, cada um barato porque o artefato é curto:
    junto com o eixo História: o rebase reescreveu as mensagens a partir
    da árvore e mudou os shas da série, e uma mensagem reescrita nunca
    passa pelas ferramentas que leem a mensagem no comando `git commit`
-   (o hook `commit-msg` do próprio git roda numa reescrita, mas não
-   confere fatos).
+   (o hook `commit-msg` do próprio git roda num reword do rebase, mas
+   não confere fatos).
    Antes dela, o agente autor roda de novo o momento 1 sobre cada
    mensagem reescrita, contra a árvore daquele commit, não a da ponta.
    No mesmo levantamento, 8 das 43 revisões rodaram o subagente de Fatos
@@ -301,9 +301,8 @@ para o próprio commit e para qualquer commit que ele cite (o diff do
 commit citado, nunca a mensagem; `git log -S'<text>' -- <path>` acha que
 commit introduziu uma linha); `git show <sha>^:<path>` para o problema no
 pai; o arquivo de instruções na árvore do commit para uma regra citada,
-na frase exata; o registro da tarefa no rastreador de tarefas ou o
-ticket para uma tarefa; o
-arquivo para um registro de decisão; o arquivo de teste ou a saída do
+na frase exata; `bd show <id>` ou o ticket para uma tarefa; o arquivo
+para um registro de decisão; o arquivo de teste ou a saída do
 comando para uma contagem; a entrada da bibliografia (cada sobrenome de
 `author`, em ordem, e a data) e o arquivo de trechos para uma fonte
 citada por autor e ano. Um achado de revisão que a mensagem menciona não
