@@ -354,14 +354,31 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		"gh api graphql -f query='mutation { enqueuePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { mergeBranch(input: {repositoryId: \"x\", base: \"main\", head: \"y\"}) { clientMutationId } }'" \
 		"'gh' pr merge 12" 'timeout 5 gh pr merge 1' 'if gh pr merge 1; then :; fi' \
-		'gh pr -R o/r merge 3' "gh alias set m 'pr merge'"; do
+		'gh pr -R o/r merge 3' "gh alias set m 'pr merge'" 'gh -b x pr merge 3' \
+		'gh --verbose pr merge 3' "gh '' pr merge 3" 'gh pr -b x --verbose y merge 3' \
+		'gh -R o/r -ds pr merge 3' 'gh pr -R o/r -ds merge 3' 'gh -R o/r -Ro/r pr merge 3' \
+		'gh -R o/r api -X PUT repos/o/r/pulls/3/merge'; do
+		echo "comando: $c"
 		run guarda "$c"
 		recusa
 	done
-	for c in 'gh pr view 12' "gh alias set co 'pr checkout'" 'gh api repos/o/r/pulls/3'; do
+	for c in 'gh pr view 12' "gh alias set co 'pr checkout'" 'gh api repos/o/r/pulls/3' \
+		'gh pr view merge' 'gh pr --title=merge view' 'gh search prs merge'; do
+		echo "comando: $c"
 		run guarda "$c"
 		[ -z "$output" ]
 	done
+}
+
+# A leitura do gh é uma passada só: centenas de opções antes do subcomando
+# não estouram o prazo do hook.
+@test "muitas opções no gh não estouram o tempo do hook" {
+	SECONDS=0
+	run guarda "gh $(printf -- '-b %s ' $(seq 1500))pr merge 3"
+	recusa
+	run guarda "gh $(printf -- '-x w%s ' $(seq 1500))pr view 3"
+	[ -z "$output" ]
+	[ "$SECONDS" -lt 3 ]
 }
 
 @test "git revisao excecao pergunta ao autor; pronto e pendente passam" {

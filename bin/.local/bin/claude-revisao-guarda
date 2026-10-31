@@ -799,14 +799,53 @@ def gh_junta(args):
     """O gh que faz o merge pelo GitHub: gh pr merge, gh repo sync (o
     merge-upstream num repositório do GitHub), ou a API REST
     (/pulls/N/merge, /merges, /merge-upstream) ou a GraphQL
-    (mergePullRequest, o auto-merge, a fila de merge, o mergeBranch)."""
-    posicionais = gh_posicionais(args)
-    if posicionais[:2] in (["pr", "merge"], ["repo", "sync"]):
+    (mergePullRequest, o auto-merge, a fila de merge, o mergeBranch), em uma
+    das leituras de gh_pode (gh -R o/r pr merge 3, gh -b x pr merge 3, gh -R
+    o/r -ds pr merge 3)."""
+    if gh_pode(args, "pr", "merge") or gh_pode(args, "repo", "sync"):
         return True
     texto = " ".join(args)
-    return posicionais[:1] == ["api"] and bool(
+    return gh_pode(args, "api") and bool(
         re.search(r"/(?:pulls/\d+/merge|merges|merge-upstream)\b|mergePullRequest"
                   r"|enablePullRequestAutoMerge|enqueuePullRequest|mergeBranch", texto))
+
+
+def gh_pode(args, primeiro, segundo=None):
+    """Se o gh pode achar o subcomando `primeiro` (e `segundo` depois dele)
+    em alguma leitura das opções. O cobra acha os subcomandos pulando a
+    palavra depois de uma opção que ele não conhece como booleana (gh -h
+    github.com auth token roda o token), o pflag lê um grupo curto como
+    booleanas ou como opção com o valor colado (gh -R o/r -ds pr merge 3,
+    gh -R o/r -Ro/r pr merge 3), e o guarda não sabe quais são quais: a
+    palavra que não começa com - depois de uma opção sem = pode ser o valor
+    dela ou um posicional. O primeiro posicional é uma palavra solta cujas
+    soltas de antes podem todas ser valor; o segundo, uma solta depois dele
+    cujas soltas do meio também podem. A palavra vazia o cobra pula ao
+    achar o subcomando (gh '' pr merge 3), e esta leitura também. É uma
+    passada só pelas palavras: o hook tem prazo, e enumerar as leituras de
+    um comando com centenas de opções o estouraria."""
+    ps = [a for a in args if a != ""]
+    # procura: as soltas até aqui podem todas ser valor, e esta pode ser o
+    # primeiro; armado: há uma leitura com o primeiro achado e as soltas
+    # depois dele todas valor, e esta pode ser o segundo.
+    procura, armado = True, False
+    for k, a in enumerate(ps):
+        if a.startswith("-"):
+            continue
+        valor = k > 0 and ps[k - 1].startswith("-") and "=" not in ps[k - 1]
+        if armado:
+            if a == segundo:
+                return True
+            armado = valor
+        if procura:
+            if a == primeiro:
+                if segundo is None:
+                    return True
+                armado = True
+            procura = valor
+        if not (procura or armado):
+            return False
+    return False
 
 
 def decidir(decisao, motivo):
