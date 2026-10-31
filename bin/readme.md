@@ -107,9 +107,10 @@ expansão, e o alias inocente dá depois a forma recusada (`gh alias set p
 config` se leem com a palavra que não começa com `-` depois de cada
 opção sem `=` como valor dela ou como posicional, em todas as leituras
 (`gh -R o/r pr merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge
-3`), numa passada só pelas palavras. Ler a configuração do git (`get`,
-`list`, `--get*`, `--list`, a chave sozinha) passa, também com
-redirecionamento.
+3`), numa passada só pelas palavras. As mesmas regras do `gh` valem para
+o `gh-escrita` da camada privada, que roda o `gh api` com um token de
+escrita. Ler a configuração do git (`get`, `list`, `--get*`, `--list`, a
+chave sozinha) passa, também com redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não
@@ -141,8 +142,8 @@ duplas, não entre simples); o do heredoc que um shell lê (`bash
 O `eval` (também `eval --`) e o `source` ou `.` de um heredoc ou
 here-string (`source /dev/stdin <<'EOF'`, também `<<EOF source
 /dev/stdin`) rodam no shell de agora, na ordem da linha, e o ambiente
-que trocam vale para os comandos seguintes. O git, o gh, o
-`git-revisao`, os shells e os prefixos (`env`, `sudo`, `nohup`, `nice`,
+que trocam vale para os comandos seguintes. O git, o gh, o `gh-escrita`,
+o `git-revisao`, os shells e os prefixos (`env`, `sudo`, `nohup`, `nice`,
 `timeout`, `xargs`, `time`) se conferem onde
 estiverem nas palavras de um comando, sem aspas nem barra, e nenhum
 programa que os roda numa palavra própria (`setsid git`, `stdbuf git`,
@@ -181,9 +182,10 @@ arquivo ou pela entrada padrão (`-F query=@q.graphql`, `-F query=@-`,
 `gh` no comando (`git credential fill`, um credential helper chamado
 direto), a palavra que o shell monta ao rodar (`gh {auth,token}`, `gh
 $(echo auth) token`, `a=auth; gh $a token`, um glob) e uma extensão do
-`gh` que chame o `gh auth token` por dentro: o que segura é o escopo do
-token, que a camada privada, com os passos do autor, deixa só de
-leitura. Do outro lado, ele recusa a mais em sete casos: o `gh` com a
+`gh` que chame o `gh auth token` por dentro: no `gh`, o que segura é o
+escopo do token, que a camada privada, com os passos do autor, deixa só
+de leitura, e no `gh-escrita` o diálogo da chave do App a cada chamada.
+Do outro lado, ele recusa a mais em sete casos: o `gh` com a
 palavra `auth` fora das formas que passam, também a que não mexe no
 token (`gh auth --hostname github.com status`, `gh auth token --help`,
 `gh search issues auth`); todo alias novo do `gh`, também

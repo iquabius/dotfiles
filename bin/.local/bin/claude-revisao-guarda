@@ -25,20 +25,23 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   mexem nele;
 - recusa criar alias do gh, que põe os argumentos da chamada no fim da
   expansão;
+- lê o gh-escrita, da camada privada, que roda o gh api com um token de
+  escrita, como o gh;
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
   revisão de pé é decisão dele.
 
 O push sem revisão fica com o pre-push, que estas regras protegem do
 --no-verify e de hook.*. Elas pegam as formas diretas: separam o
 comando em palavras pelas aspas, separadores, comentários e heredocs do
-shell (analisar), acham o git, o gh, o git-revisao, os shells e os
-prefixos (RODADOS) onde estiverem nas palavras de um comando, e leem cada
-chamada do git palavra por palavra; um script gravado em arquivo e depois
-executado, o git chamado por uma variável, os argumentos ou o comando que
-chegam por um pipe ao xargs, a um shell ou ao source, o comando que um
-programa recebe como um texto só e passa a um shell (watch '...', su -c)
-e as outras formas que o bin/readme.md lista passam por elas, e o portão
-que segura de fato é o pre-push do push, que é do autor.
+shell (analisar), acham o git, o gh, o gh-escrita, o git-revisao, os
+shells e os prefixos (RODADOS) onde estiverem nas palavras de um
+comando, e leem cada chamada do git palavra por palavra; um script
+gravado em arquivo e depois executado, o git chamado por uma variável,
+os argumentos ou o comando que chegam por um pipe ao xargs, a um shell
+ou ao source, o comando que um programa recebe como um texto só e passa
+a um shell (watch '...', su -c) e as outras formas que o bin/readme.md
+lista passam por elas, e o portão que segura de fato é o pre-push do
+push, que é do autor.
 
 Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
 a decisão na saída padrão; sem nada a dizer, sai calado com 0.
@@ -462,7 +465,10 @@ ENV_SEPARA = {"-S", "--split-string"}
 # find -exec git, stdbuf bash -c), e nenhuma lista de prefixos os esgota.
 # Os prefixos que são do próprio shell (command, exec, builtin) ficam de
 # fora: outro programa não os roda.
-RODADOS = {"git", "gh", "git-revisao"} | SHELLS | (
+# O gh-escrita, da camada privada, roda o gh api com os argumentos que
+# recebe e um token de escrita: as regras do gh valem para ele.
+GH = {"gh", "gh-escrita"}
+RODADOS = {"git", "git-revisao"} | GH | SHELLS | (
     set(PREFIXOS) - {"command", "exec", "builtin"})
 
 
@@ -1088,7 +1094,7 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
         for script in scripts_do_shell(ps) or entradas:
             yield from decisoes(script, nivel + 1, do_shell)
         return
-    if nome == "gh":
+    if nome in GH:
         if gh_junta(ps[1:]):
             yield "deny", GH_MERGE
         if gh_auth(ps[1:]):
