@@ -87,12 +87,15 @@ aceita inteiros), ou apontar a ela o `core.notesRef` gravado ou o
 `notes.rewriteRef` (também por glob ou pelo `GIT_NOTES_REWRITE_REF`),
 que copiaria a marca para o commit reescrito por um `--amend` ou um
 rebase; e o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
-que não passa pelo pre-push. O merge pelo GitHub se lê com a palavra
-que não começa com `-` depois de cada opção sem `=` como valor dela ou
-como posicional, em todas as leituras (`gh -R o/r pr merge 3`, `gh -b x
-pr merge 3`, `gh -R o/r -ds pr merge 3`), numa passada só pelas
-palavras. Ler a configuração (`get`, `list`, `--get*`, `--list`, a
-chave sozinha) passa, também com redirecionamento.
+que não passa pelo pre-push. Criar alias do `gh` (`gh alias set`, `gh
+alias import`) se recusa: o `gh` põe os argumentos da chamada no fim da
+expansão, e o alias inocente dá depois a forma recusada (`gh alias set p
+'pr '`, depois `gh p merge 3`). O merge pelo GitHub e o alias se leem
+com a palavra que não começa com `-` depois de cada opção sem `=` como
+valor dela ou como posicional, em todas as leituras (`gh -R o/r pr
+merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge 3`), numa
+passada só pelas palavras. Ler a configuração (`get`, `list`, `--get*`,
+`--list`, a chave sozinha) passa, também com redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não
@@ -161,7 +164,8 @@ arquivo ou pela entrada padrão (`-F query=@q.graphql`, `-F query=@-`,
 `--input -`), e a escrita no `main` pela API que não é merge (`-X PATCH
 .../git/refs/heads/main`, `-X PUT .../contents/<arquivo>`, a mutation
 `createCommitOnBranch`): o que segura é o escopo do token. Do outro
-lado, ele recusa a mais em cinco casos: o que parece merge pelo GitHub e
+lado, ele recusa a mais em seis casos: todo alias novo do `gh`, também
+o que não leva a uma forma recusada; o que parece merge pelo GitHub e
 não é, o `gh repo sync` sem destino, que só atualiza o clone local, e o
 `gh api` cujo texto cita um nome do merge (um título que diga
 `mergeBranch`); a troca de ambiente dentro de um subshell (`( HOME=/x;

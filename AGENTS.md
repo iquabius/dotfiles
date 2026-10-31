@@ -103,7 +103,7 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   ambiente num commit, merge, pull ou push, tirar `CLAUDECODE` do
   ambiente, pelo qual o pre-commit reconhece o agente), escrever as notas da
   revisão à mão ou apontar a elas o `core.notesRef` ou o
-  `notes.rewriteRef`, e o merge pelo GitHub;
+  `notes.rewriteRef`, o merge pelo GitHub e criar alias do `gh`;
   pergunta ao autor antes de `git revisao excecao`. O portão que segura é
   o pre-push do push do autor.
 - **Outros hooks da camada privada**: têm regras próprias, além da
