@@ -4,13 +4,13 @@ description: >-
   Escreve mensagens de commit que explicam por que a mudança existe, no
   estilo de um patch do kernel Linux: o problema primeiro, a correção
   escolhida e a alternativa recusada, o que fica fora do escopo e como se
-  testou. Use ao rascunhar, escrever, reescrever ou revisar uma mensagem
-  de commit, commitar, dividir o trabalho em commits, reescrever depois de
-  um squash ou rebase, ou quando o usuário disser "commita isso",
-  "/commit" ou perguntar por que uma mensagem está fraca. Adapta a forma
-  (prefixo, idioma, quebra, trailers) às convenções do repositório; rege
-  o conteúdo. Também em inglês: "commit-message", "commit this", "write
-  the commit".
+  testou. Use sempre que for rascunhar, escrever, reescrever ou revisar
+  uma mensagem de commit, commitar mudanças, dividir o trabalho em
+  commits, reescrever depois de um squash ou rebase, ou quando o usuário
+  disser "commita isso", "/commit" ou perguntar por que uma mensagem está
+  fraca. Adapta a forma (prefixo, idioma, quebra, trailers) às convenções
+  do repositório; rege o conteúdo. Também em inglês: "commit-message",
+  "commit this", "write the commit".
 ---
 
 # Mensagem de commit
@@ -42,9 +42,9 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
    tamanho de assunto, um escopo obrigatório, uma largura de quebra, um
    trailer).
 2. **Precedente na história.** Quando a maioria dos commits recentes
-   compartilha uma forma (assuntos abaixo de um tamanho menor, um prefixo
-   `type(scope):`, outra quebra), siga-a. Um ou dois commits fora da linha
-   não são precedente.
+   compartilha uma forma (assuntos abaixo de um limite mais apertado, um
+   prefixo `type(scope):`, outra quebra), siga-a. Um ou dois commits fora
+   da linha não são precedente.
 3. **Os valores padrão abaixo**, quando o repositório não diz nada e a
    história dele não mostra padrão consistente.
 
