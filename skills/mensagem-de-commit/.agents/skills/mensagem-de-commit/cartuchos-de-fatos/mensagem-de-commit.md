@@ -17,9 +17,9 @@ Por que este cartucho existe: em 2026-10-17, dois ramos chegaram a um
 ramo principal com mensagens que diziam que uma regra "exige" o que a
 regra só pede que fique mínimo, e que atribuíam a um commit o que outro
 tinha feito. Os dois foram pegos por um eixo da revisão depois do commit,
-quando a regra do projeto contra reescrever a história revisada só
-deixava uma errata numa mensagem posterior. A checagem tem de rodar
-enquanto um amend ainda é livre.
+quando, pela regra do projeto contra reescrever a história revisada, só
+restava uma errata numa mensagem posterior. A checagem tem de rodar
+enquanto um amend ainda sai de graça.
 
 ## 1. Artefato e âncora
 
@@ -90,9 +90,10 @@ assunto de um commit (assuntos resumem; o diff decide).
 - **sha + o que ele fez**: "X entrou em `<sha>`" — o diff de `<sha>` tem
   de mostrar X entrando; se ele só tirou um qualificativo, `git log -S`
   acha o commit que acrescentou X. Um sha do **mesmo ramo ainda não
-  juntado** é alvo móvel: o rebase que condensa o muda. Depois do rebase,
-  cada sha se confere de novo, e a mensagem que cita um commit do ramo
-  cita ao lado o assunto dele entre aspas, como faz o trailer `Fixes:`;
+  juntado** é alvo móvel: o rebase de condensação muda o sha. Depois do
+  rebase, cada sha se confere de novo, e a mensagem que cita um commit do
+  ramo cita ao lado o assunto dele entre aspas, como faz o trailer
+  `Fixes:`;
 - **caminho + o que ele diz ou faz**: o arquivo existe no commit, no pai
   (apagado ou renomeado por este commit) ou no disco (fora do git); o que
   ele "diz" é a frase na árvore do commit;
@@ -117,7 +118,7 @@ assunto de um commit (assuntos resumem; o diff decide).
 - **história**: "introduzido em", "até", "o primeiro", "o único";
 - **afirmação sobre a árvore**: "só comentário", "nenhuma mudança
   funcional", "capturas sem mudança", "o teste passa", "só estas linhas
-  mudaram, o parágrafo não foi refluído";
+  mudaram, as quebras de linha do parágrafo não foram refeitas";
 - **descrição do problema**: o sintoma existe no pai
   (`git show <sha>^:<path>`, o caso que falha, o número errado);
 - **alternativa recusada**: ela existia e era possível nesta árvore;
@@ -174,17 +175,17 @@ pergunta uma vez.
   citado (o rastreador de tarefas, as notas) e se troca.
 
 No rascunho e no ramo ainda não juntado, o agente autor aplica um achado
-pela etapa 6 do motor: a correção conferida antes de entrar, a mesma
-afirmação procurada nas outras mensagens da série e nos arquivos que o
-commit escreve. Uma frase que uma segunda passada acha errada de novo não
-se estreita uma terceira vez: sai, ou vira a frase mais fraca que um
-comando prova. Uma afirmação de ausência sobre o pai ("só pedia",
-"nenhuma skill pedia") se escreve como a busca que a mostra, ou cai. Em
-2026-10-26, uma frase assim levou três passadas, cada uma estreitando a
-anterior; numa medição no mesmo dia, ela voltou com o veredito
-impreciso tanto de um remendo conferido quanto de uma reescrita do
-parágrafo dela a partir da árvore, e a reescrita custou mais e
-acrescentou afirmações.
+pela etapa 6 do motor: confere a correção antes de ela entrar na
+mensagem e procura a mesma afirmação nas outras mensagens da série e nos
+arquivos que o commit escreve. Uma frase que uma segunda passada acha
+errada de novo não se estreita uma terceira vez: sai, ou vira a frase
+mais fraca que um comando prova. Uma afirmação de ausência sobre o pai
+("só pedia", "nenhuma skill pedia") se escreve como a busca que a
+mostra, ou cai. Em 2026-10-26, uma frase assim levou três passadas,
+cada uma estreitando a anterior; numa medição no mesmo dia, ela voltou
+com o veredito impreciso tanto de um remendo conferido quanto de uma
+reescrita do parágrafo dela a partir da árvore, e a reescrita custou
+mais e acrescentou afirmações.
 
 ## 7. Passadas e momento
 
@@ -195,8 +196,8 @@ ramo principal, cada um barato porque o artefato é curto:
    lista as afirmações do rascunho e roda um comando por afirmação,
    guardando a saída, antes do `git commit`: de três a oito comandos. O
    mesmo contexto que escreveu a mensagem a confere, então esta passada
-   pega os deslizes (uma contagem, o nome de uma opção) e perde os pontos
-   cegos. As seis conferências da autoconferência da skill
+   pega os deslizes (uma contagem, o nome de uma opção) e deixa passar os
+   pontos cegos. As seis conferências da autoconferência da skill
    `mensagem-de-commit` (o assunto sozinho, quantificadores, números,
    afirmações de sabotagem, escopo, outros commits) são os comandos que
    mais importam: em 2026-10-26, um levantamento de 43 revisões (41
@@ -210,7 +211,7 @@ ramo principal, cada um barato porque o artefato é curto:
    antes de a mensagem ir ao autor; onde o commit espera a aprovação do
    diff pelo autor, a mensagem vai com o diff, e a aprovação cobre os
    dois. É o contexto limpo que falta ao momento 1, na única hora em que
-   uma correção ainda é livre nesse ramo.
+   uma correção ainda sai de graça nesse ramo.
 2. **Na revisão do ramo, um subagente só de leitura sobre a série** (o
    eixo Fatos da `revisao-rigorosa`, ou avulso num ramo só de
    documentação, que uma revisão de código pularia). Ele extrai e confere
@@ -233,13 +234,13 @@ ramo principal, cada um barato porque o artefato é curto:
    que um commit posterior tornou falso ou descreve o estado de antes da
    condensação.
 
-Um portão mecânico, onde o repositório tiver um (um hook de pre-commit
-ou de antes da ferramenta que confere que todo sha citado resolve, todo
-caminho citado existe, todo id de tarefa e número de decisão existe, os
-sobrenomes de uma fonte citada por autor e ano batem com a entrada dela
-na bibliografia), roda antes do 1 e não custa nada; pega o sha inventado,
-o caminho errado e o coautor errado, e não o verbo, a atribuição nem a
-contagem.
+Onde o repositório tiver um, um portão mecânico roda antes do 1 e não
+custa nada: um hook de pre-commit, ou um que roda antes da ferramenta,
+que confere que todo sha citado resolve, todo caminho citado existe,
+todo id de tarefa e número de decisão existe e os sobrenomes de uma
+fonte citada por autor e ano batem com a entrada dela na bibliografia.
+Ele pega o sha inventado, o caminho errado e o coautor errado, e não o
+verbo, a atribuição nem a contagem.
 
 ## 8. Lotes e modelo
 
@@ -265,9 +266,9 @@ repositório, o mesmo brief com o parágrafo dos lotes levou 24, 34 e 24
 turnos contra 29, 49 e 47, e 13%, 24% e 43% menos tokens, ponderados pelo
 preço (leituras de cache a um décimo, escritas de cache a 1,25, saída a
 5); as leituras de cache foram 78%, 92% e 80% dessa economia. Em dois
-ramos, cada rodada achou algo que a outra perdeu; no terceiro, a rodada
-sem lotes achou uma imprecisão a mais. Uma rodada só nunca prova uma
-série limpa.
+ramos, cada rodada achou algo que a outra deixou passar; no terceiro, a
+rodada sem lotes achou uma imprecisão a mais. Uma rodada só nunca prova
+uma série limpa.
 
 ## 9. Onde fica o relatório e em que língua
 
@@ -306,10 +307,10 @@ para um registro de decisão; o arquivo de teste ou a saída do
 comando para uma contagem; a entrada da bibliografia (cada sobrenome de
 `author`, em ordem, e a data) e o arquivo de trechos para uma fonte
 citada por autor e ano. Um achado de revisão que a mensagem menciona não
-é evidência; o fato tem de aparecer na árvore. Também não é o corpo de
-uma tarefa nem o pedido que abriu a sessão: um nome ou uma página que
-eles afirmam é cópia, conferida na fonte dela. Você lê; não edita, não
-faz commit, não faz rebase nem escreve nada.
+é evidência; o fato tem de aparecer na árvore. O corpo de uma tarefa e
+o pedido que abriu a sessão também não são evidência: um nome ou uma
+página que eles afirmam é cópia, conferida na fonte dela. Você lê; não
+edita, não faz commit, não faz rebase nem escreve nada.
 
 Trabalhe em lotes, porque cada turno relê o seu contexto inteiro.
 Primeiro leia todas as mensagens e escreva, para você, a lista de
@@ -352,8 +353,8 @@ ausência mais estreita.
   `git log -S'<termo>' -- AGENTS.md` lista `<sha-B>` como o último
   commit que mudou quantas vezes o termo aparece no arquivo, e o diff
   dele é o que acrescenta o termo ao item. Veredito: falso; correção: o
-  sha. A regra do projeto já proibia reescrever então, e a errata foi na
-  próxima mensagem que tocou o item.
+  sha. Nessa época, a regra do projeto já proibia reescrever, e a errata
+  entrou na próxima mensagem que tocou o item.
 - **Nome como na tarefa, não como na bibliografia.** Uma mensagem de um
   repositório de texto acadêmico citou uma fonte por dois sobrenomes e o
   ano; a entrada da bibliografia trazia outro segundo autor. O texto que
@@ -363,7 +364,7 @@ ausência mais estreita.
   conferidas, nomeia só outra. Veredito: falso; correção: o sobrenome. A
   mesma série tinha o assunto "Tira da lista os N itens deixados de
   fora" para um commit em que os N ficavam na lista: enganoso, lido
-  sozinho. Os dois chegaram ao ramo principal, que é para o que serve o
+  sozinho. Os dois chegaram ao ramo principal, e é para isso que serve o
   momento 1b.
 - **Contagem.** "os quatro" quando eram cinco (a pasta de especificações
   lista cinco: `ls <pasta-das-especificações> | wc -l`). Pego pelo

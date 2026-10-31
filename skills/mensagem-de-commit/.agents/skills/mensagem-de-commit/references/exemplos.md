@@ -1,7 +1,7 @@
 # Exemplos de mensagem de commit
 
 As mensagens de exemplo ficam em inglês: ilustram um repositório escrito
-em inglês e são amostras da saída, não texto a traduzir.
+em inglês e são amostras do que a skill produz, não texto a traduzir.
 
 Os números destes exemplos representam fatos que o autor deles tinha em
 mãos. Nunca copie um número para uma mensagem real sem uma fonte para ele.
@@ -102,7 +102,7 @@ Faça as três perguntas a que o corpo tem de responder. O que estava
 errado? (As sessões expiravam no meio da requisição, e a chamada que
 renova o token entrava de novo em si mesma.) Por que esta correção? (Uma
 flag de guarda é menor que tirar a renovação do middleware, de que toda
-rota depende.) Como se testou? (Um teste nomeado que fica em laço no
+rota depende.) Como se testou? (Um teste nomeado que entra em loop no
 commit pai.) Então escreva:
 
 ```

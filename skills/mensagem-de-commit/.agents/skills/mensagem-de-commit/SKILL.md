@@ -56,8 +56,8 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
 - **Corpo: quebrado em 72 colunas.** O git recua o corpo no `git log`, e as
   ferramentas que trabalham por e-mail o citam; 72 deixa espaço para as
   duas coisas num terminal de 80 colunas.
-- **Prefixo do assunto: nenhum imposto.** Siga a história; um repositório
-  sem padrão leva um assunto simples no imperativo.
+- **Prefixo do assunto: nenhum obrigatório.** Siga a história; um
+  repositório sem padrão leva um assunto simples no imperativo.
 
 ## Antes de escrever
 
@@ -67,21 +67,21 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
    `git show <commit>`.
 2. **Diga a mudança em duas frases:** o que estava errado, e por que esta
    correção. Se não conseguir, o commit talvez tenha mais de uma mudança
-   lógica. Divida-o quando as partes se separam limpas, cada commit sendo o
-   pai mais linhas do diff final e passando nos próprios testes: uma
-   correção de bug, uma limpeza, uma mudança de API e um novo chamador
-   dessa API são quatro commits; uma mudança espalhada por muitos arquivos
-   é um. Partes que dividem uma mesma reestruturação, em que um commit
+   lógica. Divida-o quando as partes se separam limpamente, de modo que
+   cada commit seja o pai mais linhas do diff final e passe nos próprios
+   testes: uma correção de bug, uma limpeza, uma mudança de API e um novo
+   chamador dessa API são quatro commits; uma mudança espalhada por muitos
+   arquivos é um. Se as partes são de uma mesma reestruturação e um commit
    intermediário precisaria de código que não está nem no pai nem na
-   mudança terminada, ficam num commit só, e o corpo diz por que vão
+   mudança terminada, elas ficam num commit só, e o corpo diz por que vão
    juntas.
 3. **Não deixe o movimento esconder a modificação.** Uma renomeação, um
    deslocamento ou uma reformatação vai num commit próprio, antes da
-   mudança de lógica, quando esconderia a mudança, para que ninguém tenha
-   de achar a correção de uma linha dentro de uma reformatação de
-   trezentas: quando, mesmo com as opções do diff que olham através dele
-   (`-w`, `--color-moved`, `--word-diff`), o leitor tem de ler as linhas
-   mecânicas para achar a mudança. Uma reformatação ampla feita por uma
+   mudança de lógica, quando esconderia a mudança: quando, mesmo com as
+   opções do diff que enxergam além do movimento (`-w`, `--color-moved`,
+   `--word-diff`), o leitor tem de ler as linhas mecânicas para achar a
+   mudança. Assim ninguém precisa achar a correção de uma linha dentro de
+   uma reformatação de trezentas. Uma reformatação ampla feita por uma
    ferramenta vai sempre sozinha, para que um arquivo de blame-ignore a
    pule sem pular lógica junto. Uma renomeação local, uma quebra de linha
    que a edição força e a renomeação que segue uma mudança no contrato da
@@ -126,7 +126,7 @@ segurança, uma migração de dados e um revert sempre levam corpo.
 - **Modo imperativo.** O assunto completa a frase "this commit will ...":
   "add", "drop", "fix", e não "added" nem "adds". Num repositório escrito
   em outra língua, use a convenção dessa língua para o assunto do commit.
-- **Diga o que muda no comportamento, não que arquivo mudou.** Nomes de
+- **Diga o que muda no comportamento, não qual arquivo mudou.** Nomes de
   arquivo, nomes de classe e detalhes de implementação ficam no diff.
 - **Tamanho conforme os [valores padrão](#valores-padrão)**, salvo quando
   o repositório define o seu, sem ponto final.
@@ -170,7 +170,7 @@ segurança, uma migração de dados e um revert sempre levam corpo.
 
 O esqueleto pede um sintoma, um caso que falha, um número. Cada um vem do
 usuário, do ticket ou de um comando cuja saída você tem em mãos. O que
-você não tem, pergunte uma vez, ou escreva a frase mais fraca que é
+você não tem, peça uma vez, ou escreva a frase mais fraca que é
 verdadeira sem ele ("the new test shows `load_prices()` returns both
 rows"). Um número inventado é pior que nenhum: o primeiro "qual
 relatório?" acaba com a credibilidade do autor diante desse revisor.
@@ -184,22 +184,21 @@ execução dos testes) e tenha a saída em mãos. O cartucho de checagem de
 fatos desta skill (`cartuchos-de-fatos/mensagem-de-commit.md`, que a
 skill `checagem-de-fatos` carrega) lista as categorias de afirmação, os
 comandos e o brief do subagente; esta passada é o primeiro momento dele,
-feito só pelo agente que escreve,
-enquanto o amend ainda sai de graça. Uma mensagem no ramo principal nunca
-se reescreve, e por isso um fato errado achado depois sobrevive como
-errata numa mensagem posterior. O sha do mesmo ramo ainda não juntado é
-um alvo móvel, que o rebase de condensação reescreve: cite o assunto dele
-entre aspas ao lado, como faz o trailer `Fixes:`, e confira de novo depois
-do rebase. Toda mensagem que o rebase de condensação reescreve passa de
-novo pela autoconferência, contra a árvore do próprio commit
+feito só pelo agente que escreve, enquanto o amend ainda sai de graça.
+Uma mensagem no ramo principal nunca se reescreve, e por isso um fato
+errado achado depois sobrevive como errata numa mensagem posterior. O
+sha do mesmo ramo ainda não juntado é um alvo móvel, que o rebase de
+condensação reescreve: cite o assunto dele entre aspas ao lado, como faz
+o trailer `Fixes:`, e confira de novo depois do rebase. Toda mensagem
+que o rebase de condensação reescreve passa de novo pela autoconferência, contra a árvore do próprio commit
 (`git show <sha>:<path>`), e não contra a da ponta: é na reescrita que
 entra a frase sobre um commit posterior.
 
-Um achado da checagem de Fatos sobre a sua própria mensagem se aplica pela
-etapa 6 da skill `checagem-de-fatos`: confira a correção antes de ela
-entrar, releia as palavras vizinhas e as outras mensagens atrás do mesmo
-deslize, e corte ou enfraqueça, em vez de estreitar de novo, a frase que
-volta de uma segunda passada.
+Aplique pela etapa 6 da skill `checagem-de-fatos` um achado da checagem
+de Fatos sobre a sua própria mensagem: confira a correção antes de ela
+entrar, releia as palavras vizinhas e procure o mesmo deslize nas outras
+mensagens, e, na frase que volta de uma segunda passada, corte ou
+enfraqueça em vez de estreitar de novo.
 
 ## Trailers
 
