@@ -127,7 +127,7 @@ do cartucho; uma pista para o verificador, não uma prova. Regras:
 - Pule as decisões do autor, as opiniões assumidas e as frases que
   anunciam a estrutura.
 - Ordene por fonte e por tema, para que um lote leia a mesma fonte.
-- Escreva o mapa da cadeia (etapa 5) na mesma sentada.
+- Escreva o mapa do argumento (etapa 5) na mesma sentada.
 
 **2. Confira em contextos limpos.** A conferência vai para subagentes,
 cada um com contexto limpo e ferramentas só de leitura: nenhum arquivo do
@@ -142,17 +142,17 @@ completa o que um lote deixou de fora.
 
 **3. Vereditos.** Um por afirmação:
 
-- **falsa**: a primária a contradiz, ou a afirmação não está lá.
-- **imprecisa**: a direção está certa e o detalhe errado (página, ano,
+- **falso**: a primária a contradiz, ou a afirmação não está lá.
+- **impreciso**: a direção está certa e o detalhe errado (página, ano,
   número, grafia, versão; um verbo mais forte que a fonte; um escopo
   inflado de um grupo para todos).
-- **enganosa**: cada parte é verdadeira e o enquadramento engana (a
+- **enganoso**: cada parte é verdadeira e o enquadramento engana (a
   ressalva da própria fonte largada, um caso mostrado como
   representativo, um número escolhido para caber).
 - **sem fonte**: uma busca de verdade não achou nada aceitável, ou a
-  frase afirma um fato e não cita nada. Nunca arredondada para
-  **correta**.
-- **correta**: conferida na primária, ou na corroboração onde o cartucho
+  frase afirma um fato e não cita nada. Nunca se arredonda para
+  **correto**.
+- **correto**: conferido na primária, ou na corroboração onde o cartucho
   a aceita.
 - **fora do escopo**: afinal não é conferível; raro, porque a extração já
   filtrou.
@@ -177,19 +177,19 @@ as premissas que o texto não diz. Depois, como o leitor de pior fé:
 
 - **contradição**: X aqui e não-X ali, ou contra o glossário do projeto
   ou outro documento;
-- **escolha a dedo**: a evidência cobre uma fatia da conclusão;
+- **dado escolhido a dedo**: a evidência cobre uma fatia da conclusão;
 - **salto causal**: "A, portanto B" sem o passo do meio;
-- **ressalva faltando**: uma afirmação verdadeira que muda de sentido sem
+- **ressalva que falta**: uma afirmação verdadeira que muda de sentido sem
   a condição que a fonte lhe prende;
 - **premissa não dita**: o que o leitor tem de aceitar para acompanhar;
   se for conferível, vira uma afirmação extraída;
 - **elo sem apoio**: um elo que nenhuma afirmação sustenta.
 
-A afirmação que sustenta uma conclusão e não voltou **correta** vai para
-a fila "para o autor decidir". Salto causal, premissa não dita e elo sem
-apoio são do autor escrever: o cartucho diz se viram uma pergunta (a
-pergunta socrática do cartucho de capítulo acadêmico) ou um achado que o
-autor responde.
+A afirmação que sustenta uma conclusão e não voltou com o veredito
+**correto** vai para a fila "para o autor decidir". Salto causal,
+premissa não dita e elo sem apoio são do autor escrever: o cartucho diz
+se viram uma pergunta (a pergunta socrática do cartucho de capítulo
+acadêmico) ou um achado que o autor responde.
 
 **6. Corrija conforme o cartucho.** As respostas do autor entram
 primeiro; as correções da checagem vão por cima, para que o diff separe
@@ -219,15 +219,15 @@ foram aplicadas, 4 deles correções erradas coladas como vieram.
 Versão lida: <commit/intervalo/data>. Afirmações: N, em B lotes.
 Provedores: Claude <modelo>; Codex <codex --version>, <modelo>, esforço <e>
   (ou: "só Claude; Codex não rodou: <motivo>").
-Vereditos: falsa n, imprecisa n, enganosa n, sem fonte n, correta n.
+Vereditos: falso n, impreciso n, enganoso n, sem fonte n, correto n.
 Divergências entre provedores: n (decididas na fonte n, para o autor n).
 Lógica: n achados.
 
 ## Para o autor decidir
-## Correções   (ordem: falsa, imprecisa, enganosa, lógica)
+## Correções   (ordem: falso, impreciso, enganoso, lógica)
 ## Sem fonte
 ## Divergências entre provedores
-## Mapa da cadeia
+## Mapa do argumento
 ## Pendências   (fonte que não se abriu, lote que falhou,
                  chamada do Codex que falhou)
 ```
@@ -262,7 +262,7 @@ fonte, diga; nunca finja tê-la lido. Você lê; não edita nada.
 Nunca mande a um serviço externo (API, busca, formulário) o e-mail, o
 nome ou outro dado pessoal do autor, mesmo que os ache no ambiente.
 
-Vereditos: falsa, imprecisa, enganosa, sem fonte, correta, fora do
+Vereditos: falso, impreciso, enganoso, sem fonte, correto, fora do
 escopo.
 
 Saída: um bloco ```json com uma lista, um objeto por id:
@@ -288,7 +288,7 @@ que escreveu o texto é muitas vezes o mesmo modelo. Por isso, onde quer
 que um cartucho mande a conferência a um subagente, as mesmas afirmações
 vão também, em paralelo, ao Codex da OpenAI (`codex exec`, só leitura),
 que confere toda afirmação, não só as de que o Claude duvidou: o erro que
-importa é um **correta** que está errado. Onde não roda subagente (a
+importa é um **correto** que está errado. Onde não roda subagente (a
 conferência do próprio agente autor antes de um commit), o Codex também
 não roda.
 

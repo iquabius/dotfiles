@@ -141,7 +141,8 @@ A forma da mensagem é a cadeia dela: **problema → por que este conserto
   achado é do eixo História da revisao-rigorosa; a checagem de Fatos
   relata o fato vencido).
 
-Uma descrição do problema que volta **falsa** não é defeito da mensagem:
+Uma descrição do problema que volta com o veredito **falso** não é
+defeito da mensagem:
 o commit pode estar resolvendo um problema que não existe. Ela vai para
 o autor, não para uma reescrita da mensagem.
 
@@ -180,9 +181,10 @@ se estreita uma terceira vez: sai, ou vira a frase mais fraca que um
 comando prova. Uma afirmação de ausência sobre o pai ("só pedia",
 "nenhuma skill pedia") se escreve como a busca que a mostra, ou cai. Em
 2026-10-26, uma frase assim levou três passadas, cada uma estreitando a
-anterior; numa medição no mesmo dia, ela voltou imprecisa tanto de um
-remendo conferido quanto de uma reescrita do parágrafo dela a partir da
-árvore, e a reescrita custou mais e acrescentou afirmações.
+anterior; numa medição no mesmo dia, ela voltou com o veredito
+impreciso tanto de um remendo conferido quanto de uma reescrita do
+parágrafo dela a partir da árvore, e a reescrita custou mais e
+acrescentou afirmações.
 
 ## 7. Passadas e momento
 
@@ -322,7 +324,7 @@ mensagem.
 Nunca mande a um serviço externo o e-mail, o nome ou outro dado pessoal
 do autor, mesmo que os ache no ambiente.
 
-Vereditos: falsa, imprecisa, enganosa, sem fonte, correta, fora do
+Vereditos: falso, impreciso, enganoso, sem fonte, correto, fora do
 escopo.
 
 Saída: um bloco ```json com uma lista, um objeto por afirmação:
@@ -342,7 +344,7 @@ ausência mais estreita.
 - **Verbo inflado.** Uma mensagem diz que uma regra "exige" que uma das
   duas implementações de um par mantenha todos os métodos da outra. A
   regra, na árvore do commit, diz que as duas devem "diferir o mínimo"
-  além do que a tecnologia de cada uma pede. Veredito: imprecisa;
+  além do que a tecnologia de cada uma pede. Veredito: impreciso;
   correção: "para manter o par tão próximo quanto a regra pede". O
   método pode até ficar; o motivo dado para ele não era o da regra.
 - **Atribuição ao commit errado.** Uma mensagem diz que um termo entrou
@@ -350,7 +352,7 @@ ausência mais estreita.
   mostra que esse commit só reescreveu o item (tirou um qualificativo);
   `git log -S'<termo>' -- AGENTS.md` lista `<sha-B>` como o último
   commit que mudou quantas vezes o termo aparece no arquivo, e o diff
-  dele é o que acrescenta o termo ao item. Veredito: falsa; correção: o
+  dele é o que acrescenta o termo ao item. Veredito: falso; correção: o
   sha. A regra do projeto já proibia reescrever então, e a errata foi na
   próxima mensagem que tocou o item.
 - **Nome como na tarefa, não como na bibliografia.** Uma mensagem de um
@@ -359,7 +361,7 @@ ausência mais estreita.
   o commit mudou citava a fonte só pela chave, e o par errado já estava
   no corpo da tarefa em que o commit trabalhou, no pai do commit. A
   linha "Fontes conferidas" do commit, que lista as fontes declaradas
-  conferidas, nomeia só outra. Veredito: falsa; correção: o sobrenome. A
+  conferidas, nomeia só outra. Veredito: falso; correção: o sobrenome. A
   mesma série tinha o assunto "Tira da lista os N itens deixados de
   fora" para um commit em que os N ficavam na lista: enganoso, lido
   sozinho. Os dois chegaram ao ramo principal, que é para o que serve o
