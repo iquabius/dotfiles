@@ -386,6 +386,44 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	done
 }
 
+@test "gh auth que mexe no token é recusado; o status passa" {
+	for c in 'gh auth token' 'gh auth token -h github.com' 'gh auth git-credential get' \
+		'gh auth login --with-token' 'gh auth refresh -s admin:public_key' \
+		'gh auth logout -h github.com' 'gh auth switch' 'gh auth setup-git' \
+		'gh auth status -t' 'gh auth status --show-token' 'gh auth status -at' \
+		'gh auth status --show-token=true' 'distrobox-host-exec gh auth token' \
+		"sh -c 'gh auth token'" 'echo $(gh auth token)' \
+		'gh auth token --help --help=false' 'gh auth login -s --help' 'gh auth foo' \
+		'gh auth status -th github.com' 'gh auth status -thgithub.com' 'gh auth status -ath x' \
+		'gh auth status -at=true --json hosts' 'gh auth status -t=false' \
+		'gh auth status --json hosts -t' 'gh auth status -hgithub.com -t' \
+		'gh auth -h status token -h github.com' 'gh auth token -- --help' 'gh auth token -h --help' \
+		'gh auth --hostname status refresh --hostname github.com -s delete_repo' \
+		'gh -h github.com auth token' \
+		'gh --hostname github.com auth refresh -s delete_repo' 'gh -h github.com auth status -t' \
+		'gh -u eu auth switch' 'gh auth -h status novo' \
+		'gh -h github.com -hgithub.com auth token' 'gh --show-token=true auth status' \
+		'gh -at auth status' 'gh auth setup-git -- x --help' 'gh "" auth setup-git' \
+		'gh auth status -h -t' 'gh auth status -- -t' 'gh auth status -hat' \
+		'gh auth --hostname github.com status' 'gh auth token --help' \
+		'gh auth -h status -hgithub.com token' \
+		'gh config set -h github.com oauth_token x' 'gh config get -h github.com oauth_token' \
+		'gh -h x -hx config get oauth_token' 'gh search issues auth'; do
+		echo "comando: $c"
+		run guarda "$c"
+		recusa
+	done
+	for c in 'gh auth status' 'gh auth status -a -h github.com' 'gh auth status --json hosts' \
+		'gh auth status --jq .hosts -a' 'gh auth status --hostname=github.com --active' \
+		'gh auth status --template x' 'gh help auth token' 'gh help auth status -t' \
+		'gh auth --help' 'gh auth' 'gh pr view 3' 'gh -R o/r pr view 3' \
+		'gh search code oauth_token' "echo 'gh auth token'"; do
+		echo "comando: $c"
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
 # A leitura do gh é uma passada só: centenas de opções antes do subcomando
 # não estouram o prazo do hook.
 @test "muitas opções no gh não estouram o tempo do hook" {
@@ -394,6 +432,8 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	recusa
 	run guarda "gh $(printf -- '-x w%s ' $(seq 1500))pr view 3"
 	[ -z "$output" ]
+	run guarda "gh $(printf -- '-h %s ' $(seq 1500))config get oauth_token"
+	recusa
 	[ "$SECONDS" -lt 3 ]
 }
 
