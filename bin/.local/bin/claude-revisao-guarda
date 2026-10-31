@@ -17,6 +17,8 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   notes.rewriteRef, que forjaria uma marca;
 - recusa o merge pelo GitHub (gh pr merge, a API REST ou a GraphQL), que
   leva código ao main sem passar pelo pre-push;
+- recusa criar alias do gh, que põe os argumentos da chamada no fim da
+  expansão;
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
   revisão de pé é decisão dele.
 
@@ -60,6 +62,8 @@ ENV_CONFIG = ("Recusado: trocar a configuração global do git pelo ambiente "
 CLAUDECODE = "Recusado: CLAUDECODE é como o pre-commit do git-revisao reconhece o agente."
 GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; junte no "
             "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
+GH_ALIAS = ("Recusado: o alias do gh roda depois, com os argumentos da chamada no fim "
+            "da expansão, fora do que o guarda lê agora; criar alias é do autor.")
 NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"
 REF_DAS_NOTAS = ("Recusado: o core.notesRef ou o notes.rewriteRef apontado às notas da "
                  "revisão grava nelas ou copia a marca para um commit reescrito, que "
@@ -782,19 +786,6 @@ def par_gravado(args):
     return (ps[0], ps[1]) if len(ps) >= 2 else None
 
 
-def gh_posicionais(args):
-    """As palavras do gh que não são opção nem o argumento do -R/--repo."""
-    posicionais, pular = [], False
-    for a in args:
-        if pular:
-            pular = False
-        elif a in ("-R", "--repo"):
-            pular = True
-        elif not a.startswith("-"):
-            posicionais.append(a)
-    return posicionais
-
-
 def gh_junta(args):
     """O gh que faz o merge pelo GitHub: gh pr merge, gh repo sync (o
     merge-upstream num repositório do GitHub), ou a API REST
@@ -1051,13 +1042,12 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
     if nome == "gh":
         if gh_junta(ps[1:]):
             yield "deny", GH_MERGE
-        posicionais = gh_posicionais(ps[1:])
-        if posicionais[:2] == ["alias", "set"] and len(posicionais) >= 4:
-            # O alias do gh roda depois, quando chamado: confere-se já.
-            alias = posicionais[3]
-            shell = alias.startswith("!") or any(a in ("-s", "--shell") for a in ps[1:])
-            yield from decisoes_do_texto(alias.removeprefix("!") if shell else "gh " + alias,
-                                         nivel + 1, ambiente)
+        # O alias do gh roda depois, quando chamado, com os argumentos da
+        # chamada no fim da expansão (gh alias set p 'pr ', depois gh p merge
+        # 3), ou vem da entrada padrão ou de um arquivo, que o guarda não lê.
+        # Conferir a expansão não basta: criar alias é do autor.
+        if gh_pode(ps[1:], "alias", "set") or gh_pode(ps[1:], "alias", "import"):
+            yield "deny", GH_ALIAS
         return
     if nome == "git":
         for pares, sub, args in chamadas_do_git(ps[1:], ambiente, estrita=no_meio):

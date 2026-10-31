@@ -354,7 +354,7 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		"gh api graphql -f query='mutation { enqueuePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { mergeBranch(input: {repositoryId: \"x\", base: \"main\", head: \"y\"}) { clientMutationId } }'" \
 		"'gh' pr merge 12" 'timeout 5 gh pr merge 1' 'if gh pr merge 1; then :; fi' \
-		'gh pr -R o/r merge 3' "gh alias set m 'pr merge'" 'gh -b x pr merge 3' \
+		'gh pr -R o/r merge 3' 'gh -b x pr merge 3' \
 		'gh --verbose pr merge 3' "gh '' pr merge 3" 'gh pr -b x --verbose y merge 3' \
 		'gh -R o/r -ds pr merge 3' 'gh pr -R o/r -ds merge 3' 'gh -R o/r -Ro/r pr merge 3' \
 		'gh -R o/r api -X PUT repos/o/r/pulls/3/merge'; do
@@ -362,11 +362,27 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		run guarda "$c"
 		recusa
 	done
-	for c in 'gh pr view 12' "gh alias set co 'pr checkout'" 'gh api repos/o/r/pulls/3' \
+	for c in 'gh pr view 12' 'gh api repos/o/r/pulls/3' 'gh alias list' \
 		'gh pr view merge' 'gh pr --title=merge view' 'gh search prs merge'; do
 		echo "comando: $c"
 		run guarda "$c"
 		[ -z "$output" ]
+	done
+}
+
+# O gh põe os argumentos da chamada no fim da expansão do alias: o alias
+# inocente dá depois a forma recusada (gh alias set p 'pr ', gh p merge 3).
+@test "criar alias do gh é recusado" {
+	for c in "gh alias set m 'pr merge'" "gh alias set m -- '-b x pr merge'" \
+		"gh alias set co 'pr checkout'" "gh alias set p 'pr '" "gh alias set t 'auth '" \
+		"gh alias set v 'api \$1 -X PUT'" 'gh alias import a.yml' "gh -R o/r alias set y pr" \
+		"gh alias set t - <<< 'auth token'" 'printf x | gh alias set r -' \
+		"gh '' alias set t 'auth token'" "gh alias '' set t 'auth token'" "gh '' alias import a.yml" \
+		"gh alias set --shell=true t \"eval 'gh auth token'\"" \
+		"gh --shell t -ss alias set 'gh auth token'" "gh alias --shell t -ss set 'gh auth token'"; do
+		echo "comando: $c"
+		run guarda "$c"
+		recusa
 	done
 }
 
