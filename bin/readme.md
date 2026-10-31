@@ -152,9 +152,16 @@ shells de fora do POSIX, além do fish e do csh, fazem pelo jeito deles
 (o `$env.HOME` do `nu`); e o resto do comando depois de um `$(...)` que
 traz um heredoc com apóstrofo (`git commit -m "$(cat <<'EOF'` ... `it's`
 ... `EOF` `)" --no-verify`), porque a busca do `)` que fecha o `$(` não
-pula o corpo do heredoc. Do outro lado, ele recusa a mais em quatro
-casos: a troca de ambiente dentro de um subshell (`( HOME=/x; ...)`)
-vale para os comandos de fora; o git, o gh, o shell ou o prefixo sem
+pula o corpo do heredoc. Passa ainda a mutation GraphQL do merge num
+arquivo ou pela entrada padrão (`-F query=@q.graphql`, `-F query=@-`,
+`--input -`), e a escrita no `main` pela API que não é merge (`-X PATCH
+.../git/refs/heads/main`, `-X PUT .../contents/<arquivo>`, a mutation
+`createCommitOnBranch`): o que segura é o escopo do token. Do outro
+lado, ele recusa a mais em cinco casos: o que parece merge pelo GitHub e
+não é, o `gh repo sync` sem destino, que só atualiza o clone local, e o
+`gh api` cujo texto cita um nome do merge (um título que diga
+`mergeBranch`); a troca de ambiente dentro de um subshell (`( HOME=/x;
+...)`) vale para os comandos de fora; o git, o gh, o shell ou o prefixo sem
 aspas como argumento de outro programa conta como comando (`echo git
 commit -n`, `printf '%s\n' git push --no-verify`); o `set` do bash que
 traz um nome depois das opções (`set -e HOME`) conta como o do fish; e o
