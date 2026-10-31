@@ -220,9 +220,9 @@ O commit que um agente de IA escreveu ou ajudou a escrever diz isso. O
 leitor do `git log` e do `git blame` tem direito de saber que a mudança
 passou por um agente, e por qual.
 
-1. **Use a atribuição que o seu harness fornece, ao pé da letra.** Os
-   harnesses de agente costumam entregar ao agente as linhas exatas com
-   que terminar um commit (o Claude Code, por exemplo, fornece uma linha
+1. **Use a atribuição que o seu harness fornece, ao pé da letra.** Um
+   harness de agente pode entregar ao agente as linhas exatas com que
+   terminar um commit (o Claude Code, por exemplo, fornece uma linha
    como `Co-Authored-By: Claude <model> <noreply@anthropic.com>`).
    Copie-as como vieram: o trailer vai no bloco de trailers, e uma linha
    de banner que o harness fornece para commits vai numa linha própria
