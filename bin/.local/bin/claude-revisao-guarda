@@ -17,6 +17,12 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   notes.rewriteRef, que forjaria uma marca;
 - recusa o merge pelo GitHub (gh pr merge, a API REST ou a GraphQL), que
   leva código ao main sem passar pelo pre-push;
+- recusa o gh com a palavra auth fora do gh help, do gh auth sozinho ou
+  com --help e do gh auth status sem o token, e o oauth_token do gh config
+  (gh_auth): o escopo do token que o autor deu ao gh é o limite do que o
+  agente faz pela API; o login, o refresh e o switch o trocam, o token, o
+  git-credential e o status -t o tiram do gh, e o logout e o setup-git
+  mexem nele;
 - recusa criar alias do gh, que põe os argumentos da chamada no fim da
   expansão;
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
@@ -62,6 +68,10 @@ ENV_CONFIG = ("Recusado: trocar a configuração global do git pelo ambiente "
 CLAUDECODE = "Recusado: CLAUDECODE é como o pre-commit do git-revisao reconhece o agente."
 GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; junte no "
             "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
+GH_AUTH = ("Recusado: este gh (o gh auth, ou o oauth_token do gh config) pode ler, "
+           "criar, trocar ou apagar o token do gh, o que é do autor. Passam o gh auth "
+           "status com -a, --active, -h ou --hostname <host>, --json, --jq ou "
+           "--template, o gh auth --help, e a ajuda pelo gh help auth <subcomando>.")
 GH_ALIAS = ("Recusado: o alias do gh roda depois, com os argumentos da chamada no fim "
             "da expansão, fora do que o guarda lê agora; criar alias é do autor.")
 NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"
@@ -839,6 +849,45 @@ def gh_pode(args, primeiro, segundo=None):
     return False
 
 
+# O gh auth status que passa: estas opções, e as que levam valor com ele
+# na palavra seguinte, que não começa com -, ou depois do =.
+STATUS_SEM_VALOR = {"-a", "--active"}
+STATUS_COM_VALOR = {"-h", "--hostname", "--json", "--jq", "--template"}
+
+
+def gh_auth(args):
+    """O gh com a palavra auth que pode mexer no token. O gh_pode acha o
+    subcomando, mas não lê as opções que vêm depois dele como o pflag as lê
+    (gh auth status -th github.com mostra o token: o -t num grupo curto), e
+    conhecer cada opção de cada subcomando do auth deixaria escapar a que
+    uma versão nova do gh trouxer: o guarda falha fechado. Passam só o gh
+    help, o gh auth sozinho ou com --help, e o gh auth status com as opções
+    de STATUS_SEM_VALOR e STATUS_COM_VALOR; o resto com a palavra auth se
+    recusa, também um texto qualquer igual a auth. O oauth_token do gh
+    config (gh config set -h x oauth_token y) guarda ou lê o token sem a
+    palavra auth, e se recusa também. Como as outras regras, esta lê as
+    palavras escritas: a que o shell monta (gh {auth,token}, gh $(echo auth)
+    token) passa, e o que segura é o escopo do token."""
+    if "oauth_token" in args and gh_pode(args, "config"):
+        return True
+    if "auth" not in args or args[:1] == ["help"]:
+        return False
+    if args in (["auth"], ["auth", "--help"]):
+        return False
+    if args[:2] != ["auth", "status"]:
+        return True
+    resto, i = args[2:], 0
+    while i < len(resto):
+        a = resto[i]
+        if a in STATUS_SEM_VALOR or ("=" in a and a.split("=", 1)[0] in STATUS_COM_VALOR):
+            i += 1
+        elif a in STATUS_COM_VALOR and resto[i + 1:i + 2] and not resto[i + 1].startswith("-"):
+            i += 2
+        else:
+            return True
+    return False
+
+
 def decidir(decisao, motivo):
     json.dump({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
@@ -1042,6 +1091,8 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
     if nome == "gh":
         if gh_junta(ps[1:]):
             yield "deny", GH_MERGE
+        if gh_auth(ps[1:]):
+            yield "deny", GH_AUTH
         # O alias do gh roda depois, quando chamado, com os argumentos da
         # chamada no fim da expansão (gh alias set p 'pr ', depois gh p merge
         # 3), ou vem da entrada padrão ou de um arquivo, que o guarda não lê.

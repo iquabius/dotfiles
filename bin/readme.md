@@ -86,16 +86,30 @@ do subcomando, que se expande; senão o `GIT_NOTES_REF`; senão o último
 aceita inteiros), ou apontar a ela o `core.notesRef` gravado ou o
 `notes.rewriteRef` (também por glob ou pelo `GIT_NOTES_REWRITE_REF`),
 que copiaria a marca para o commit reescrito por um `--amend` ou um
-rebase; e o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
-que não passa pelo pre-push. Criar alias do `gh` (`gh alias set`, `gh
-alias import`) se recusa: o `gh` põe os argumentos da chamada no fim da
+rebase; o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
+que não passa pelo pre-push; e o `gh` com a palavra `auth`, menos o `gh
+auth status` sem o token: o escopo do token é o limite do que o agente
+faz pela API, o `login`, o `refresh` e o `switch` o trocam, o `token`, o
+`git-credential` e o `status -t` o tiram do `gh`, e o `logout` e o
+`setup-git` mexem nele. O pflag lê o `-t` num grupo de opções curtas
+depois do subcomando (`gh auth status -th github.com`), e conhecer as
+opções de cada subcomando do `auth` deixaria escapar a que uma versão
+nova trouxer; por isso o guarda falha fechado: passam só o `gh help
+...`, o `gh auth` sozinho ou com `--help`, e o `gh auth status` seguido
+só de `-a`, `--active` e de `-h`, `--hostname`, `--json`, `--jq` ou
+`--template` com o valor. A ajuda de um subcomando vem pelo `gh help
+auth <subcomando>`. O `oauth_token` do `gh config` (`gh config get -h
+<host> oauth_token`, e o `set`), que lê ou grava o token sem a palavra
+`auth`, também se recusa. Criar alias do `gh` (`gh alias set`, `gh alias
+import`) se recusa: o `gh` põe os argumentos da chamada no fim da
 expansão, e o alias inocente dá depois a forma recusada (`gh alias set p
-'pr '`, depois `gh p merge 3`). O merge pelo GitHub e o alias se leem
-com a palavra que não começa com `-` depois de cada opção sem `=` como
-valor dela ou como posicional, em todas as leituras (`gh -R o/r pr
-merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge 3`), numa
-passada só pelas palavras. Ler a configuração (`get`, `list`, `--get*`,
-`--list`, a chave sozinha) passa, também com redirecionamento.
+'pr '`, depois `gh p merge 3`). O merge pelo GitHub, o alias e o `gh
+config` se leem com a palavra que não começa com `-` depois de cada
+opção sem `=` como valor dela ou como posicional, em todas as leituras
+(`gh -R o/r pr merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge
+3`), numa passada só pelas palavras. Ler a configuração do git (`get`,
+`list`, `--get*`, `--list`, a chave sozinha) passa, também com
+redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não
@@ -163,8 +177,16 @@ pula o corpo do heredoc. Passa ainda a mutation GraphQL do merge num
 arquivo ou pela entrada padrão (`-F query=@q.graphql`, `-F query=@-`,
 `--input -`), e a escrita no `main` pela API que não é merge (`-X PATCH
 .../git/refs/heads/main`, `-X PUT .../contents/<arquivo>`, a mutation
-`createCommitOnBranch`): o que segura é o escopo do token. Do outro
-lado, ele recusa a mais em seis casos: todo alias novo do `gh`, também
+`createCommitOnBranch`), o que chega ao `gh auth git-credential` sem o
+`gh` no comando (`git credential fill`, um credential helper chamado
+direto), a palavra que o shell monta ao rodar (`gh {auth,token}`, `gh
+$(echo auth) token`, `a=auth; gh $a token`, um glob) e uma extensão do
+`gh` que chame o `gh auth token` por dentro: o que segura é o escopo do
+token, que a camada privada, com os passos do autor, deixa só de
+leitura. Do outro lado, ele recusa a mais em sete casos: o `gh` com a
+palavra `auth` fora das formas que passam, também a que não mexe no
+token (`gh auth --hostname github.com status`, `gh auth token --help`,
+`gh search issues auth`); todo alias novo do `gh`, também
 o que não leva a uma forma recusada; o que parece merge pelo GitHub e
 não é, o `gh repo sync` sem destino, que só atualiza o clone local, e o
 `gh api` cujo texto cita um nome do merge (um título que diga
