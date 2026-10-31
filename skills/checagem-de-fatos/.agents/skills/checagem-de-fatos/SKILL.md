@@ -20,7 +20,8 @@ description: >-
 
 # checagem-de-fatos — a checagem adversarial de fatos e de lógica
 
-Um texto que já existe chega com o seu registro. A checagem o lê como um
+Um texto que já existe chega com o seu registro (o tipo de texto: uma
+mensagem de commit, um ADR, um capítulo). A checagem o lê como um
 revisor hostil leria: toda afirmação conferível é presumida errada até a
 fonte primária mostrar o contrário, todo veredito traz a evidência citada,
 e a cadeia do argumento é auditada atrás do passo que falta. A checagem
@@ -82,13 +83,13 @@ O motor não enxerga o registro. Antes da etapa 1, um cartucho declara:
 9. **Onde fica o relatório e em que língua**: onde o relatório se escreve
    e em que língua saem as citações e a prosa.
 
-Cada cartucho mora na skill do registro dele, numa pasta
-`cartuchos-de-fatos/` aninhada na pasta dela
+Cada cartucho mora na skill do seu registro, numa pasta
+`cartuchos-de-fatos/` dentro da pasta dessa skill
 (`<skill do registro>/cartuchos-de-fatos/<cartucho>.md`), e a skill do
-registro diz à checagem onde ele está; esta skill é só o motor. Carregue
-o cartucho pelo caminho que essa skill der. A pasta `references/` de uma
-skill guarda só as referências genéricas, nunca um cartucho. Os
-cartuchos de hoje:
+registro diz à checagem onde o cartucho está; esta skill é só o motor.
+Carregue o cartucho pelo caminho que essa skill der. A pasta
+`references/` de uma skill guarda só as referências genéricas, nunca um
+cartucho. Os cartuchos de hoje:
 
 - `mensagem-de-commit/cartuchos-de-fatos/mensagem-de-commit.md` — um
   rascunho de mensagem antes do `git commit`, ou a série de um ramo
@@ -170,46 +171,48 @@ artefato, a citação da evidência contra a fonte, byte a byte. Um achado
 que só um subagente ou só o Codex viu não entra. Uma afirmação em que os
 dois provedores divergem se decide aqui, na fonte.
 
-**5. Audite a cadeia.** Enquanto os lotes rodam, sem web e sem
-subagente, o agente principal escreve a cadeia que o artefato sustenta,
-uma linha por elo, com os ids das afirmações em que cada elo se apoia e
-as premissas que o texto não diz. Depois, como o leitor de pior fé:
+**5. Audite a cadeia.** Enquanto os lotes rodam, o agente principal,
+sem web e sem subagente, escreve a cadeia que o artefato sustenta, uma
+linha por elo, com os ids das afirmações em que cada elo se apoia e as
+premissas que o texto não diz. Depois, lê a cadeia como o leitor de pior
+fé e procura:
 
 - **contradição**: X aqui e não-X ali, ou contra o glossário do projeto
   ou outro documento;
 - **dado escolhido a dedo**: a evidência cobre uma fatia da conclusão;
 - **salto causal**: "A, portanto B" sem o passo do meio;
 - **ressalva que falta**: uma afirmação verdadeira que muda de sentido sem
-  a condição que a fonte lhe prende;
+  a condição que a fonte põe nela;
 - **premissa não dita**: o que o leitor tem de aceitar para acompanhar;
   se for conferível, vira uma afirmação extraída;
 - **elo sem apoio**: um elo que nenhuma afirmação sustenta.
 
 A afirmação que sustenta uma conclusão e não voltou com o veredito
-**correto** vai para a fila "para o autor decidir". Salto causal,
-premissa não dita e elo sem apoio são do autor escrever: o cartucho diz
-se viram uma pergunta (a pergunta socrática do cartucho de capítulo
-acadêmico) ou um achado que o autor responde.
+**correto** vai para a fila "para o autor decidir". Cabe ao autor
+escrever o salto causal, a premissa não dita e o elo sem apoio: o
+cartucho diz se eles se tornam uma pergunta (a pergunta socrática do
+cartucho de capítulo acadêmico) ou um achado que o autor responde.
 
 **6. Corrija conforme o cartucho.** As respostas do autor entram
 primeiro; as correções da checagem vão por cima, para que o diff separe
 umas das outras. Correções mecânicas (página, ano, grafia, sha, caminho)
 são uma linha cada; correções de sentido (a força de um verbo, uma
 ressalva, uma atribuição trocada) levam o veredito e a evidência citada.
-A correção que começa a puxar uma conclusão era da fila do autor, não uma
-correção.
+A correção que começa a mexer numa conclusão era da fila do autor, não
+uma correção.
 
 **A correção mínima limita o verificador, não quem a aplica.** Ela impede
 a checagem de escrever o texto do autor; continua sendo uma afirmação que
 ninguém conferiu, calculada sobre a leitura que o verificador fez da
-base. Antes de ela entrar, quem a aplica a confere na primária como
-qualquer afirmação, relê as palavras vizinhas da corrigida atrás do mesmo
-deslize e procura a mesma afirmação no resto do artefato e no que a mesma
-mudança escreve. O texto na voz do autor recebe a correção como ela é e
-nada mais; o cartucho diz quando o agente que aplica pode reescrever o
-texto que ele mesmo escreveu. Em 2026-10-26, 10 dos 16 achados de três
-passadas posteriores sobre um ramo vieram da maneira como as correções
-foram aplicadas, 4 deles correções erradas coladas como vieram.
+base. Antes de a correção entrar, quem a aplica confere essa correção
+na primária como qualquer afirmação, relê as palavras vizinhas da
+corrigida atrás do mesmo deslize e procura a mesma afirmação no resto do
+artefato e no que a mesma mudança escreve. O texto na voz do autor
+recebe a correção como ela é e nada mais; o cartucho diz quando o agente
+que aplica pode reescrever o texto que ele mesmo escreveu. Em
+2026-10-26, 10 dos 16 achados de três passadas posteriores sobre um
+ramo vieram da maneira como as correções foram aplicadas, 4 deles
+correções erradas coladas como vieram.
 
 **7. Relate.** Escrito onde o cartucho diz, com o resumo na conversa:
 
@@ -388,7 +391,7 @@ decidiu.
   nela, e fica com o retorno sobre a escrita.
 - **mensagem-de-commit** pede ao agente autor que rode a autoconferência
   do cartucho de mensagem de commit em todo rascunho antes do
-  `git commit`, enquanto um amend ainda é livre.
+  `git commit`, enquanto o amend ainda sai de graça.
 - **revisao-rigorosa** lança o subagente do cartucho de mensagem de
   commit como um eixo Fatos ao lado de Normas, Especificação e História,
   e de novo depois que o ramo é condensado, quando as mensagens são

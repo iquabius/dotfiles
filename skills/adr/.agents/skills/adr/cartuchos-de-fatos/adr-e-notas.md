@@ -1,7 +1,7 @@
 # Cartucho: registros de decisão e notas do projeto
 
-Cartucho de checagem de fatos do registro desta skill, a `adr`: o motor,
-sem registro, é a skill `checagem-de-fatos`.
+Cartucho de checagem de fatos do registro da skill `adr`. O motor, que
+não tem registro, é a skill `checagem-de-fatos`.
 
 O artefato é um registro de decisão (um ADR: um parágrafo com data
 absoluta, a decisão, o que ela substitui, "em vez de" e "custo") ou uma
@@ -44,7 +44,7 @@ número.
   diferem);
 - **a alternativa**: ela existia e era possível neste projeto naquela
   data; um "em vez de" que nunca esteve na mesa é enfeite;
-- **o custo**: um fato sobre o que a decisão abre mão, não uma
+- **o custo**: um fato sobre aquilo de que a decisão abre mão, não uma
   esperança;
 - **o termo**: uma palavra por conceito, contra a entrada do glossário e
   a lista de "evitar" dela;
@@ -65,18 +65,18 @@ vencidos, e o autor decide se a decisão fica de pé).
 
 ## 5. O que vira a afirmação sem fonte
 
-A convenção do projeto: um fato datado sem fonte ganha "não conferido,
-observado em <data>" ou se pergunta ao autor; um termo fora do glossário
-vira uma pergunta de glossário (`domain-modeling`), não uma troca de nome
-calada.
+A convenção do projeto: um fato datado sem fonte ganha a marca
+"não conferido, observado em <data>" ou se pergunta ao autor; um termo
+fora do glossário vira uma pergunta de glossário (`domain-modeling`), não
+uma troca de nome feita em silêncio.
 
 ## 6. Correções e quem aprova
 
 Um ADR que muda se reescreve no lugar, com a data nova e a decisão
 anterior num "em vez de"; uma errata se corrige no texto. Correções de
 fato (uma data, um sha, um termo) entram no diff que o autor revisa; uma
-correção que muda o motivo da decisão é do autor decidir, com as
-alternativas, antes de qualquer coisa se escrever.
+correção que muda o motivo da decisão cabe ao autor decidir, com as
+alternativas, antes de se escrever qualquer coisa.
 
 ## 7. Passadas e momento
 
