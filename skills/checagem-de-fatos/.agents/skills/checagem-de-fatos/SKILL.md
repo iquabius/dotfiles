@@ -2,18 +2,19 @@
 name: checagem-de-fatos
 description: >-
   Checagem adversarial dos fatos e da lógica de um texto que já existe:
-  as mensagens de commit de um ramo contra o repositório, um ADR ou uma
-  nota do projeto contra o glossário e o histórico, um capítulo acadêmico
+  as mensagens de commit de um ramo contra o repositório, um ADR ou nota
+  do projeto contra o glossário e o histórico, um capítulo acadêmico
   contra os PDFs que cita. Extrai cada afirmação conferível com a citação
   literal, confere cada uma na fonte primária em subagentes só de leitura
   e, onde houver, no Codex como segundo provedor, dá o veredito com a
   evidência, audita a cadeia do argumento e relata; nunca reescreve as
   decisões do autor. Carrega o "cartucho" do registro, que mora na skill
-  dele. Use antes de um marco (uma tag, uma entrega, um merge), quando
-  pedirem para "checar os fatos" ou uma "checagem adversarial", para
-  conferir o que uma mensagem de commit ou um ramo afirma, ou quando um
-  eixo da revisão precisar dos fatos de uma mensagem. Não é revisão de
-  estilo nem crítica de qualidade: só fato, enquadramento e lógica.
+  dele. Use antes de um marco (tag, entrega, merge), quando pedirem para
+  "checar os fatos" ou uma "checagem adversarial", para conferir o que
+  uma mensagem de commit ou um ramo afirma, ou quando um eixo da revisão
+  precisar dos fatos de uma mensagem. Não é revisão de estilo
+  (revisao-rigorosa, escrita acadêmica) nem crítica de qualidade (oficina
+  de texto): só fato, enquadramento e lógica.
   Também em inglês: "fact-check", "check the facts", "verify commit
   messages".
 ---
