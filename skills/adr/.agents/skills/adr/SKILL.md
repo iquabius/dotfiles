@@ -114,6 +114,11 @@ Fontes: <pesquisa, commit, ADR anterior>.
 - [ ] Nenhum "hoje/atual/recente/novo" sem data ou versão.
 - [ ] Lido frio: faz sentido sem a conversa que o gerou.
 
+O cartucho de checagem de fatos desta skill
+(`cartuchos-de-fatos/adr-e-notas.md`, que a skill `checagem-de-fatos`
+carrega) diz como conferir os fatos de um ADR ou de uma nota do projeto
+antes do commit.
+
 ## Fontes
 
 Adaptado de `mattpocock/skills` (domain-modeling, formato e os três
