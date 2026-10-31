@@ -126,8 +126,8 @@ assunto de um commit (assuntos resumem; o diff decide).
 
 ## 4. A cadeia
 
-A forma da mensagem é a cadeia dela: **problema → por que este conserto
-→ alternativa recusada → escopo → teste**. Audite:
+O esqueleto da mensagem é a cadeia dela: **problema → por que este
+conserto → alternativa recusada → escopo → teste**. Audite:
 
 - o problema é real no pai, dito como um fato sobre o código;
 - o conserto que o diff faz é o conserto que a mensagem descreve, e não
