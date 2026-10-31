@@ -14,12 +14,13 @@ outra fonte. A mensagem diz por quê; o diff diz o quê. Onde os dois
 discordam, a mensagem está errada, nunca o diff.
 
 Por que este cartucho existe: em 2026-10-17, dois ramos chegaram a um
-ramo principal com mensagens que diziam que uma regra "exige" o que a
-regra só pede que fique mínimo, e que atribuíam a um commit o que outro
-tinha feito. Os dois foram pegos por um eixo da revisão depois do commit,
-quando, pela regra do projeto contra reescrever a história revisada, só
-restava uma errata numa mensagem posterior. A checagem tem de rodar
-enquanto um amend ainda sai de graça.
+ramo principal com mensagens que diziam que uma regra pede o que ela não
+pede (ela só pede que a diferença entre duas implementações fique
+mínima), e que atribuíam a um commit o que outro tinha feito. Os dois
+foram pegos por um eixo da revisão depois do commit, quando, pela regra
+do projeto contra reescrever a história revisada, só restava uma errata
+numa mensagem posterior. A checagem tem de rodar enquanto um amend ainda
+sai de graça.
 
 ## 1. Artefato e âncora
 
@@ -39,10 +40,10 @@ commit:**
   `git show <sha>:<path>`; para um rascunho, `git show HEAD:<path>` e
   `git show :<path>` (o índice);
 - o que um commit **citado** fez: o diff dele (`git show <cited>`), nunca
-  a mensagem. A mensagem do commit citado também pode estar errada; que
-  commit introduziu ou tirou uma linha se acha com
-  `git log --format=%h -S'<text>' -- <path>` ou
-  `git log -L<start>,<end>:<path>`;
+  a mensagem. A mensagem do commit citado também pode estar errada; o
+  commit que mudou quantas vezes um texto aparece no arquivo se acha com
+  `git log --format=%h -S'<text>' -- <path>`, e a história de um
+  intervalo de linhas, com `git log -L<start>,<end>:<path>`;
 - uma regra citada ou parafraseada de um arquivo de instruções
   (`AGENTS.md`, `CONTRIBUTING.md`, um guia de estilo): a frase exata no
   arquivo na árvore do commit. O verbo é o fato: "exige", "proíbe",
@@ -202,7 +203,8 @@ ramo principal, cada um barato porque o artefato é curto:
    afirmações de sabotagem, escopo, outros commits) são os comandos que
    mais importam: em 2026-10-26, um levantamento de 43 revisões (41
    ramos) classificou 209 dos 366 achados de mensagem que o subagente
-   deste cartucho fez na revisão como esses seis deslizes.
+   deste cartucho fez na revisão (sem os repetidos) como esses seis
+   deslizes.
 1b. **Antes de um commit feito direto no ramo principal**, que nenhuma
    revisão de ramo vai ler (a prosa de um texto acadêmico, o rastreador
    de tarefas): um subagente só de leitura, sem nada do contexto da
@@ -245,10 +247,10 @@ verbo, a atribuição nem a contagem.
 ## 8. Lotes e modelo
 
 Um subagente por série, por padrão, no modelo que a `revisao-rigorosa`
-fixa para os eixos dela (o passo 4 dela, "Modelo"), também quando esta
-checagem roda sozinha e não como o eixo Fatos; lotes de 4–8 afirmações
-acima de ~30 afirmações, todos lançados numa mensagem só. A passada do
-agente autor (momento 1) não usa subagente.
+fixa para os eixos dela (o parágrafo "Modelo" do passo 4 dela), também
+quando esta checagem roda sozinha e não como o eixo Fatos; lotes de 4–8
+afirmações acima de ~30 afirmações, todos lançados numa mensagem só. A
+passada do agente autor (momento 1) não usa subagente.
 
 O Codex roda ao lado do subagente nos momentos 1b, 2 e 3, com o brief
 abaixo depois do preâmbulo do motor (SKILL.md da `checagem-de-fatos`,
@@ -299,18 +301,18 @@ alternativa recusada; a frase de escopo).
 
 Confira cada uma na primária: `git show <sha>` e `git show <sha>:<path>`
 para o próprio commit e para qualquer commit que ele cite (o diff do
-commit citado, nunca a mensagem; `git log -S'<text>' -- <path>` acha que
-commit introduziu uma linha); `git show <sha>^:<path>` para o problema no
-pai; o arquivo de instruções na árvore do commit para uma regra citada,
-na frase exata; `bd show <id>` ou o ticket para uma tarefa; o arquivo
-para um registro de decisão; o arquivo de teste ou a saída do
-comando para uma contagem; a entrada da bibliografia (cada sobrenome de
-`author`, em ordem, e a data) e o arquivo de trechos para uma fonte
-citada por autor e ano. Um achado de revisão que a mensagem menciona não
-é evidência; o fato tem de aparecer na árvore. O corpo de uma tarefa e
-o pedido que abriu a sessão também não são evidência: um nome ou uma
-página que eles afirmam é cópia, conferida na fonte dela. Você lê; não
-edita, não faz commit, não faz rebase nem escreve nada.
+commit citado, nunca a mensagem; `git log -S'<text>' -- <path>` acha o
+commit que mudou quantas vezes um texto aparece); `git show <sha>^:<path>`
+para o problema no pai; o arquivo de instruções na árvore do commit para
+uma regra citada, na frase exata; `bd show <id>` ou o ticket para uma
+tarefa; o arquivo para um registro de decisão; o arquivo de teste ou a
+saída do comando para uma contagem; a entrada da bibliografia (cada
+sobrenome de `author`, em ordem, e a data) e o arquivo de trechos para
+uma fonte citada por autor e ano. Um achado de revisão que a mensagem
+menciona não é evidência; o fato tem de aparecer na árvore. O corpo de
+uma tarefa e o pedido que abriu a sessão também não são evidência: um
+nome ou uma página que eles afirmam é cópia, conferida na fonte dela.
+Você lê; não edita, não faz commit, não faz rebase nem escreve nada.
 
 Trabalhe em lotes, porque cada turno relê o seu contexto inteiro.
 Primeiro leia todas as mensagens e escreva, para você, a lista de
@@ -341,7 +343,7 @@ ausência mais estreita.
 
 ## Anti-exemplos resolvidos
 
-- **Verbo inflado.** Uma mensagem diz que uma regra "exige" que uma das
+- **Regra inflada.** Uma mensagem diz que uma regra "pede" que uma das
   duas implementações de um par mantenha todos os métodos da outra. A
   regra, na árvore do commit, diz que as duas devem "diferir o mínimo"
   além do que a tecnologia de cada uma pede. Veredito: impreciso;
