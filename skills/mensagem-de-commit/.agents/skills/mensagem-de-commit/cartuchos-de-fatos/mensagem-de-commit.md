@@ -15,8 +15,9 @@ discordam, a mensagem está errada, nunca o diff.
 
 Por que este cartucho existe: em 2026-10-17, dois ramos chegaram a um
 ramo principal com mensagens que diziam que uma regra pede o que ela não
-pede (ela só pede que a diferença entre duas implementações fique
-mínima), e que atribuíam a um commit o que outro tinha feito. Os dois
+pede (ela pede que uma de duas implementações se escreva como a outra,
+para o par diferir o mínimo, e não pede que as duas tenham os mesmos
+métodos), e que atribuíam a um commit o que outro tinha feito. Os dois
 foram pegos por um eixo da revisão depois do commit, quando, pela regra
 do projeto contra reescrever a história revisada, só restava uma errata
 numa mensagem posterior. A checagem tem de rodar enquanto um amend ainda
@@ -376,13 +377,16 @@ cada comando que você rodou e cada arquivo que abriu, um por linha.
 
 - **Regra inflada.** Uma mensagem diz que uma regra "pede" que uma das
   duas implementações de um par mantenha todos os métodos da outra. A
-  regra, na árvore do commit, diz que as duas devem "diferir o mínimo"
-  além do que a tecnologia de cada uma pede. Veredito: impreciso;
-  correção: "para manter o par tão próximo quanto a regra pede". O
+  regra, na árvore do commit, diz que uma se escreve como a outra, para
+  o par "diferir o mínimo" além da ligação do estado com a tela, lista o
+  que fica igual e não pede que as duas tenham os mesmos métodos.
+  Veredito: impreciso; correção:
+  "para o par diferir o mínimo, como pede a regra". O
   método pode até ficar; o motivo dado para ele não era o da regra.
 - **Atribuição ao commit errado.** Uma mensagem diz que um termo entrou
   num item do arquivo de instruções em `<sha-A>`. `git show <sha-A>`
-  mostra que esse commit só reescreveu o item (tirou um qualificativo);
+  mostra que esse commit reescreveu o item sem acrescentar o termo
+  (trocou um qualificativo por outro);
   `git log -S'<termo>' -- AGENTS.md` lista `<sha-B>` como o último
   commit que mudou quantas vezes o termo aparece no arquivo, e o diff
   dele é o que acrescenta o termo ao item. Veredito: falso; correção: o
@@ -399,7 +403,8 @@ cada comando que você rodou e cada arquivo que abriu, um por linha.
   fora" para um commit em que os N ficavam na lista: enganoso, lido
   sozinho. Os dois chegaram ao ramo principal, e é para isso que serve o
   momento 1b.
-- **Contagem.** "os quatro" quando eram cinco (a pasta de especificações
-  lista cinco: `ls <pasta-das-especificações> | wc -l`). Pego pelo
+- **Contagem.** "as quatro" quando eram cinco (o cabeçalho do teste de
+  uma das interfaces diz "as cinco" implementações:
+  `head -1 <teste-da-interface>`). Pego pelo
   agente autor antes do commit e consertado com um amend; é para isso
   que serve o momento 1.
