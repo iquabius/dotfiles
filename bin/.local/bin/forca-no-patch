@@ -1,0 +1,246 @@
+#!/usr/bin/env python3
+"""forca-no-patch — marca força, asserções, permissões e números num diff.
+
+Uso: forca-no-patch [--so TIPO ...] [arquivo | -]
+Sem arquivo, ou com -, lê a entrada padrão. --so é repetível e aceita
+força, asserção, permissão e número. Cada linha idêntica que volta no
+mesmo hunk cancela uma retirada de força ou asserção; números se
+comparam só com as linhas tiradas daquele hunk, de modo que um número
+que só troca de lugar dentro do hunk não se marca. As palavras de força
+e de permissão se reconhecem sem distinguir maiúsculas. A força se marca
+só na linha tirada: uma regra apertada numa linha nova se vê na lista
+força: da resposta, e não aqui. A permissão se marca em toda linha nova,
+também na que só mudou de lugar.
+
+Um arquivo é de teste se tem um diretório test ou tests, ou se o nome
+começa com test_, termina em _test.<ext>, contém .test. ou termina em
+.bats.
+
+Cada achado sai como arquivo:linha: tipo: texto, sem o sinal do diff.
+Sai com 0 sem achados, 1 com achados e 2 por erro de leitura, de formato
+ou de uso, com mensagem em stderr. São erro de formato a entrada sem
+diff --git nem @@, o hunk que termina antes dos contadores do @@, o
+cabeçalho @@ malformado, o caminho entre aspas malformado, o --- sem +++
+antes do hunk e o +++ sem nenhum hunk depois (uma renomeação ou um
+binário, sem ---/+++, passam). Uma linha vazia dentro do hunk
+conta como contexto, como no git apply.
+"""
+
+import argparse
+from collections import Counter
+import re
+import sys
+
+TIPOS = ("força", "asserção", "permissão", "número")
+FORCA = re.compile(
+    r"nunca|sempre|jamais|tem de|têm de|não pode|não podem|"
+    r"proíb|recus|portão|obrigatóri|só |apenas|devem? ",
+    re.IGNORECASE,
+)
+ASSERCAO = re.compile(r"assert|refute|\[ |\[\[ |expect|-eq|-ne")
+PERMISSAO = re.compile(
+    r"pode |podem |basta|opcional|dispensa|se não houver|à vontade|"
+    r"sem [^,\n]+, escreva",
+    re.IGNORECASE,
+)
+NUMERO = re.compile(r"[+-]?\d+(?:[.,]\d+)*")
+HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+
+
+class Argumentos(argparse.ArgumentParser):
+    def format_help(self):
+        return __doc__ + "\n"
+
+    def error(self, mensagem):
+        self.exit(2, f"{self.prog}: {mensagem}; consulte --help.\n")
+
+
+ESCAPES = {"a": 7, "b": 8, "t": 9, "n": 10, "v": 11, "f": 12, "r": 13,
+           '"': 34, "\\": 92}
+
+
+def desaspa(texto):
+    """Lê um caminho entre aspas como o git o escreve.
+
+    As aspas do git seguem o C: \\NNN em octal é um byte, \\t, \\n, \\" e
+    os outros escapes têm o valor de sempre, e o resto é UTF-8 literal
+    (com core.quotePath=false, os dois se misturam no mesmo nome).
+    """
+    if len(texto) < 2 or not texto.endswith('"'):
+        raise ValueError(f"caminho entre aspas malformado: {texto}")
+    corpo, saida, i = texto[1:-1], bytearray(), 0
+    while i < len(corpo):
+        c = corpo[i]
+        if c == '"':
+            raise ValueError(f"caminho entre aspas malformado: {texto}")
+        if c != "\\":
+            saida += c.encode("utf-8")
+            i += 1
+        elif corpo[i + 1:i + 2] in ESCAPES:
+            saida.append(ESCAPES[corpo[i + 1]])
+            i += 2
+        elif re.fullmatch(r"[0-7]{3}", corpo[i + 1:i + 4]):
+            saida.append(int(corpo[i + 1:i + 4], 8))
+            i += 4
+        else:
+            raise ValueError(f"caminho entre aspas malformado: {texto}")
+    return saida.decode("utf-8", errors="backslashreplace")
+
+
+def caminho(texto):
+    texto = texto.split("\t", 1)[0]
+    if texto.startswith('"'):
+        texto = desaspa(texto)
+    return texto[2:] if texto.startswith(("a/", "b/")) else texto
+
+
+def arquivo_de_teste(arquivo):
+    partes = arquivo.split("/")
+    nome = partes[-1]
+    return (
+        any(parte in ("test", "tests") for parte in partes[:-1])
+        or nome.startswith("test_")
+        or re.search(r"_test\.[^.]+$", nome) is not None
+        or ".test." in nome
+        or nome.endswith(".bats")
+    )
+
+
+def achados(linhas, tipos):
+    novas = Counter(texto.rstrip() for sinal, _, _, texto in linhas if sinal == "+")
+    numeros_velhos = {
+        numero
+        for sinal, _, _, texto in linhas if sinal == "-"
+        for numero in NUMERO.findall(texto)
+    }
+    for sinal, arquivo, numero, texto in linhas:
+        marcas = []
+        if sinal == "-":
+            if novas[texto.rstrip()]:
+                novas[texto.rstrip()] -= 1
+                continue
+            if FORCA.search(texto):
+                marcas.append("força")
+            if arquivo_de_teste(arquivo) and ASSERCAO.search(texto):
+                marcas.append("asserção")
+        if sinal == "+":
+            if PERMISSAO.search(texto):
+                marcas.append("permissão")
+            if set(NUMERO.findall(texto)) - numeros_velhos:
+                marcas.append("número")
+        for tipo in marcas:
+            if tipo in tipos:
+                yield f"{arquivo}:{numero}: {tipo}: {texto}"
+
+
+def conteudo_do_hunk(linha, restante):
+    """A linha é do hunk se tem sinal e sobra contador do lado dela.
+
+    A linha vazia conta como contexto, como no git apply: um patch escrito
+    à mão ou por um modelo perde o espaço do fim da linha de contexto vazia.
+    """
+    lados = {" ": (0, 1), "": (0, 1), "-": (0,), "+": (1,)}.get(linha[:1])
+    return lados is not None and all(restante[lado] > 0 for lado in lados)
+
+
+def cabecalho_incompleto(falta, velho, novo):
+    if falta == "+++":
+        return ValueError(f"{velho}: cabeçalho --- sem +++")
+    return ValueError(f"{novo}: cabeçalho +++ sem nenhum hunk")
+
+
+def conferir(texto, tipos):
+    velho = novo = "(sem arquivo)"
+    linhas = []
+    restante = None
+    valido = False
+    falta = None  # "+++" depois de um ---, "hunk" depois de um +++
+    encontrados = []
+    partes = texto.split("\n")
+    if partes and partes[-1] == "":
+        partes.pop()  # o \n do fim não é uma linha vazia de contexto
+    for linha in partes:
+        linha = linha.removesuffix("\r")
+        if restante is not None:
+            if linha.startswith("\\ No newline at end of file"):
+                continue
+            # Os contadores do @@ decidem o que é conteúdo, como no git
+            # apply: uma linha "--- a/x" dentro do hunk é uma retirada.
+            if conteudo_do_hunk(linha, restante):
+                sinal, conteudo = (linha[0], linha[1:]) if linha else (" ", "")
+                if sinal == "-":
+                    linhas.append((sinal, velho, anterior, conteudo))
+                elif sinal == "+":
+                    linhas.append((sinal, novo, posterior, conteudo))
+                if sinal != "+":
+                    anterior += 1
+                    restante[0] -= 1
+                if sinal != "-":
+                    posterior += 1
+                    restante[1] -= 1
+                continue
+            if any(restante):
+                raise ValueError("hunk incompleto: faltam linhas indicadas em @@")
+            encontrados.extend(achados(linhas, tipos))
+            linhas = []
+            restante = None
+        if linha.startswith("diff --git "):
+            if falta:
+                raise cabecalho_incompleto(falta, velho, novo)
+            valido = True
+            velho = novo = "(sem arquivo)"
+        elif linha.startswith("--- "):
+            if falta == "+++":
+                raise cabecalho_incompleto(falta, velho, novo)
+            velho = caminho(linha[4:])
+            falta = "+++"
+        elif linha.startswith("+++ "):
+            novo = caminho(linha[4:])
+            falta = "hunk"
+        elif linha.startswith("@@"):
+            m = HUNK.match(linha)
+            if not m:
+                raise ValueError(f"cabeçalho de hunk malformado: {linha}")
+            if falta == "+++":
+                raise cabecalho_incompleto(falta, velho, novo)
+            falta = None
+            valido = True
+            anterior, posterior = int(m[1]), int(m[3])
+            restante = [
+                int(m[2]) if m[2] is not None else 1,
+                int(m[4]) if m[4] is not None else 1,
+            ]
+    if restante is not None and any(restante):
+        raise ValueError("hunk incompleto: faltam linhas indicadas em @@")
+    if falta:
+        raise cabecalho_incompleto(falta, velho, novo)
+    encontrados.extend(achados(linhas, tipos))
+    if not valido:
+        raise ValueError("a entrada não é um diff: faltam diff --git e @@")
+    return encontrados
+
+
+def main():
+    parser = Argumentos()
+    parser.add_argument("arquivo", nargs="?", default="-")
+    parser.add_argument("--so", action="append", choices=TIPOS)
+    args = parser.parse_args()
+    try:
+        if args.arquivo == "-":
+            sys.stdin.reconfigure(encoding="utf-8", newline="")
+            texto = sys.stdin.read()
+        else:
+            with open(args.arquivo, encoding="utf-8", newline="") as entrada:
+                texto = entrada.read()
+        encontrados = conferir(texto, set(args.so or TIPOS))
+    except (OSError, UnicodeError, ValueError) as erro:
+        print(f"forca-no-patch: não foi possível conferir a entrada: {erro}",
+              file=sys.stderr)
+        return 2
+    for achado in encontrados:
+        print(achado)
+    return int(bool(encontrados))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

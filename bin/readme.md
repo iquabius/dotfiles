@@ -241,6 +241,25 @@ false`.
 descartável com o hook no `.git/hooks`; `GIT_ASSUNTO_MERGE_SCRIPT` aponta a
 suíte para uma cópia sabotada.
 
+## forca-no-patch
+
+Marca mudanças de força, asserções retiradas, permissões e números novos
+num diff.
+
+```sh
+forca-no-patch [--so TIPO ...] [arquivo | -]
+git diff ... | forca-no-patch
+```
+
+Sem arquivo ou com `-`, lê a entrada padrão. `--so` é repetível e aceita
+`força`, `asserção`, `permissão` e `número`. Cada achado sai como
+`arquivo:linha: tipo: texto`, sem o sinal do diff. Sai com 0 sem achados,
+1 com achados e 2 por erro de leitura, de formato ou de uso, com mensagem
+em stderr.
+
+`forca-no-patch.test.bats`, ao lado do script; `FORCA_NO_PATCH_SCRIPT`
+aponta a suíte para uma cópia sabotada.
+
 ## condensar-transcricao
 
 Condensa uma transcrição JSONL do Claude Code para busca em texto.
