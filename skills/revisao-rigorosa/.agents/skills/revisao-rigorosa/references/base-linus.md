@@ -19,10 +19,10 @@ abaixo somado.
   certo.
 - **"Camada errada. Quem mais lê isto e ainda vê o bug?"** Conserte onde
   todos os consumidores ganham.
-- **"Queremos isto?"** Uma capacidade que ninguém pediu não se salva por
-  estar bem escrita.
+- **"Queremos isto, afinal?"** Uma capacidade que ninguém pediu não se
+  salva por estar bem escrita.
 - **"Isto acrescenta código que nada chama."** Ele entra junto com o
-  primeiro uso.
+  primeiro chamador.
 
 ## Estruturas de dados
 
@@ -68,9 +68,9 @@ ponteiro para o elo em vez de um ponteiro para o nó.
 
 ## Nunca quebre o espaço do usuário
 
-- **"Isto muda um comportamento de que quem chama depende."** Procure
-  todos os que chamam cada assinatura, valor de retorno, rota, flag e
-  formato guardado que mudou. Uma regressão é um bug mesmo quando o modelo
+- **"Isto muda um comportamento de que os chamadores existentes
+  dependem."** Procure todos os chamadores de cada assinatura, valor de
+  retorno, rota, flag e formato guardado que mudou. Uma regressão é um bug mesmo quando o modelo
   novo é mais limpo.
 - **"Dados guardados escritos pelo código antigo: o que os lê agora?"**
   Uma mudança de formato pede uma migração ou um leitor que aceite os

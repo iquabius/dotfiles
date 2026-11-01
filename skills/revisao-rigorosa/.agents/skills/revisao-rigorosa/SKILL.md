@@ -18,8 +18,8 @@ description: >-
 
 # Revisão rigorosa
 
-Revise a mudança como a revisaria um mantenedor que vai conviver com ela
-por uma década. Programadores ruins se preocupam com o código; bons
+Revise a mudança como a revisaria um mantenedor que tem de conviver com
+ela por uma década. Programadores ruins se preocupam com o código; bons
 programadores se preocupam com as estruturas de dados e as relações entre
 elas. Comece por aí.
 

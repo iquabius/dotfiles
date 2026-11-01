@@ -129,9 +129,9 @@ Trate `<dir>/codex-review.md` como o relatório de qualquer subagente: o
 passo 5 roda sobre ele por inteiro. Reabra cada local citado e confira
 cada hunk citado contra o diff, palavra por palavra; uma citação que o
 diff não contém, ou uma linha que não diz o que o Codex afirma, descarta o
-achado. O Codex não sabe nada dos outros eixos, e os achados dele não se
-conferem contra os deles: um achado que só o Codex levantou e que
-sobrevive à conferência conta como qualquer outro. Uma chamada é uma
+achado. Ao Codex não se diz nada dos outros eixos, e os achados dele não
+se comparam com os dos outros eixos: um achado que só o Codex levantou e
+que sobrevive à conferência conta como qualquer outro. Uma chamada é uma
 amostra: duas rodadas do mesmo brief sobre o mesmo commit, em 2026-10-26,
 devolveram dois achados bloqueantes e depois um deles. Um relatório limpo
 do Codex não prova que a mudança está limpa.
