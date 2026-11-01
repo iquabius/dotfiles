@@ -331,6 +331,9 @@ Afirmações ({{N}}), cada uma com a citação literal, a âncora, a categoria
 e onde a verdade deveria estar (uma pista, não uma prova):
 {{CLAIMS}}
 
+Decisões do autor que mudam um veredito: {{DECISOES}} ("nenhuma" quando
+não há).
+
 Fontes e como lê-las, cada uma do git pela versão (`<sha>:<caminho>`)
 e cada uma de fora dele pelo caminho: {{LADDER}}. Em evidence, cite
 cada fonte do git pela versão que leu. Se o melhor que você achar for
