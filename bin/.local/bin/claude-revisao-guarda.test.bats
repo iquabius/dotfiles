@@ -241,6 +241,13 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		"git config \$'core.\\x68ooksPath' /tmp/hooks" "git \$'co\\x6dmit' -n" \
 		'git commit $"--no-verify" -m x' 'git $"commit" -n' 'gh $"auth" token' \
 		'gh pr $"merge" 3' 'gh $"pr" merge 3' 'gh config get -h x $"oauth_token"' 'gh alias $"set" t pr' \
+		"gh \$'auth\\0x' token" "gh \$'auth\\x00' token" "gh\$'\\0' auth token" "gh pr \$'merge\\0x' 3" \
+		"gh config get -h x \$'oauth_token\\0'" "gh alias \$'set\\c@' t pr" "git commit \$'--no-verify\\000' -m x" \
+		"gh \$'auth\\x0' token" "gh \$'auth\\u0' token" "gh \$'auth\\U0' login" \
+		"gh config get -h github.com \$'oauth_token\\x0'" \
+		"gh alias \$'set\\x0' p 'pr '" "gh \$'pr\\x0' merge 3" \
+		"git commit \$'--no-verify\\x0' -m x" "gh \$'auth\\400' token" "gh \$'auth\\0\\x' token" \
+		"gh config get -h x \$'oauth_token\\0\\u'" \
 		"git -c alias.x='commit -n -m x' x" 'git -c alias.p="!git commit --no-verify" p'; do
 		run guarda "$c"
 		recusa
