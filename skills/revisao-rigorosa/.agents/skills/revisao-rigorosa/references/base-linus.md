@@ -3,8 +3,9 @@
 O conjunto fixo de objeções que o eixo Normas aplica quando o repositório
 não documenta nada em contrário. Cada item é uma questão de julgamento,
 rotulada como tal no achado, e uma norma documentada do repositório
-prevalece sobre ele. Cole este arquivo inteiro no prompt do subagente de
-Normas.
+prevalece sobre ele. Cole este arquivo no prompt do subagente de Normas,
+sem os itens que uma norma do repositório endossa (o passo 3 do
+`SKILL.md`).
 
 Cada linha é a objeção como um mantenedor a diria, depois o que o autor
 tem de fazer.
@@ -94,7 +95,8 @@ para o elo em vez de um ponteiro para o nó.
 - **"Isto reformata linhas em que você não mudou mais nada."** Desfaça, ou
   mova a reformatação para um commit próprio.
 - **"Você renomeou coisas e mudou lógica no mesmo commit."** Primeiro a
-  renomeação, depois a lógica.
+  renomeação, depois a lógica. Uma renomeação local e uma que acompanha
+  uma mudança no contrato da mesma função ficam com a mudança.
 - **"Mudança alheia de dependência, lockfile ou configuração."** Um commit
   próprio com a própria razão, ou fora.
 - **"Cada linha mudada precisa de uma razão."** O que não tem razão é
