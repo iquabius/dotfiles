@@ -35,8 +35,9 @@ PDFs que ele cita. Essa instância é o precedente mais rico e vive no
 cartucho de um capítulo acadêmico em português, que mora na skill de
 escrita acadêmica. Extraída numa skill sem registro em 2026-10-17, depois que
 dois ramos chegaram a um ramo principal com fatos errados nas mensagens
-de commit, que só a revisão do ramo pegou, quando reescrever já
-não era permitido.
+de commit, que só a revisão do ramo pegou, e que o agente, lendo a
+regra como se proibisse reescrever o ramo revisado, deixou para uma
+errata.
 
 ## Postura
 
