@@ -12,12 +12,18 @@ de chegar ao relatório.
 command -v codex && codex login status && codex --version
 ```
 
-Se qualquer um dos três falhar, o eixo não roda. Nunca rode `codex
-login`, digite uma chave nem instale nada: o login é do autor. Configure o
-Codex só por flags (`-m`, `-c key=value`), nunca por variáveis de
-ambiente. Dentro de um contêiner distrobox, o wrapper `codex` passa a
-chamada ao host por `distrobox-host-exec`, que mantém o diretório de
-trabalho, o stdin e o código de saída, mas descarta o ambiente.
+Se qualquer um dos três falhar, o eixo não roda. Confira também que
+`codex debug models` lista o modelo da chamada abaixo. Se não listar,
+descarte antes a hipótese de um CLI desatualizado (o item Modelo, em "A
+chamada"): com o CLI atrás do `latest_version`, o eixo não roda, e
+`## Codex` diz por quê; com o CLI em dia, ou sem o arquivo que diria a
+versão, escolha o mesmo nível pela descrição e diga-o no relatório.
+Nunca rode `codex login`, digite uma chave nem instale nada: o login é
+do autor. Configure o Codex só por flags (`-m`, `-c key=value`), nunca
+por variáveis de ambiente. Dentro de um contêiner distrobox, o wrapper
+`codex` passa a chamada ao host por `distrobox-host-exec`, que mantém o
+diretório de trabalho, o stdin e o código de saída, mas descarta o
+ambiente.
 
 ## A chamada
 
@@ -62,7 +68,9 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
   casos em que o CLI escreveu esse arquivo (um build 0.164.0-alpha não
   escreveu); atualizar o CLI é decisão do autor.
   `model_reasoning_effort=high`: o padrão do modelo é `low`, raso demais
-  para uma revisão. Confira a linha `reasoning effort: high` do cabeçalho.
+  para uma revisão. Confira a linha `reasoning effort: high` do
+  cabeçalho; com outro esforço, a rodada não conta, e `## Codex` diz por
+  quê.
 - O Codex acha sozinho as skills instaladas em `~/.agents/skills`: em
   2026-10-26, com um brief sem a linha que proíbe abrir skills, ele abriu
   o `SKILL.md` desta skill e o seguiu em vez do brief. Como esse arquivo
@@ -74,15 +82,20 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
 - Fora de um repositório git (um plano sem código), acrescente
   `--skip-git-repo-check` e tire o `-C`.
 
-No Claude Code, inicie-o com o `run_in_background` da ferramenta Bash, na
-mesma mensagem que os subagentes dos outros eixos, para que rode junto com
+No Claude Code, escreva o arquivo do brief numa chamada anterior e inicie
+só o `codex exec` com o `run_in_background` da ferramenta Bash, na mesma
+mensagem que os subagentes dos outros eixos, para que rode junto com
 eles. É um comando, não um subagente: nada de Agent em volta dele.
 
 ## O brief
 
 Preencha o que está entre `< >`. No modo de plano, troque as linhas do
-intervalo pelo texto do plano e pelas quatro perguntas da Revisão de plano
-do `SKILL.md`.
+intervalo pelo texto do plano (colado, ou o caminho do arquivo) e pelas
+quatro perguntas da Revisão de plano do `SKILL.md`, e a linha de
+veredito por `Veredito: Se sustenta | Não se sustenta: <o que tem de
+mudar no plano, o mais importante primeiro>`. As linhas Repositório e
+Arquivos de normas ficam quando o plano trata de um repositório e saem
+fora de um; as três perguntas e a lista de achados ficam.
 
 ```text
 Você é um eixo de uma revisão rigorosa, no estilo de Linus Torvalds. Você
@@ -112,9 +125,11 @@ Depois aponte cada achado:
   chama).
 
 Cada achado: bloqueante ou não, `caminho:linha`, o hunk citado ao pé da
-letra, por que está errado e o conserto. Nenhum achado sem uma linha que
-você possa citar. Contexto que falta é pergunta, não achado. Não aponte o
-que um linter ou formatador impõe.
+letra, por que está errado e o conserto. Bloqueante é a quebra de norma
+documentada, o requisito da especificação que falta ou está errado e o
+defeito; o item da base e o comportamento que ninguém pediu não são.
+Nenhum achado sem uma linha que você possa citar. Contexto que falta é
+pergunta, não achado. Não aponte o que um linter ou formatador impõe.
 
 Termine com o seu próprio veredito, numa linha só:
 Veredito: Pronto para o merge | Não está pronto: <consertos, o mais importante primeiro>
@@ -122,7 +137,7 @@ Veredito: Pronto para o merge | Não está pronto: <consertos, o mais importante
 Responda em <língua>, em menos de 600 palavras.
 
 A base Linus:
-<references/base-linus.md inteiro>
+<references/base-linus.md, sem os itens que o passo 3 do SKILL.md retirou>
 ```
 
 ## Confira, depois relate
