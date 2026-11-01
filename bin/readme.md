@@ -192,6 +192,10 @@ $(echo auth) token`, `a=auth; gh $a token`, um glob) e uma extensão do
 `gh` que chame o `gh auth token` por dentro: no `gh`, o que segura é o
 escopo do token, que a camada privada, com os passos do autor, deixa só
 de leitura, e no `gh-escrita` o diálogo da chave do App a cada chamada.
+O guarda lê o bash até onde este texto diz, e não o imita por inteiro:
+a forma ofuscada que ele não descreve (um escape, uma expansão ou outra
+sintaxe que só o bash resolve) fica fora do que ele promete, e quem a
+segura é o mesmo escopo do token, o diálogo da chave e o pre-push.
 Do outro lado, ele recusa a mais em sete casos: o `gh` com a
 palavra `auth` fora das formas que passam, também a que não mexe no
 token (`gh auth --hostname github.com status`, `gh auth token --help`,
