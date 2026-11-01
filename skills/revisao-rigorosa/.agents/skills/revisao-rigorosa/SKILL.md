@@ -303,6 +303,11 @@ o levantou. A linha Divergência mostra onde os dois modelos discordam; ela
 não anula o veredito. Quando o Codex não rodou, a linha Provedores diz
 "só Claude (<modelo>)" e por quê, e não há linha Divergência.
 
+Cada achado vira um conserto no ramo. Todo conserto, do agente ou do
+Codex, segue as regras de força e de "nada novo" e a conferência pelo
+`forca-no-patch` da seção "O Codex que escreve o conserto" de
+`references/codex.md`.
+
 ### 7. Condense antes do merge
 
 Um ramo que ainda não chegou ao ramo principal e em que ninguém mais se

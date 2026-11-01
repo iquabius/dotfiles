@@ -245,6 +245,44 @@ que aplica pode reescrever o texto que ele mesmo escreveu. Em
 ramo vieram da maneira como as correções foram aplicadas, 4 deles
 correções erradas coladas como vieram.
 
+**Quem escreve a correção recebe a lista reconciliada.** Um conserto
+só sai de um achado que passou pela etapa 4, e o que este parágrafo e a
+lista abaixo dizem vale para todo conserto, do próprio agente ou do
+Codex; o agente que conserta à mão trabalha sobre a mesma lista.
+O brief de quem o escreve (um subagente, o Codex) leva, por afirmação,
+o veredito decidido, a evidência que decidiu e a correção mínima
+conferida, e nunca os relatórios crus dos provedores. Leva também a
+lista do que ficou **correto**, com citação, nos mesmos arquivos, e a
+lista do que ficou **sem acesso**: o conserto não toca nenhuma das duas.
+Quem escreve:
+
+- não enfraquece uma afirmação dessas duas listas;
+- não acrescenta número, contagem, data, sha nem atribuição que não
+  esteja na correção decidida: uma recontagem própria vai na resposta,
+  como observação, e não no texto;
+- não escreve no artefato frases sobre a checagem ("nas fontes
+  consultadas", "não foi comprovado", "exige o rascunho
+  correspondente"), que são do relatório;
+- quando a correção é uma ressalva, escreve a que a evidência cita, e
+  não a mais fraca que couber.
+
+A seção "O Codex que escreve o conserto" de
+`revisao-rigorosa/references/codex.md` traz o brief do Codex e as regras
+de força e de "nada novo", que valem também para o conserto do próprio
+agente: antes do commit, ele roda o `forca-no-patch` sobre o próprio
+diff, ou, onde o script não existe, confere à mão as mesmas marcas.
+
+Em 2026-10-31, um patch escrito com um relatório só, num brief que
+mandava, para a correção que fosse uma ressalva, "prefira enfraquecer a
+afirmação", trocou três fatos que a transcrição registrava por "exemplos
+de falhas que o verificador procura" e por frases como "não foi
+comprovada nas fontes consultadas", e pôs no texto, ao lado dos totais
+declarados (510 linhas, 187 marcas), recontagens de linhas iniciadas
+por `|` (612 e 616) e de ocorrências literais de "conferido" (170 de
+cada lado). A base dos totais, a saída do script da sessão
+(`rows=510 conf=187`), outra chamada do Codex achou depois na
+transcrição.
+
 **7. Relate.** Escrito onde o cartucho diz, com o resumo na conversa:
 
 ```markdown

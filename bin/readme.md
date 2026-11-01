@@ -244,7 +244,9 @@ suíte para uma cópia sabotada.
 ## forca-no-patch
 
 Marca mudanças de força, asserções retiradas, permissões e números novos
-num diff.
+num diff. A seção "O Codex que escreve o conserto" da
+`revisao-rigorosa/references/codex.md` o usa antes de aplicar um patch
+e antes de um commit de conserto do próprio agente.
 
 ```sh
 forca-no-patch [--so TIPO ...] [arquivo | -]
