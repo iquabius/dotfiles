@@ -70,6 +70,10 @@ A convenção do projeto: um fato datado sem fonte ganha a marca
 fora do glossário vira uma pergunta de glossário (`domain-modeling`), não
 uma troca de nome feita em silêncio.
 
+Uma afirmação **sem acesso** não ganha a marca por isso: não pede
+correção (`checagem-de-fatos`, etapa 3) e fica nas Pendências do
+relatório, com a fonte que faltou.
+
 ## 6. Correções e quem aprova
 
 Um ADR que muda se reescreve no lugar, com a data nova e a decisão
