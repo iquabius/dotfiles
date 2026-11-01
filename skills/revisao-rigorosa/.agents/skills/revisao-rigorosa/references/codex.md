@@ -73,9 +73,10 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
   quê.
 - O Codex acha sozinho as skills instaladas em `~/.agents/skills`: em
   2026-10-26, com um brief sem a linha que proíbe abrir skills, ele abriu
-  o `SKILL.md` desta skill e o seguiu em vez do brief. Como esse arquivo
-  traz este eixo, segui-lo é rodar o Codex de novo. A chave de `codex
-  features list` que mais parece nomear o interruptor,
+  o `SKILL.md` desta skill e disse que a aplicaria, embora o relatório
+  saísse no formato do brief. O arquivo aberto então ainda não trazia
+  este eixo; o de hoje traz, e segui-lo é rodar o Codex de novo. A
+  chave de `codex features list` que mais parece nomear o interruptor,
   `skip_host_skill_discovery`, está "under development" (a
   `skill_search`, stable, não foi testada), então o brief proíbe
   abri-las. Procure no log um `cat` de um `SKILL.md`.
@@ -294,5 +295,5 @@ citação, sem cartão" por uma regra que aceitava `palpite` sem fonte e
 `[Afirmado]` sem respaldo. A lista dizia só "`palpite` aceito, com grau
 explícito" e não declarou a mudança de força.
 
-Em 2026-10-10, o conserto de um teste de cor trocou a exigência de nenhum
+Em 2026-10-09, o conserto de um teste de cor trocou a exigência de nenhum
 `\e[` por duas sequências específicas; uma cópia sabotada passou.

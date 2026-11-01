@@ -159,8 +159,9 @@ nome no trailer de atribuição. Somados os achados dos quatro eixos, o
 Claude Sonnet 5.5 chegou a 25 e o Claude Opus 5.5 a 32,5; nessa soma, um
 defeito achado por dois eixos conta duas vezes, e em defeitos distintos
 são cerca de 18 e 26,5 de 39. O Opus ficou à frente nos quatro eixos,
-com a maior vantagem em Especificação e História, ao custo de no máximo
-11% mais tokens.
+com a maior vantagem em Especificação (11 contra 7,5) e, em proporção, em
+História (3 contra 1,5), ao custo de no máximo 11% mais tokens do
+subagente, sem contar o preço por token, que muda com o modelo.
 
 **Normas.** Dê a ele o comando do diff, a lista de commits, a lista dos
 arquivos de normas e o texto da base Linus colado, sem os itens que o
