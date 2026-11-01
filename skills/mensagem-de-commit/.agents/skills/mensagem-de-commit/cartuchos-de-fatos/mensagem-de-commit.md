@@ -155,6 +155,11 @@ frase enfraquece para o que o diff prova ("o teste novo mostra que
 "Todo fato tem fonte"). Um número que o autor tem e o agente não tem se
 pergunta uma vez.
 
+Uma afirmação **sem acesso** não enfraquece nem sai por isso: o agente
+autor a confere na fonte que faltou ao verificador antes do commit, ou,
+sem acesso também para ele, pergunta ao autor; até lá, ela fica entre as
+pendências do relatório, com a fonte que faltou.
+
 ## 6. Correções e quem aprova
 
 - **Rascunho**: reescreva antes do commit. O agente autor corrige o
@@ -326,8 +331,9 @@ mensagem.
 Nunca mande a um serviço externo o e-mail, o nome ou outro dado pessoal
 do autor, mesmo que os ache no ambiente.
 
-Vereditos: falso, impreciso, enganoso, sem fonte, correto, fora do
-escopo.
+Vereditos: falso, impreciso, enganoso, sem fonte, sem acesso, correto,
+fora do escopo. Se a fonte que decide estiver fora do seu alcance, dê
+"sem acesso", com a fonte nomeada, nunca "sem fonte" nem uma correção.
 
 Saída: um bloco ```json com uma lista, um objeto por afirmação:
 {"sha", "line", "verdict", "claim_quote", "finding", "evidence":
@@ -338,7 +344,8 @@ AUTOR" quando a própria descrição do problema é falsa)}. Um número em
 minimal_correction leva a sua base (o que foi contado, de onde); uma
 afirmação de ausência ou um quantificador ("só", "nenhum", "todo") se
 corrige para a frase mais fraca que a evidência cita, não para uma
-ausência mais estreita.
+ausência mais estreita. Depois do bloco, uma seção "## Leituras" com
+cada comando que você rodou e cada arquivo que abriu, um por linha.
 ~~~
 
 ## Anti-exemplos resolvidos

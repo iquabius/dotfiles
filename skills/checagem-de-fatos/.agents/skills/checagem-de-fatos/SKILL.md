@@ -171,9 +171,16 @@ Claude vazio, e o Codex que o escreveu só tinha o próprio.
 - **enganoso**: cada parte é verdadeira e o enquadramento engana (a
   ressalva da própria fonte largada, um caso mostrado como
   representativo, um número escolhido para caber).
-- **sem fonte**: uma busca de verdade não achou nada aceitável, ou a
-  frase afirma um fato e não cita nada. Nunca se arredonda para
-  **correto**.
+- **sem fonte**: uma busca de verdade, na fonte que decidiria, não
+  achou nada aceitável, ou a frase afirma um fato e não cita nada.
+  Nunca se arredonda para **correto**.
+- **sem acesso**: a fonte que decide existe ou é nomeada (a
+  transcrição de uma sessão, um arquivo fora do que o verificador
+  pode ler, uma página que não abriu) e o verificador não a leu. Diz
+  qual fonte faltou e por quê. Uma evidência de memória, ou com a
+  citação vazia, é **sem acesso**. Não é **sem fonte**: não pede
+  correção, não entra em "Correções" e, numa divergência, não conta
+  como veredito.
 - **correto**: conferido na primária, ou na corroboração onde o cartucho
   a aceita.
 - **fora do escopo**: afinal não é conferível; raro, porque a extração já
@@ -185,6 +192,9 @@ e diz o degrau dela na escada. Um veredito sem citação só vale para
 (`supports_conclusion`) e dá a correção mínima: só o fato, na voz do
 autor, ou "DISCUTIR COM O AUTOR" quando o fato correto derruba uma
 premissa.
+
+Em **sem acesso**, a citação aponta a fonte não lida e diz por quê;
+não há evidência a simular nem correção mínima.
 
 **4. Reconfira antes de qualquer coisa entrar.** O agente principal
 reabre cada achado sobre o qual vai agir: a citação da afirmação contra o
@@ -244,7 +254,8 @@ Versão lida: <commit/intervalo/data do artefato>; fontes no git:
   <sha:caminho de cada uma>. Afirmações: N, em B lotes.
 Provedores: Claude <modelo>; Codex <codex --version>, <modelo>, esforço <e>
   (ou: "só Claude; Codex não rodou: <motivo>").
-Vereditos: falso n, impreciso n, enganoso n, sem fonte n, correto n.
+Vereditos: falso n, impreciso n, enganoso n, sem fonte n, sem acesso n,
+  correto n.
 Divergências entre provedores: n (decididas na fonte n, para o autor n).
 Lógica: n achados.
 
@@ -253,7 +264,7 @@ Lógica: n achados.
 ## Sem fonte
 ## Divergências entre provedores
 ## Mapa do argumento
-## Pendências   (fonte que não se abriu, lote que falhou,
+## Pendências   (cada "sem acesso", com a fonte e o motivo; lote que falhou,
                  chamada do Codex que falhou)
 ```
 
@@ -283,20 +294,25 @@ e onde a verdade deveria estar (uma pista, não uma prova):
 Fontes e como lê-las, cada uma do git pela versão (`<sha>:<caminho>`)
 e cada uma de fora dele pelo caminho: {{LADDER}}. Em evidence, cite
 cada fonte do git pela versão que leu. Se o melhor que você achar for
-o degrau de baixo, o veredito é "sem fonte". Se não conseguir abrir uma
-fonte, diga; nunca finja tê-la lido. Você lê; não edita nada.
+o degrau de baixo, o veredito é "sem fonte". Se a fonte que decide não
+estiver ao seu alcance, o veredito é "sem acesso", com a fonte nomeada;
+nunca "sem fonte" e nunca uma correção. Nunca finja tê-la lido. O que
+você lembra de uma fonte que não abriu não é evidência. Você lê; não
+edita nada.
 
 Nunca mande a um serviço externo (API, busca, formulário) o e-mail, o
 nome ou outro dado pessoal do autor, mesmo que os ache no ambiente.
 
-Vereditos: falso, impreciso, enganoso, sem fonte, correto, fora do
-escopo.
+Vereditos: falso, impreciso, enganoso, sem fonte, sem acesso, correto,
+fora do escopo.
 
 Saída: um bloco ```json com uma lista, um objeto por id:
 {"id", "verdict", "claim_quote", "finding" (o que está errado e como você
 sabe), "evidence": [{"source", "location", "rung" (primary|corroboration),
 "quote" (literal, na língua da fonte)}], "supports_conclusion"
-(true se o argumento cai sem ela), "minimal_correction"}.
+(true se o argumento cai sem ela), "minimal_correction"}. Depois do
+bloco, uma seção "## Leituras" com cada comando que você rodou e cada
+arquivo que abriu, um por linha.
 
 Em minimal_correction, só o fato: o número, a página, o sha, o verbo ou a
 ressalva que está certo, na voz do autor. Um número leva a sua base (o
@@ -305,7 +321,8 @@ que foi contado, de onde). Uma afirmação de ausência ou um quantificador
 evidência cita, não para uma ausência mais estreita. Se o fato certo
 derruba uma premissa ou uma conclusão, escreva "DISCUTIR COM O AUTOR" e
 descreva a tensão em finding, sem propor frase. Evidence vazia só para
-"fora do escopo".
+"fora do escopo". Em "sem acesso", evidence aponta a fonte não lida e
+finding diz por quê.
 ~~~
 
 ## O segundo provedor: Codex
@@ -395,18 +412,32 @@ nunca escreve um, nunca diz que os provedores concordam sem os dois
 arquivos e nunca manda um lote do Codex que falhou ao Claude para
 "preenchê-lo", já que o lote do Claude já cobre essas afirmações.
 
-**Divergência.** Case as duas listas pelo id ou, quando o verificador
-extrai por conta própria (uma série de commits numa rodada só), pela
-âncora e pela citação. O mesmo veredito é um achado só, com as duas
-evidências. Um veredito diferente, ou uma afirmação que só um provedor
-listou, vai para a etapa 4: o agente principal reabre as duas evidências
-na fonte, byte a byte, e fica o veredito que a fonte sustenta; a citação
-de evidência que não se reencontra perde. Quando a fonte não decide (duas
-leituras de uma frase, uma questão de julgamento de enquadramento), a
-afirmação vai para "Para o autor decidir" com os dois vereditos. Toda
-divergência se lista em "Divergências entre provedores": id, veredito do
-Claude, veredito do Codex, o que ficou e a linha de evidência que
-decidiu.
+**Divergência.** O acesso vem antes do veredito: antes de casar os
+vereditos, compare o que cada provedor leu: as linhas `exec` do log do
+Codex e as Leituras do subagente. Quando só um leu a fonte que decide
+uma afirmação, o veredito do outro vale **sem acesso**, diga ele o que
+disser, e a afirmação se decide pela evidência de quem leu, reencontrada
+byte a byte pelo agente principal; a que não se reencontra vai ao autor.
+Uma evidência de memória ou com a citação vazia nunca vence uma citação
+reencontrada na primária. Em 2026-10-31, um "impreciso" de memória sobre
+Nielsen venceu, na fila do autor, um "correto" com a página da NN/g, e o
+conserto aprovado voltou no Fatos das mensagens.
+
+Case as duas listas pelo id ou, quando o verificador extrai por conta
+própria (uma série de commits numa rodada só), pela âncora e pela citação.
+O mesmo veredito é um achado só, com as duas evidências. Um veredito
+diferente, ou uma afirmação que só um provedor listou, vai para a etapa 4:
+o agente principal reabre as duas evidências na fonte, byte a byte, e
+fica o veredito que a fonte sustenta; a citação de evidência que não se
+reencontra perde. Quando a fonte não decide (duas leituras de uma frase,
+uma questão de julgamento de enquadramento), a afirmação vai para "Para
+o autor decidir" com os dois vereditos. Toda divergência se lista em
+"Divergências entre provedores": id, veredito do Claude, veredito do
+Codex, o que ficou e a linha de evidência que decidiu.
+
+Um achado herdado ou que vai à fila do autor passa por esta
+reconciliação antes: o autor recebe o veredito decidido, com as
+divergências, e nunca a leitura de um provedor só.
 
 ## Composição com outras skills
 
