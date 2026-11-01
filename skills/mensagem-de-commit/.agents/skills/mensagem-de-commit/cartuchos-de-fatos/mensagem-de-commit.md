@@ -18,10 +18,13 @@ ramo principal com mensagens que diziam que uma regra pede o que ela não
 pede (ela pede que uma de duas implementações se escreva como a outra,
 para o par diferir o mínimo, e não pede que as duas tenham os mesmos
 métodos), e que atribuíam a um commit o que outro tinha feito. Os dois
-foram pegos por um eixo da revisão depois do commit, quando, pela regra
-do projeto contra reescrever a história revisada, só restava uma errata
-numa mensagem posterior. A checagem tem de rodar enquanto um amend ainda
-sai de graça.
+foram pegos por um eixo da revisão depois do commit, antes do merge. A
+regra do projeto deixava condensar o ramo ainda não juntado, mas o
+agente a leu como se proibisse reescrever o commit revisado, e cada
+erro ganhou errata numa mensagem posterior: um no mesmo ramo, o outro
+depois do merge. A checagem tem de rodar antes do commit,
+quando o conserto é editar o rascunho e não depende de como se lê a
+regra de reescrita.
 
 ## 1. Artefato e âncora
 
@@ -390,8 +393,9 @@ cada comando que você rodou e cada arquivo que abriu, um por linha.
   `git log -S'<termo>' -- AGENTS.md` lista `<sha-B>` como o último
   commit que mudou quantas vezes o termo aparece no arquivo, e o diff
   dele é o que acrescenta o termo ao item. Veredito: falso; correção: o
-  sha. Nessa época, a regra do projeto já proibia reescrever, e a errata
-  entrou na próxima mensagem que tocou o item.
+  sha. Nessa época, a regra do projeto deixava condensar o ramo ainda
+  não juntado; o agente a leu como proibição, e a errata entrou na
+  próxima mensagem que tocou o item.
 - **Nome como na tarefa, não como na bibliografia.** Uma mensagem de um
   repositório de texto acadêmico citou uma fonte por dois sobrenomes e o
   ano; a entrada da bibliografia trazia outro segundo autor. O texto que
@@ -406,5 +410,5 @@ cada comando que você rodou e cada arquivo que abriu, um por linha.
 - **Contagem.** "as quatro" quando eram cinco (o cabeçalho do teste de
   uma das interfaces diz "as cinco" implementações:
   `head -1 <teste-da-interface>`). Pego pelo
-  agente autor antes do commit e consertado com um amend; é para isso
-  que serve o momento 1.
+  agente autor logo depois do commit, antes da revisão do ramo, e
+  consertado com um amend; o momento 1 o pegaria antes.
