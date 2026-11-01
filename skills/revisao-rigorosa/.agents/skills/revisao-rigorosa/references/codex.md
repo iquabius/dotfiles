@@ -106,8 +106,8 @@ revisao-rigorosa incluída, e não rode `codex`.
 Repositório: <caminho absoluto>
 Mudança: rode `git diff <base>...HEAD` e `git log --oneline <base>..HEAD`;
 leia os arquivos inteiros onde um hunk precisar do contexto.
-Especificação: <caminho, texto colado ou "nenhuma">
-Arquivos de normas: <lista de caminhos ou "nenhum">
+Especificação: <sha:caminho no git, caminho fora dele, texto colado ou "nenhuma">
+Arquivos de normas: <sha:caminho de cada um ou "nenhum">
 
 Primeiro responda, sobre a mudança como um todo: É um problema real ou
 imaginado? Há um jeito mais simples? O que ela quebra (quem chama o
@@ -171,10 +171,11 @@ veredito que a saída dele não contenha.
 
 ## No veredito
 
-Duas linhas, depois do veredito em si:
+Três linhas, depois do veredito em si:
 
 ```
 Provedores: Claude (<modelo>) + Codex (<modelo>, <esforço>, codex-cli <versão>)
+Versões lidas: <base e ponta do intervalo; sha:caminho de cada fonte fora do diff>
 Divergência: <os achados bloqueantes que só um provedor levantou, e o veredito do Codex quando difere deste; ou "nenhuma">
 ```
 

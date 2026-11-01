@@ -130,6 +130,10 @@ limitam:
 
 Abra um subagente por eixo, todos de uma vez, para que os contextos fiquem
 separados. Cada prompt tem de se bastar: o subagente não vê mais nada.
+Por isso o prompt leva as decisões do autor que mudam o que se revisa, e
+cada fonte fora do diff vem pela versão no git (`<sha>:<caminho>`), e
+não pelo checkout nem pela skill instalada, que podem estar noutro ramo.
+Antes de lançar, confira que cada fonte indicada está ao alcance do eixo.
 Todo eixo é só de leitura, e cada prompt o diz: o subagente não edita
 arquivos, não troca de commit nem de ramo e lê os commits com `git show`.
 O "compila e passa nos próprios testes" da História é julgamento a partir
@@ -271,6 +275,7 @@ impedem que um esconda o outro.
 ## Veredito
 Pronto para o merge | Não está pronto: <os consertos exigidos, o mais importante primeiro>
 Provedores: Claude (<modelo>) + Codex (<modelo>, <esforço>, codex-cli <versão>)
+Versões lidas: <base e ponta do intervalo; sha:caminho de cada fonte fora do diff>
 Divergência: os achados bloqueantes que só um provedor levantou; o
 veredito do Codex quando ele difere; ou "nenhuma"
 
