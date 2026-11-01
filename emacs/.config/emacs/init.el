@@ -377,17 +377,74 @@ For the tooltip and the completion annotation, which show the string as is."
 ;; (`\chapter{Método}\label{chap:metodo}'), so
 ;; org-ref never finds them in the Org source: it paints the link as missing,
 ;; and following it left point at the top of the buffer. A `chap:X' label that
-;; is not in the buffer stands for X.org beside the current file, when that
-;; file exists; following the link opens it, and the link is not flagged.
+;; is not in the buffer stands for its chapter's Org file: X.org beside the
+;; current file, when that file exists, or else the listed Org file (see
+;; `gambi/org-document-files' below) named like the file a listed LaTeX file
+;; inputs under the label, so a chapter file named after its title, not after
+;; its label, is still found. A stray X.org beside the file still wins over
+;; the \input. Following the link opens it, and the link is not flagged.
 ;; Export is untouched: the link still becomes \ref{chap:X}.
+(defun gambi/org-tex-commented-p (pos)
+  "Non-nil if POS is after an unescaped % on its line.
+A % after an even run of backslashes starts a comment (`\\\\%' is a line
+break and then a comment); after an odd run it is a literal `\\%'."
+  (save-excursion
+    (goto-char pos)
+    (re-search-backward "\\(?:^\\|[^\\\\]\\)\\(?:\\\\\\\\\\)*%"
+                        (line-beginning-position) t)))
+
+(defun gambi/org-scan-chapter-inputs ()
+  "Alist (LABEL . NAME) of the `chap:' labels of the current LaTeX buffer.
+NAME is the base name of the first \\input after the label, before the
+next \\chapter; a label, \\input or \\chapter in a comment does not count."
+  (let (inputs)
+    (save-excursion
+      (save-restriction
+        (widen)
+        (goto-char (point-min))
+        (while (re-search-forward "\\\\label{\\(chap:[^}]+\\)}" nil t)
+          (unless (gambi/org-tex-commented-p (match-beginning 0))
+            (let ((label (match-string-no-properties 1))
+                  name)
+              (save-excursion
+                (while (and (not name)
+                            (re-search-forward "\\\\\\(input\\|chapter\\)\\b" nil t))
+                  (unless (gambi/org-tex-commented-p (match-beginning 0))
+                    (cond ((equal (match-string 1) "chapter")
+                           (goto-char (point-max)))
+                          ((looking-at "{\\([^}]+\\)}")
+                           (setq name (file-name-base
+                                       (match-string-no-properties 1))))))))
+              (when name
+                (push (cons label name) inputs)))))))
+    (nreverse inputs)))
+
+(defun gambi/org-ref-chapter-input (label)
+  "Base name of the file a listed LaTeX file inputs under LABEL, if any."
+  (seq-some (lambda (file)
+              (and (string-suffix-p ".tex" file)
+                   (alist-get label (plist-get (gambi/org-file-scan file) :inputs)
+                              nil nil #'equal)))
+            (gambi/org-ref-document)))
+
 (defun gambi/org-ref-chapter-file (label)
-  "Return X.org beside the current file for LABEL `chap:X', if it exists."
-  (when (and buffer-file-name
-             (string-prefix-p "chap:" label)
-             (not (org-ref-find-label-in-buffer label)))
-    (let ((file (expand-file-name (concat (substring label 5) ".org")
-                                  (file-name-directory buffer-file-name))))
-      (and (file-exists-p file) file))))
+  "Return the Org file of chapter LABEL `chap:X', if there is one.
+X.org beside the current file, or the listed Org file whose name is the
+one a listed LaTeX file inputs under the label. The match data is kept:
+`gambi/org-ref-activate-chapter-file' uses it after the call."
+  (save-match-data
+    (when (and buffer-file-name
+               (string-prefix-p "chap:" label)
+               (not (org-ref-find-label-in-buffer label)))
+      (let ((file (expand-file-name (concat (substring label 5) ".org")
+                                    (file-name-directory buffer-file-name))))
+        (if (file-exists-p file)
+            file
+          (when-let* ((base (gambi/org-ref-chapter-input label)))
+            (seq-find (lambda (f)
+                        (and (string-suffix-p ".org" f)
+                             (equal (file-name-base f) base)))
+                      (gambi/org-ref-document))))))))
 
 (defun gambi/org-ref-jump-to-chapter-file (orig &optional path)
   "Open the chapter file of a `chap:' label at point, else call ORIG with PATH."
@@ -445,9 +502,9 @@ For the tooltip and the completion annotation, which show the string as is."
 ;; have had anyway. Following a ref: link reaches a title or a label in any
 ;; listed file; org-ref itself fails in a LaTeX file, unfolding Org headings
 ;; there, and says a label it did reach in another Org file was not found. A
-;; `chap:X' label is listed from the LaTeX master but still opens X.org
-;; (`gambi/org-ref-chapter-file'). Only ref links search the listed files:
-;; glossary links also read `org-ref-get-included-files'.
+;; `chap:X' label is listed from the LaTeX master but still opens its
+;; chapter's Org file (`gambi/org-ref-chapter-file'). Only ref links search
+;; the listed files: glossary links also read `org-ref-get-included-files'.
 (require 'ox)
 (require 'ucs-normalize)
 
@@ -535,9 +592,11 @@ even when empty."
   "File name -> (STAMP . SCAN), so fontification does not reread it.")
 
 (defun gambi/org-file-scan (file)
-  "Plist (:titles :labels) of FILE; titles only for an Org file.
-A buffer visiting FILE is read instead of the disk, unsaved edits included.
-TITLES are plists (:path :custom-id :begin); LABELS are strings."
+  "Plist (:titles :labels :inputs) of FILE.
+Titles only for an Org file, inputs only for a LaTeX one. A buffer visiting
+FILE is read instead of the disk, unsaved edits included. TITLES are plists
+(:path :custom-id :begin); LABELS are strings; INPUTS are the alist of
+`gambi/org-scan-chapter-inputs'."
   (let* ((buffer (find-buffer-visiting file))
          (stamp (if buffer
                     (cons buffer (buffer-chars-modified-tick buffer))
@@ -546,9 +605,11 @@ TITLES are plists (:path :custom-id :begin); LABELS are strings."
     (if (equal (car cached) stamp)
         (cdr cached)
       (let* ((org (string-suffix-p ".org" file))
+             (tex (string-suffix-p ".tex" file))
              (scan (lambda ()
                      (list :titles (and org (gambi/org-scan-titles))
-                           :labels (gambi/org-scan-labels))))
+                           :labels (gambi/org-scan-labels)
+                           :inputs (and tex (gambi/org-scan-chapter-inputs)))))
              (result (if buffer
                          (with-current-buffer buffer (funcall scan))
                        (with-temp-buffer
