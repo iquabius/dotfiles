@@ -111,6 +111,16 @@ improvisados.
 intervalo, um arquivo numa data), o cartucho e o prazo a que a checagem
 serve.
 
+O brief de cada verificador nomeia a versão de cada fonte que ele lê no
+git (`git show <sha>:<caminho>`), nunca o checkout nem a skill instalada,
+que podem estar noutro ramo. O relatório repete essas versões em
+"Versão lida". Antes de lançar, quem monta o brief confere que cada
+fonte indicada está ao alcance do verificador e que cada decisão do
+autor que muda um veredito está nele. Em 2026-10-31, uma banca usou o
+original em inglês anterior a um ramo paralelo, e duas lentes
+compararam com o motor instalado de outro ramo; os cartões foram
+descartados a tempo.
+
 **1. Extraia.** O agente principal, sem subagente, lê o artefato inteiro
 uma vez e escreve cada afirmação conferível como uma linha num arquivo:
 
@@ -220,7 +230,8 @@ correções erradas coladas como vieram.
 ```markdown
 # checagem-de-fatos: <artefato>, passada <n>
 
-Versão lida: <commit/intervalo/data>. Afirmações: N, em B lotes.
+Versão lida: <commit/intervalo/data do artefato>; fontes no git:
+  <sha:caminho de cada uma>. Afirmações: N, em B lotes.
 Provedores: Claude <modelo>; Codex <codex --version>, <modelo>, esforço <e>
   (ou: "só Claude; Codex não rodou: <motivo>").
 Vereditos: falso n, impreciso n, enganoso n, sem fonte n, correto n.
@@ -259,8 +270,10 @@ Afirmações ({{N}}), cada uma com a citação literal, a âncora, a categoria
 e onde a verdade deveria estar (uma pista, não uma prova):
 {{CLAIMS}}
 
-Fontes e como lê-las: {{LADDER}}. Se o melhor que você achar for o
-degrau de baixo, o veredito é "sem fonte". Se não conseguir abrir uma
+Fontes e como lê-las, cada uma do git pela versão (`<sha>:<caminho>`)
+e cada uma de fora dele pelo caminho: {{LADDER}}. Em evidence, cite
+cada fonte do git pela versão que leu. Se o melhor que você achar for
+o degrau de baixo, o veredito é "sem fonte". Se não conseguir abrir uma
 fonte, diga; nunca finja tê-la lido. Você lê; não edita nada.
 
 Nunca mande a um serviço externo (API, busca, formulário) o e-mail, o
