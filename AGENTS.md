@@ -46,9 +46,9 @@ história dele se condensa antes do merge (passo 5).
    ```
 
    A série refeita à mão (juntar, dividir, reescrever mensagens) passa
-   pelo mesmo `git diff` vazio. Com a árvore igual à revisada, só o eixo
-   História da `revisao-rigorosa` roda de novo, sobre a série nova; com outra
-   árvore, a revisão do ramo inteiro.
+   pelo mesmo `git diff` vazio. Com a árvore igual à revisada, só os eixos
+   História e Fatos da `revisao-rigorosa` rodam de novo, sobre a série nova;
+   com outra árvore, a revisão do ramo inteiro.
 6. **Marque a ponta**: `git revisao pronto`, da ponta, sem código mudado
    fora do commit. Ele roda antes o teste da linha `teste:` do
    `.config/revisao` (`scripts/testes-da-revisao`, que escolhe as suítes
