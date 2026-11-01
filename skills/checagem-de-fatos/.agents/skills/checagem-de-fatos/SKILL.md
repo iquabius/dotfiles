@@ -135,8 +135,8 @@ uma vez e escreve cada afirmação conferível como uma linha num arquivo:
 do cartucho; uma pista para o verificador, não uma prova. Regras:
 
 - Extraia todas. Conte por script (`wc -l`, `jq -s length`), nunca à
-  mão: uma contagem à mão já disse 73 quando eram 82. Os números do
-  relatório e os lotes saem dessa contagem.
+  mão: uma contagem à mão já disse 73 quando a extração tinha 81. Os
+  números do relatório e os lotes saem dessa contagem.
 - A frase que mistura opinião e fato rende o fato.
 - Pule as decisões do autor, as opiniões assumidas e as frases que
   anunciam a estrutura.
@@ -276,9 +276,10 @@ diff, ou, onde o script não existe, confere à mão as mesmas marcas.
 
 Em 2026-10-31, um patch escrito com um relatório só, num brief que
 mandava, para a correção que fosse uma ressalva, "prefira enfraquecer a
-afirmação", trocou três fatos que a transcrição registrava por "exemplos
-de falhas que o verificador procura" e por frases como "não foi
-comprovada nas fontes consultadas", e pôs no texto, ao lado dos totais
+afirmação", trocou por "exemplos de falhas que o verificador procura"
+os três defeitos de um script, que a transcrição registrava, e outros
+fatos do caso por frases como "não foi comprovada nas fontes
+consultadas", e pôs no texto, ao lado dos totais
 declarados (510 linhas, 187 marcas), recontagens de linhas iniciadas
 por `|` (612 e 616) e de ocorrências literais de "conferido" (170 de
 cada lado). A base dos totais, a saída do script da sessão
@@ -506,9 +507,10 @@ diferentes:
 Em 2026-11-01, dos cinco trechos de um caso dados por confirmados "na
 transcrição", dois tinham evento, o relatório de um eixo da revisão; um
 ("a lente das DCs pesou mais") só estava no devlog do próprio agente; e
-outro (os três defeitos de um script) tinha evento, um diff, para um
-defeito só, e os outros dois defeitos estavam só no resumo de fechamento
-e no devlog. Uma busca por termos deixou passar o evento do quinto: os
+outro (os três defeitos de um script) tinha evento para os três: um
+diff para um deles e, para os outros dois, a saída de um comando que
+imprimiu a abertura das notas, que a busca por termos não achou. Uma
+busca por termos deixou passar também o evento do quinto: os
 quatro arranjos estavam numa mensagem cujos títulos não tinham a
 palavra buscada. Para um fato sobre
 a árvore (o que um commit fez, o que um arquivo diz), a transcrição
