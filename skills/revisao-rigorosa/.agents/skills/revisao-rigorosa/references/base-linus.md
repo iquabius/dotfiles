@@ -26,7 +26,7 @@ abaixo somado.
 
 ## Estruturas de dados
 
-- **"Qual é o dado central, e de quem ele é?"** Se a mudança não sabe
+- **"Qual é o dado central, e quem é o dono dele?"** Se a mudança não sabe
   dizer quem cria, altera e lê cada parte do estado, o design não está
   pronto.
 - **"Por que isto é copiado ou convertido?"** Elimine as transformações
@@ -37,9 +37,9 @@ abaixo somado.
 ## Casos especiais
 
 Bom gosto é ver o problema de um ângulo em que o caso especial some. O
-exemplo clássico: remover um item de uma lista simplesmente encadeada com
-um desvio para "é a cabeça?" fica sem desvio quando o código percorre um
-ponteiro para o elo em vez de um ponteiro para o nó.
+exemplo clássico: ao remover um item de uma lista simplesmente encadeada,
+o desvio para "é a cabeça?" some quando o código percorre um ponteiro
+para o elo em vez de um ponteiro para o nó.
 
 - **"Caso especial para o primeiro, o vazio ou o que falta."** Mude a
   representação para que ele não seja especial, ou explique por que tem de
@@ -56,12 +56,12 @@ ponteiro para o elo em vez de um ponteiro para o nó.
   parâmetros.
 - **"Módulo auxiliar novo para um só chamador."** Ponha-o ao lado do
   chamador.
-- **"Abstração nova, um usuário."** Ponha-a em linha; extraia-a no
-  terceiro usuário.
+- **"Abstração nova, um usuário."** Incorpore-a ao código que a usa;
+  extraia-a no terceiro usuário.
 - **"Opções que ninguém pediu."** Apague-as até aparecer uma necessidade
   real.
-- **"Mais de três níveis de aninhamento."** Cláusulas de guarda, retornos
-  antecipados, ou divida na emenda.
+- **"Mais de três níveis de aninhamento."** Use cláusulas de guarda e
+  retornos antecipados, ou divida no ponto de corte.
 - **"Engenhoso."** Torne-o óbvio.
 - **"Número mágico."** Dê-lhe um nome.
 - **"Duplicata de uma função existente."** Reutilize-a, e diga-o.
@@ -70,8 +70,8 @@ ponteiro para o elo em vez de um ponteiro para o nó.
 
 - **"Isto muda um comportamento de que os chamadores existentes
   dependem."** Procure todos os chamadores de cada assinatura, valor de
-  retorno, rota, flag e formato guardado que mudou. Uma regressão é um bug mesmo quando o modelo
-  novo é mais limpo.
+  retorno, rota, flag e formato guardado que mudou. Uma regressão é um
+  bug mesmo quando o modelo novo é mais limpo.
 - **"Dados guardados escritos pelo código antigo: o que os lê agora?"**
   Uma mudança de formato pede uma migração ou um leitor que aceite os
   dois.
@@ -91,8 +91,8 @@ ponteiro para o elo em vez de um ponteiro para o nó.
 
 ## Mudanças cirúrgicas
 
-- **"Isto reformata linhas que você não mudou de outro modo."** Desfaça,
-  ou mova a reformatação para um commit próprio.
+- **"Isto reformata linhas em que você não mudou mais nada."** Desfaça, ou
+  mova a reformatação para um commit próprio.
 - **"Você renomeou coisas e mudou lógica no mesmo commit."** Primeiro a
   renomeação, depois a lógica.
 - **"Mudança alheia de dependência, lockfile ou configuração."** Um commit
