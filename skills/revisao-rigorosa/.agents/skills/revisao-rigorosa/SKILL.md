@@ -126,15 +126,15 @@ cada eixo (Claude Opus 5.5 em 2026-10-24). Com outro harness ou outro
 provedor, escolha o mesmo nível pelo nome; com modelos locais, o mais
 forte que responda em velocidade interativa. O subagente que herda o
 modelo herda o carro-chefe quando a sessão roda nele, o que custa mais e
-roda mais devagar do que uma revisão precisa. O menor nível não dá conta:
-medido em 2026-10-24 sobre quatro ramos já juntados de um repositório
-(código de aplicação, ferramentas em Python, instruções para agentes,
-ferramentas de LaTeX), 48 rodadas dos quatro eixos contra os defeitos que
-a revisão original tinha consertado, o Claude Haiku 4.5 achou 3 de 39, com
-evidência inventada e checagens que impunham o próprio nome no trailer de
-atribuição; o Claude Sonnet 5.5 achou 25 e o Claude Opus 5.5 achou 32,5, à
-frente nos quatro eixos, mais em Especificação e História, por no máximo
-11% mais tokens.
+roda mais devagar do que uma revisão precisa. O menor nível não dá conta.
+Na medição de 2026-10-24, sobre quatro ramos já juntados de um
+repositório (código de aplicação, ferramentas em Python, instruções para
+agentes, ferramentas de LaTeX), foram 48 rodadas dos quatro eixos contra
+os defeitos que a revisão original tinha consertado. O Claude Haiku 4.5
+achou 3 de 39, com evidência inventada e checagens que impunham o próprio
+nome no trailer de atribuição; o Claude Sonnet 5.5 achou 25 e o Claude
+Opus 5.5 achou 32,5, à frente nos quatro eixos, com a maior vantagem em
+Especificação e História, ao custo de no máximo 11% mais tokens.
 
 **Normas.** Dê a ele o comando do diff, a lista de commits, a lista dos
 arquivos de normas e o texto inteiro da base Linus colado. Brief: "Aponte
@@ -157,26 +157,27 @@ mande-o ler cada commit com `git show`. Brief: "Para cada commit,
 aponte (a) mais de uma mudança lógica num commit, quando as partes se
 separam de forma limpa: cada commit da divisão é o seu pai mais linhas do
 diff final, e compila e passa nos próprios testes. Nomeie os commits em
-que você o dividiria. Partes que compartilham uma mesma reestruturação, em
-que um commit intermediário precisaria de código que não está nem no pai
-nem na ponta, podem ficar num commit só quando a mensagem diz por que vão
-juntas. (b) Movimentação, renomeação ou reformatação que esconde a lógica:
-mesmo com as opções do diff que olham através dela (`-w`,
-`--color-moved`, `--word-diff`), o leitor tem de ler as linhas mecânicas
-para achar a mudança; ou uma reformatação ampla feita por uma ferramenta
-divide um commit com lógica, e um arquivo de blame-ignore não consegue
-pulá-la sem pular a lógica. Uma renomeação local, uma quebra de linha que
-a edição força e uma renomeação que acompanha uma mudança no contrato da
-mesma função ficam com a mudança. Onde as regras do repositório pedem
-cada movimento num commit próprio, aponte qualquer mistura. (c) Um
-problema que um commit introduz e um commit posterior conserta. (d) Uma
-mensagem que descreve o diff em vez de explicar o porquê: sem enunciar o problema, sem a razão
-deste conserto, sem teste nomeado, sem a razão de as partes de um commit
-mantido inteiro irem juntas. (e) Um banner de IA ou menção a ferramenta no
-assunto ou no corpo, a menos que as regras do repositório o peçam ali;
-uma linha de banner sozinha, logo acima do bloco de trailers, é onde a
-skill `mensagem-de-commit` põe a que um harness de agente fornece, e não
-é achado. Cite o sha curto do commit. Menos de 300 palavras." Quando a
+que você o dividiria. Podem ficar num commit só as partes que
+compartilham uma mesma reestruturação (um commit intermediário precisaria
+de código que não está nem no pai nem na ponta), quando a mensagem diz
+por que vão juntas. (b) Movimentação, renomeação ou reformatação que
+esconde a lógica: mesmo com as opções do diff que olham através dela
+(`-w`, `--color-moved`, `--word-diff`), o leitor tem de ler as linhas
+mecânicas para achar a mudança; ou uma reformatação ampla feita por uma
+ferramenta fica no mesmo commit que a lógica, e um arquivo de
+blame-ignore não consegue pulá-la sem pular a lógica. Uma renomeação
+local, uma quebra de linha que a edição força e uma renomeação que
+acompanha uma mudança no contrato da mesma função ficam com a mudança.
+Onde as regras do repositório pedem cada movimento num commit próprio,
+aponte qualquer mistura. (c) Um problema que um commit introduz e um
+commit posterior conserta. (d) Uma mensagem que descreve o diff em vez
+de explicar o porquê: sem enunciar o problema, sem a razão deste
+conserto, sem teste nomeado, sem a razão de as partes de um commit
+mantido inteiro irem juntas. (e) Um banner de IA ou menção a ferramenta
+no assunto ou no corpo, a menos que as regras do repositório o peçam
+ali. A skill `mensagem-de-commit` põe o banner que um harness de agente
+fornece numa linha sozinha, logo acima do bloco de trailers; essa linha
+não é achado. Cite o sha curto do commit. Menos de 300 palavras." Quando a
 skill `mensagem-de-commit` estiver instalada, aponte-a ao subagente como a
 norma de (d). Num ramo que ainda não chegou ao ramo principal e em que
 ninguém mais se apoia, o remédio para (c) é dobrar o commit posterior no
@@ -186,16 +187,15 @@ commit que ele conserta.
 
 **Fatos.** Só quando o intervalo tem commits e a skill
 `checagem-de-fatos` está instalada. Dê a ele o brief do cartucho de
-mensagem de commit, que mora na skill `mensagem-de-commit`
-(`cartuchos-de-fatos/mensagem-de-commit.md`, "O brief do subagente"),
-com o intervalo e o
-repositório preenchidos. Ele confere contra a árvore cada fato que as
-mensagens afirmam: um sha citado e o que ele fez, um caminho e o que ele
-diz, uma regra citada de um arquivo de instruções e o verbo dela, uma
-contagem, uma data, "só comentário". A História fica com (a)–(e) e não
-confere os fatos de novo. Uma mensagem no ramo principal nunca se
-reescreve, então este eixo é a última chance de consertar um fato errado
-com um amend ou um fixup.
+mensagem de commit, com o intervalo e o repositório preenchidos. O brief
+mora na skill `mensagem-de-commit`
+(`cartuchos-de-fatos/mensagem-de-commit.md`, "O brief do subagente").
+Ele confere contra a árvore cada fato que as mensagens afirmam: um sha
+citado e o que ele fez, um caminho e o que ele diz, uma regra citada de
+um arquivo de instruções e o verbo dela, uma contagem, uma data, "só
+comentário". A História fica com (a)–(e) e não confere os fatos de novo.
+Uma mensagem no ramo principal nunca se reescreve, então este eixo é a
+última chance de consertar um fato errado com um amend ou um fixup.
 
 **Codex.** Um segundo provedor de modelo, para que a revisão não dependa
 de um modelo só. Siga [references/codex.md](references/codex.md): confira
@@ -253,8 +253,8 @@ não anula o veredito. Quando o Codex não rodou, a linha Provedores diz
 
 ### 7. Condense antes do merge
 
-Um ramo que ainda não chegou ao ramo principal, e sobre o qual ninguém mais
-constrói, é rascunho. Quando o veredito for Pronto para o merge, leia a
+Um ramo que ainda não chegou ao ramo principal e em que ninguém mais se
+apoia é rascunho. Quando o veredito for Pronto para o merge, leia a
 lista de commits dele como a história que ele vai deixar. Se ela carregar
 o diário da revisão (commits que respondem a achados, uma regra reescrita
 em vários commits, uma área consertada em rodadas), recomende condensá-lo
@@ -274,9 +274,9 @@ antes do merge:
   mensagem reescrita, contra a árvore do próprio commit, não a da ponta.
   Depois, só os eixos História e Fatos rodam de novo, sobre a série nova:
   o rebase reescreveu as mensagens a partir da árvore e mudou os shas que
-  elas citam, e uma mensagem reescrita nunca passa pelas ferramentas que a
-  leem no comando `git commit`. Uma árvore diferente é código novo e leva
-  a revisão inteira.
+  elas citam, e uma mensagem reescrita nunca passa pelas ferramentas que
+  leem a mensagem a partir do comando `git commit`. Uma árvore diferente
+  é código novo e leva a revisão inteira.
 - O `git diff` vazio não prova nada sobre os commits do meio. Uma série
   refeita à mão (um arquivo dividido entre commits, hunks movidos) pode
   quebrar um commit intermediário que um posterior conserta: cortar um
@@ -286,18 +286,18 @@ antes do merge:
   ponta menos o que sai, e leia cada commit atrás de linhas em branco
   acrescentadas ou removidas:
   `git show --format= <sha> -- <arquivo> | grep '^[-+]$'`.
-- Uma mensagem reescrita pelo editor (`git commit --amend` sem `-F`, o
-  `reword` do `git rebase -i`, mesmo com `GIT_EDITOR` apontando para um
-  script que copia um arquivo) é limpa com `strip`, que descarta toda linha
-  que começa com o `core.commentChar` (`#`): um título de Markdown, um
-  `#123` no começo da linha. O `git commit -F` as mantém. Reescreva com
-  `git commit --amend -F <arquivo>`, ou não comece nenhuma linha com `#`;
-  depois, compare `git log --format=%B <base>..HEAD | grep -n '^#'` com os
+- O git passa a mensagem reescrita pelo editor (`git commit --amend` sem
+  `-F`, o `reword` do `git rebase -i`, mesmo com `GIT_EDITOR` apontando
+  para um script que copia um arquivo) pela limpeza `strip`, que descarta
+  toda linha que começa com o `core.commentChar` (`#`): um título de
+  Markdown, um `#123` no começo da linha. O `git commit -F` mantém essas
+  linhas. Reescreva com `git commit --amend -F <arquivo>`, ou não comece
+  nenhuma linha com `#`; depois, compare `git log --format=%B <base>..HEAD | grep -n '^#'` com os
   arquivos das mensagens.
 
 Pule este passo quando o repositório proibir reescrever um ramo não
-juntado, ou quando o ramo já tiver ido por push para outros construírem
-sobre ele. Nunca reescreva o que já está no ramo principal.
+juntado, ou quando o ramo já tiver sido enviado por push para outros se
+apoiarem nele. Nunca reescreva o que já está no ramo principal.
 
 ## Revisão de plano
 

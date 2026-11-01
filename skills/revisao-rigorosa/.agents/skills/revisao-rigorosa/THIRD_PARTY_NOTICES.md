@@ -42,11 +42,12 @@ SOFTWARE.
 - Fonte: https://github.com/GaryTang32/review-ready
 - Arquivo: `references/review-checklist.md` (a "NAK list")
 - Revisão: `5a6959a8bb5ae6554884d78e50f30bbb4526059e` (2026-09-21)
-- Adaptado: o formato objeção-depois-conserto e os itens neutros quanto à
-  linguagem em Abordagem, Casos especiais, Complexidade, Prova acima de
-  confiança e Mudanças cirúrgicas, em `references/base-linus.md`; o passo
-  de conferência "percorra o caso que falha no código antigo e no novo";
-  e a regra de que um veredito com ressalvas não é aprovação.
+- Adaptado: o formato em que a objeção vem antes do conserto e os itens
+  independentes da linguagem de programação em Abordagem, Casos
+  especiais, Complexidade, Prova acima de confiança e Mudanças
+  cirúrgicas, em `references/base-linus.md`; o passo de conferência
+  "percorra o caso que falha no código antigo e no novo"; e a regra de que
+  um veredito com ressalvas não é aprovação.
 
 ```
 MIT License

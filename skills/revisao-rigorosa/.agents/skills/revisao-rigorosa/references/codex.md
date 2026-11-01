@@ -3,8 +3,8 @@
 Um segundo provedor de modelo, para que a revisão não dependa dos pontos
 cegos de um modelo só. O Codex CLI da OpenAI roda um eixo cego sobre a
 mudança inteira: ele nunca vê o que os outros eixos acharam, e os achados
-dele passam pela mesma conferência que os deles antes de chegar ao
-relatório.
+do Codex passam pela mesma conferência dos achados dos outros eixos antes
+de chegar ao relatório.
 
 ## Confira que ele roda
 
@@ -36,9 +36,9 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
 
 - `exec`, não `codex review`: `codex exec review --commit <sha>
   "<prompt>"` recusa o prompt ("the argument '--commit <SHA>' cannot
-  be used with '[PROMPT]'"), então não leva este brief, a especificação
-  nem a língua da resposta; nem `codex review` nem `codex exec review` têm
-  a flag `--sandbox`.
+  be used with '[PROMPT]'"), então não recebe este brief, nem a
+  especificação, nem a língua da resposta; nem `codex review` nem `codex
+  exec review` têm a flag `--sandbox`.
 - `--sandbox read-only` deixa o Codex ler a árvore e rodar `git log`,
   `git show` e `git diff` sozinho, e recusa toda escrita. O Codex lê o
   diff do repositório; não o cole no brief.
@@ -52,23 +52,23 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
   models`, era o `gpt-6.1-sol` ("workhorse"), abaixo do `gpt-6-astra`
   ("frontier"); a ordem da lista não os classifica. Quando ele sumir de
   `codex debug models`, escolha o mesmo nível pela descrição e diga-o no
-  relatório. Antes, descarte um CLI desatualizado, cuja lista não traz os
-  modelos mais novos e cujas chamadas a eles falham com "not supported
-  when using Codex with a ChatGPT account": em 2026-10-28, o codex-cli
-  0.157.1 fez as duas coisas com o `gpt-6.1-sol`, e o 0.165.0 o listou e
-  respondeu. O `codex --version` contra o `latest_version` de
-  `~/.codex/version.json` mostra a diferença, onde o CLI escreveu esse
-  arquivo (um build 0.164.0-alpha não escreveu); atualizar o CLI é decisão
-  do autor.
+  relatório. Antes, descarte a hipótese de um CLI desatualizado, cuja
+  lista não traz os modelos mais novos e cujas chamadas a eles falham com
+  "not supported when using Codex with a ChatGPT account": em 2026-10-28,
+  o codex-cli 0.157.1 fez as duas coisas com o `gpt-6.1-sol`, e o 0.165.0
+  o listou e respondeu. Comparar o `codex --version` com o
+  `latest_version` de `~/.codex/version.json` mostra a diferença, nos
+  casos em que o CLI escreveu esse arquivo (um build 0.164.0-alpha não
+  escreveu); atualizar o CLI é decisão do autor.
   `model_reasoning_effort=high`: o padrão do modelo é `low`, raso demais
   para uma revisão. Confira a linha `reasoning effort: high` do cabeçalho.
 - O Codex acha sozinho as skills instaladas em `~/.agents/skills`: em
-  2026-10-26, com um brief sem a linha que o proíbe, ele abriu o
-  `SKILL.md` desta skill e o seguiu em vez do brief. Como esse arquivo
+  2026-10-26, com um brief sem a linha que proíbe abrir skills, ele abriu
+  o `SKILL.md` desta skill e o seguiu em vez do brief. Como esse arquivo
   traz este eixo, segui-lo é rodar o Codex de novo. A única chave de
   `codex features list` que nomeia o interruptor,
-  `skip_host_skill_discovery`, está "under development", então o brief o
-  proíbe. Procure no log um `cat` de um `SKILL.md`.
+  `skip_host_skill_discovery`, está "under development", então o brief
+  proíbe abri-las. Procure no log um `cat` de um `SKILL.md`.
 - Fora de um repositório git (um plano sem código), acrescente
   `--skip-git-repo-check` e tire o `-C`.
 
@@ -127,9 +127,9 @@ A base Linus:
 
 Trate `<dir>/codex-review.md` como o relatório de qualquer subagente: o
 passo 5 roda sobre ele por inteiro. Reabra cada local citado e confira
-cada hunk citado contra o diff, palavra por palavra; uma citação que o
-diff não contém, ou uma linha que não diz o que o Codex afirma, descarta o
-achado. Ao Codex não se diz nada dos outros eixos, e os achados dele não
+cada hunk citado contra o diff, palavra por palavra. Descarte o achado
+cuja citação o diff não contém ou cuja linha não diz o que o Codex
+afirma. Ao Codex não se diz nada dos outros eixos, e os achados dele não
 se comparam com os dos outros eixos: um achado que só o Codex levantou e
 que sobrevive à conferência conta como qualquer outro. Uma chamada é uma
 amostra: duas rodadas do mesmo brief sobre o mesmo commit, em 2026-10-26,
