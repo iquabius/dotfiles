@@ -119,9 +119,10 @@ redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro (o `$'...'` com os escapes
-resolvidos, o `$"..."` como aspas duplas), o separador entre aspas não
-corta o comando, o `#` no começo de uma palavra abre um comentário, a
-barra no fim da linha, fora de comentário, a junta à seguinte, e os
+resolvidos com o número de dígitos do bash, também o `\cX`, e cortado no
+NUL; o `$"..."` como aspas duplas), o separador entre aspas não corta o
+comando, o `#` no começo de uma palavra abre um comentário, a barra no
+fim da linha, fora de comentário, a junta à seguinte, e os
 redirecionamentos saem, também colados, com descritor ou antes do
 comando (`git<<<x push`, `git 0<<< x push`, `git {fd}>x push`, `git >| x
 push` são `git push`). Todas as regras leem essas palavras. Cada chamada

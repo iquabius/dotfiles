@@ -168,12 +168,60 @@ HERE_STRING = re.compile(r"(?:\d*|\{\w+\})<<<(.*)", re.S)
 
 
 def ansi_c(m):
-    """O $'...' do bash com os escapes resolvidos (\\x68 é h), entre aspas."""
-    try:
-        valor = m[1].encode("latin-1", "backslashreplace").decode("unicode_escape")
-    except UnicodeDecodeError:
-        valor = m[1]
-    return shlex.quote(valor)
+    """O $'...' do bash com os escapes e seus limites de dígitos resolvidos.
+    Corta só este trecho no primeiro NUL e devolve o valor entre aspas."""
+    cru = m[1].encode("utf-8", "surrogateescape")
+    simples = {
+        ord("a"): 7, ord("b"): 8, ord("e"): 27, ord("E"): 27,
+        ord("f"): 12, ord("n"): 10, ord("r"): 13, ord("t"): 9, ord("v"): 11,
+        ord("\\"): 92, ord("'"): 39, ord('"'): 34, ord("?"): 63,
+    }
+    valor, i = bytearray(), 0
+    while i < len(cru):
+        letra = cru[i]
+        i += 1
+        if letra != ord("\\") or i == len(cru):
+            valor.append(letra)
+            continue
+        letra = cru[i]
+        i += 1
+        if letra in simples:
+            valor.append(simples[letra])
+        elif letra == ord("c") and i < len(cru):
+            controle = cru[i]
+            i += 1
+            if controle == ord("\\") and cru[i:i + 1] == b"\\":
+                i += 1
+            valor.append(127 if controle == ord("?") else controle & 31)
+        elif letra in b"01234567xuU":
+            octal = letra in b"01234567"
+            inicio = i - 1 if octal else i
+            limite = 3 if octal else {ord("x"): 2, ord("u"): 4, ord("U"): 8}[letra]
+            digitos = b"01234567" if octal else b"0123456789abcdefABCDEF"
+            fim = inicio
+            while fim < min(inicio + limite, len(cru)) and cru[fim] in digitos:
+                fim += 1
+            if fim == inicio:
+                valor.extend((ord("\\"), letra))
+                continue
+            numero = int(cru[inicio:fim], 8 if octal else 16)
+            i = fim
+            if octal or letra == ord("x"):
+                valor.append(numero & 255)
+            elif numero < 128:
+                valor.append(numero)
+            elif numero < 0x80000000:
+                # O bash emite UTF-8 de até seis bytes, mesmo fora do Unicode.
+                tamanho = 2
+                while numero >= 1 << (5 * tamanho + 1):
+                    tamanho += 1
+                valor.append((255 << (8 - tamanho) & 255) | numero >> (6 * (tamanho - 1)))
+                valor.extend(128 | (numero >> deslocamento & 63)
+                             for deslocamento in range(6 * (tamanho - 2), -1, -6))
+        else:
+            valor.extend((ord("\\"), letra))
+    # Conserva também os bytes que não formam um caractere UTF-8.
+    return shlex.quote(valor.split(b"\0", 1)[0].decode("utf-8", "surrogateescape"))
 
 
 def desaspa(cru):
