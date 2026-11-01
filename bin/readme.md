@@ -118,7 +118,8 @@ com um token de escrita. Ler a configuração do git (`get`, `list`,
 redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
-roda: as aspas protegem o que está dentro, o separador entre aspas não
+roda: as aspas protegem o que está dentro (o `$'...'` com os escapes
+resolvidos, o `$"..."` como aspas duplas), o separador entre aspas não
 corta o comando, o `#` no começo de uma palavra abre um comentário, a
 barra no fim da linha, fora de comentário, a junta à seguinte, e os
 redirecionamentos saem, também colados, com descritor ou antes do

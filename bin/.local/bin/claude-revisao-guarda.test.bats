@@ -239,6 +239,8 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		"bash -c 'git commit -n -m x' <<< 'echo ok'" \
 		"echo \"\$(printf ')'; git commit -n -m x)\"" \
 		"git config \$'core.\\x68ooksPath' /tmp/hooks" "git \$'co\\x6dmit' -n" \
+		'git commit $"--no-verify" -m x' 'git $"commit" -n' 'gh $"auth" token' \
+		'gh pr $"merge" 3' 'gh $"pr" merge 3' 'gh config get -h x $"oauth_token"' 'gh alias $"set" t pr' \
 		"git -c alias.x='commit -n -m x' x" 'git -c alias.p="!git commit --no-verify" p'; do
 		run guarda "$c"
 		recusa

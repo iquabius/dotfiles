@@ -352,12 +352,14 @@ def analisar(texto):
             aspa = None if c == '"' else aspa
             i += 1
             continue
-        # Fora de aspas.
-        if c in "'\"" or texto.startswith("$'", i):
+        # Fora de aspas. O $'...' guarda o $, que o desaspa resolve; o $"..."
+        # do bash (a tradução pelo locale) é uma aspa dupla, e o $ some.
+        if c in "'\"" or texto.startswith(("$'", '$"'), i):
             if c == "$":
-                cru.append(c)
+                if texto[i + 1] == "'":
+                    cru.append(c)
                 i += 1
-                c = "'"
+                c = texto[i]
             aspa = c
             cru.append(c)
             i += 1
