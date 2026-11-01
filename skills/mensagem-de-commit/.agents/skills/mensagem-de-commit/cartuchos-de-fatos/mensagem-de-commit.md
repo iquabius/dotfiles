@@ -68,23 +68,31 @@ commit:**
   lido atrás de trechos que não sejam comentário, a saída do comando de
   conformidade;
 - uma data ou um "desde": a data do próprio commit
-  (`git log -1 --format=%ad`), a linha datada no arquivo.
+  (`git log -1 --format=%ad`), a linha datada no arquivo;
+- o que aconteceu numa sessão de agente, quando a mensagem o afirma
+  (as opções postas ao autor, o que uma revisão ou um verificador
+  achou, o que um script fez durante a sessão): o evento na transcrição
+  da sessão, lida como diz a `checagem-de-fatos`, seção "Fatos que só
+  uma sessão registra". O relato do agente (um devlog, um resumo, a
+  mensagem anterior) é corroboração.
 
 **Corroboração:**
 
 - um achado de revisão que a mensagem menciona ("achado do eixo
   História"): o relatório da revisão não está no repositório, então o
-  fato que o achado estabeleceu tem de estar visível por si no diff ou na
-  árvore; a procedência sozinha não prova nada;
+  fato que o achado estabeleceu tem de estar visível por si no diff, na
+  árvore ou, para o que aconteceu numa sessão, no evento da transcrição;
+  a procedência sozinha não prova nada;
 - a mensagem do commit citado, só para confirmar o que o diff dele já
   mostra.
 
 **Nunca sozinhos:** a memória do autor, a conversa que produziu a
-mudança, o pedido que abriu a sessão e o corpo de uma tarefa ou ticket
-(para qualquer fato que afirmem sobre outra coisa que não eles mesmos:
-são cópias, e o sobrenome errado do anti-exemplo abaixo já estava no
-corpo de uma tarefa), a mensagem anterior da mesma série, a linha de
-assunto de um commit (assuntos resumem; o diff decide).
+mudança (para um fato sobre a árvore; o que aconteceu na sessão é o
+último item da Primária), o pedido que abriu a sessão e o corpo de uma
+tarefa ou ticket (para qualquer fato que afirmem sobre outra coisa que
+não eles mesmos: são cópias, e o sobrenome errado do anti-exemplo abaixo
+já estava no corpo de uma tarefa), a mensagem anterior da mesma série, a
+linha de assunto de um commit (assuntos resumem; o diff decide).
 
 ## 3. Categorias de afirmação
 
@@ -289,8 +297,12 @@ repositório.
 ~~~markdown
 Você é o verificador hostil das mensagens de commit de {{RANGE}} em
 {{REPO}}. O autor contratou a sua hostilidade: ache todo fato destas
-mensagens que o repositório não sustenta. Presuma toda afirmação errada
-até a árvore mostrar o contrário. Julgue fato e lógica, não estilo.
+mensagens que as fontes não sustentam. Presuma toda afirmação errada
+até a fonte primária mostrar o contrário. Julgue fato e lógica, não
+estilo.
+
+Sessões: {{SESSOES}} (de cada sessão, o .jsonl original e o condensado;
+"nenhuma" quando não há).
 
 Leia cada mensagem com `git log --format='%H%n%B' {{RANGE}}`. (Para um
 rascunho, momento 1b: a mensagem é o arquivo {{DRAFT}}, a mudança é
@@ -313,10 +325,18 @@ uma regra citada, na frase exata; `bd show <id>` ou o ticket para uma
 tarefa; o arquivo para um registro de decisão; o arquivo de teste ou a
 saída do comando para uma contagem; a entrada da bibliografia (cada
 sobrenome de `author`, em ordem, e a data) e o arquivo de trechos para
-uma fonte citada por autor e ano. Um achado de revisão que a mensagem
-menciona não é evidência; o fato tem de aparecer na árvore. O corpo de
-uma tarefa e o pedido que abriu a sessão também não são evidência: um
-nome ou uma página que eles afirmam é cópia, conferida na fonte dela.
+uma fonte citada por autor e ano. Um fato sobre a árvore tem de aparecer
+na árvore. Um fato sobre o que aconteceu numa sessão de agente se
+confere no evento da transcrição dela, nas sessões nomeadas acima: o
+resultado de uma ferramenta, o relatório de um subagente, a mensagem ao
+autor na hora da escolha ou a resposta dele. O relato do agente (um
+devlog, um resumo, uma mensagem anterior) é corroboração e nunca prova
+sozinho. Um achado de revisão que a mensagem menciona não é evidência;
+o fato tem de aparecer na árvore ou no evento da sessão. Com a
+transcrição fora do alcance, vale a regra de
+"sem acesso" abaixo. O corpo de uma tarefa e o pedido que abriu a sessão
+também não são evidência: um nome ou uma página que eles afirmam é
+cópia, conferida na fonte dela.
 Você lê; não edita, não faz commit, não faz rebase nem escreve nada.
 
 Trabalhe em lotes, porque cada turno relê o seu contexto inteiro.

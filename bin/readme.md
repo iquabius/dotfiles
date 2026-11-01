@@ -265,6 +265,8 @@ aponta a suíte para uma cópia sabotada.
 ## condensar-transcricao
 
 Condensa uma transcrição JSONL do Claude Code para busca em texto.
+A seção "Fatos que só uma sessão registra" da `checagem-de-fatos` o
+usa para os dois provedores lerem a mesma transcrição.
 
 ```sh
 condensar-transcricao [--corte-ferramenta N] [--corte-resultado N] <transcricao.jsonl>

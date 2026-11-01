@@ -63,7 +63,9 @@ O motor não enxerga o registro. Antes da etapa 1, um cartucho declara:
    (`file:line`, `sha:line`).
 2. **A fonte primária e a escada**: onde se lê a verdade de cada
    afirmação (uma página de PDF, `git show`, um glossário), o que conta
-   como corroboração e o que nunca conta sozinho.
+   como corroboração e o que nunca conta sozinho. Quando o texto narra
+   uma sessão de agente, a escada inclui a sessão: ver "Fatos que só uma
+   sessão registra".
 3. **As categorias de afirmação** do registro, com as que um leitor hostil
    mais usa.
 4. **A cadeia** que o texto sustenta (problema → pergunta → método;
@@ -476,6 +478,76 @@ Codex, o que ficou e a linha de evidência que decidiu.
 Um achado herdado ou que vai à fila do autor passa por esta
 reconciliação antes: o autor recebe o veredito decidido, com as
 divergências, e nunca a leitura de um provedor só.
+
+## Fatos que só uma sessão registra
+
+Um texto pode narrar uma sessão de agente: o que uma revisão achou,
+as opções postas ao autor, o defeito que um script cometeu, o que o
+autor respondeu. Isso não está na árvore; está na transcrição da
+sessão (no Claude Code, `~/.claude/projects/<projeto>/<sessão>.jsonl`,
+uma linha JSON por mensagem). O cartucho de um texto assim nomeia a
+sessão na escada, e os dois provedores recebem a mesma fonte.
+
+**Evento e relato.** A transcrição guarda dois registros, em degraus
+diferentes:
+
+- o **evento** — o resultado de uma ferramenta, o relatório de um
+  subagente, a mensagem do agente ao autor na hora da escolha, a
+  resposta do autor — é primário para o que aconteceu na sessão;
+- o **relato** — o que o agente escreveu depois sobre a sessão: um
+  devlog, o resumo de fechamento, uma mensagem de commit, o que ele
+  disse a um subagente sobre o que o autor viu — é corroboração e
+  nunca decide sozinho. Ele é, muitas vezes, a fonte do texto que se
+  confere, e conferir a cópia contra o original não prova o fato.
+
+Em 2026-11-01, dos cinco trechos de um caso dados por confirmados "na
+transcrição", dois tinham evento, o relatório de um eixo da revisão; um
+("a lente das DCs pesou mais") só estava no devlog do próprio agente; e
+outro (os três defeitos de um script) tinha evento, um diff, para um
+defeito só, e os outros dois defeitos estavam só no resumo de fechamento
+e no devlog. Uma busca por termos deixou passar o evento do quinto: os
+quatro arranjos estavam numa mensagem cujos títulos não tinham a
+palavra buscada. Para um fato sobre
+a árvore (o que um commit fez, o que um arquivo diz), a transcrição
+continua sem valor sozinha, como no cartucho de mensagens de commit.
+
+**Como os provedores a leem.** O brief dos dois verificadores, o
+subagente e o Codex, nomeia a transcrição e diz que o degrau de cada
+trecho é o do evento ou do relato. Os dois leem a mesma transcrição, e
+a divergência entre eles se decide nela, pela etapa 4. Uma afirmação
+que só tem relato sai, no máximo, com o veredito do degrau de baixo,
+nunca **correto**.
+
+A transcrição se lê condensada. Antes de lançar os verificadores, o
+agente principal condensa a transcrição pelo script
+`condensar-transcricao`, do pacote `bin` do repositório de dotfiles do
+autor, no `PATH` depois do stow desse pacote. O Codex, num sandbox só
+de leitura, não escreve arquivo. O script guarda em cada bloco a linha
+da transcrição original. A entrada e o resultado das ferramentas ficam
+cortados:
+
+```sh
+condensar-transcricao <arquivo.jsonl> > <scratchpad>/<sessão>.txt
+```
+
+O brief dos dois nomeia o condensado, para buscar, e o `.jsonl` original,
+para reabrir a linha `L<n>`, como manda a regra abaixo.
+
+Um bloco cortado (`[…+n]`) pode esconder o evento que decide uma
+afirmação, como o resultado de uma ferramenta ou o relatório de um
+subagente. Se puder decidi-la, reabra o bloco na linha `L<n>` da
+transcrição original. Um evento cortado que não se reabriu não dá
+**sem fonte**; se a fonte estiver fora do alcance, vale **sem acesso**,
+como na etapa 3.
+
+Onde o script não existir, leia a transcrição bruta, buscando antes de
+ler. Uma busca por termos acha só o que os termos acham: o verificador
+que não achou o evento diz os termos que usou.
+
+O autor aceitou, em 2026-11-01, que os dois provedores leiam as
+transcrições de sessão do Claude Code, que trazem o nome e o e-mail
+dele. O brief não os passa a nenhum outro serviço (API, busca,
+formulário), como manda o brief do subagente.
 
 ## Composição com outras skills
 
