@@ -86,14 +86,43 @@ do subcomando, que se expande; senão o `GIT_NOTES_REF`; senão o último
 aceita inteiros), ou apontar a ela o `core.notesRef` gravado ou o
 `notes.rewriteRef` (também por glob ou pelo `GIT_NOTES_REWRITE_REF`),
 que copiaria a marca para o commit reescrito por um `--amend` ou um
-rebase; e o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
-que não passa pelo pre-push. Ler a configuração (`get`, `list`, `--get*`,
-`--list`, a chave sozinha) passa, também com redirecionamento.
+rebase; o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
+que não passa pelo pre-push; e o `gh` com a palavra `auth`, menos o `gh
+auth status` sem o token: o escopo do token é o limite do que o agente
+faz pela API, o `login`, o `refresh` e o `switch` o trocam, o `token`, o
+`git-credential` e o `status -t` o tiram do `gh`, e o `logout` e o
+`setup-git` mexem nele. O pflag lê o `-t` num grupo de opções curtas
+depois do subcomando (`gh auth status -th github.com`), e conhecer as
+opções de cada subcomando do `auth` deixaria escapar a que uma versão
+nova trouxer; por isso o guarda falha fechado: passam só o `gh help
+...`, o `gh auth` sozinho ou com `--help`, e o `gh auth status` seguido
+só de `-a`, `--active` e de `-h`, `--hostname`, `--json`, `--jq` ou
+`--template` com o valor. A ajuda de um subcomando vem pelo `gh help
+auth <subcomando>`. O `oauth_token` do `gh config` (`gh config get -h
+<host> oauth_token`, e o `set`), que lê ou grava o token sem a palavra
+`auth`, também se recusa. Criar alias do `gh` (`gh alias set`, `gh alias
+import`) se recusa: o `gh` põe os argumentos da chamada no fim da
+expansão, e o alias inocente dá depois a forma recusada (`gh alias set p
+'pr '`, depois `gh p merge 3`). O merge pelo GitHub, o alias e o `gh
+config` se leem com a palavra que não começa com `-` depois de cada
+opção sem `=` como valor dela ou como posicional, em todas as leituras
+(`gh -R o/r pr merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge
+3`), numa passada só pelas palavras. O caminho do merge pela API se
+procura como veio e normalizado, sem caixa, com as barras juntas, sem
+o `/./`, com o `/../` resolvido e com o percentual decodificado
+(`pulls//3/merge`, `pulls/3/x/../merge`, `%6Derge`): o `/../` de uma
+consulta (`merge?x=/../y`) não tira o `merge` da busca. As mesmas regras
+do `gh` valem para o `gh-escrita` da camada privada, que roda o `gh api`
+com um token de escrita. Ler a configuração do git (`get`, `list`,
+`--get*`, `--list`, a chave sozinha) passa, também com
+redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
-roda: as aspas protegem o que está dentro, o separador entre aspas não
-corta o comando, o `#` no começo de uma palavra abre um comentário, a
-barra no fim da linha, fora de comentário, a junta à seguinte, e os
+roda: as aspas protegem o que está dentro (o `$'...'` com os escapes
+resolvidos com o número de dígitos do bash, também o `\cX`, e cortado no
+NUL; o `$"..."` como aspas duplas), o separador entre aspas não corta o
+comando, o `#` no começo de uma palavra abre um comentário, a barra no
+fim da linha, fora de comentário, a junta à seguinte, e os
 redirecionamentos saem, também colados, com descritor ou antes do
 comando (`git<<<x push`, `git 0<<< x push`, `git {fd}>x push`, `git >| x
 push` são `git push`). Todas as regras leem essas palavras. Cada chamada
@@ -120,8 +149,8 @@ duplas, não entre simples); o do heredoc que um shell lê (`bash
 O `eval` (também `eval --`) e o `source` ou `.` de um heredoc ou
 here-string (`source /dev/stdin <<'EOF'`, também `<<EOF source
 /dev/stdin`) rodam no shell de agora, na ordem da linha, e o ambiente
-que trocam vale para os comandos seguintes. O git, o gh, o
-`git-revisao`, os shells e os prefixos (`env`, `sudo`, `nohup`, `nice`,
+que trocam vale para os comandos seguintes. O git, o gh, o `gh-escrita`,
+o `git-revisao`, os shells e os prefixos (`env`, `sudo`, `nohup`, `nice`,
 `timeout`, `xargs`, `time`) se conferem onde
 estiverem nas palavras de um comando, sem aspas nem barra, e nenhum
 programa que os roda numa palavra própria (`setsid git`, `stdbuf git`,
@@ -152,9 +181,30 @@ shells de fora do POSIX, além do fish e do csh, fazem pelo jeito deles
 (o `$env.HOME` do `nu`); e o resto do comando depois de um `$(...)` que
 traz um heredoc com apóstrofo (`git commit -m "$(cat <<'EOF'` ... `it's`
 ... `EOF` `)" --no-verify`), porque a busca do `)` que fecha o `$(` não
-pula o corpo do heredoc. Do outro lado, ele recusa a mais em quatro
-casos: a troca de ambiente dentro de um subshell (`( HOME=/x; ...)`)
-vale para os comandos de fora; o git, o gh, o shell ou o prefixo sem
+pula o corpo do heredoc. Passa ainda a mutation GraphQL do merge num
+arquivo ou pela entrada padrão (`-F query=@q.graphql`, `-F query=@-`,
+`--input -`), e a escrita no `main` pela API que não é merge (`-X PATCH
+.../git/refs/heads/main`, `-X PUT .../contents/<arquivo>`, a mutation
+`createCommitOnBranch`), o que chega ao `gh auth git-credential` sem o
+`gh` no comando (`git credential fill`, um credential helper chamado
+direto), a palavra que o shell monta ao rodar (`gh {auth,token}`, `gh
+$(echo auth) token`, `a=auth; gh $a token`, um glob) e uma extensão do
+`gh` que chame o `gh auth token` por dentro: no `gh`, o que segura é o
+escopo do token, que a camada privada, com os passos do autor, deixa só
+de leitura, e no `gh-escrita` o diálogo da chave do App a cada chamada.
+O guarda lê o bash até onde este texto diz, e não o imita por inteiro:
+a forma ofuscada que ele não descreve (um escape, uma expansão ou outra
+sintaxe que só o bash resolve) fica fora do que ele promete, e quem a
+segura é o mesmo escopo do token, o diálogo da chave e o pre-push.
+Do outro lado, ele recusa a mais em sete casos: o `gh` com a
+palavra `auth` fora das formas que passam, também a que não mexe no
+token (`gh auth --hostname github.com status`, `gh auth token --help`,
+`gh search issues auth`); todo alias novo do `gh`, também
+o que não leva a uma forma recusada; o que parece merge pelo GitHub e
+não é, o `gh repo sync` sem destino, que só atualiza o clone local, e o
+`gh api` cujo texto cita um nome do merge (um título que diga
+`mergeBranch`); a troca de ambiente dentro de um subshell (`( HOME=/x;
+...)`) vale para os comandos de fora; o git, o gh, o shell ou o prefixo sem
 aspas como argumento de outro programa conta como comando (`echo git
 commit -n`, `printf '%s\n' git push --no-verify`); o `set` do bash que
 traz um nome depois das opções (`set -e HOME`) conta como o do fish; e o

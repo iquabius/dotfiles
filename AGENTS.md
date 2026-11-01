@@ -103,9 +103,14 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   ambiente num commit, merge, pull ou push, tirar `CLAUDECODE` do
   ambiente, pelo qual o pre-commit reconhece o agente), escrever as notas da
   revisão à mão ou apontar a elas o `core.notesRef` ou o
-  `notes.rewriteRef`, e o merge pelo GitHub;
-  pergunta ao autor antes de `git revisao excecao`. O portão que segura é
-  o pre-push do push do autor.
+  `notes.rewriteRef`, o merge pelo GitHub, o `gh` com a palavra `auth`,
+  menos as formas do `gh auth status` sem o token e da ajuda que o
+  `bin/readme.md` lista, o `oauth_token` do `gh config` e criar alias
+  do `gh`, também pelo `gh-escrita` da camada privada; pergunta ao autor
+  antes de `git revisao excecao`. O portão que segura é o pre-push do
+  push do autor; no `gh`, que não passa por ele, o que segura é o escopo
+  do token que o autor deu ao `gh` e o autor, que aprova no navegador o
+  login e o refresh, e no `gh-escrita` o diálogo da chave do App.
 - **Outros hooks da camada privada**: têm regras próprias, além da
   revisão. Siga o que a mensagem de cada um disser; nunca os pule.
 
