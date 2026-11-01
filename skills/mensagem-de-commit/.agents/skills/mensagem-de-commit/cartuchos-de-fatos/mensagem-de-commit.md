@@ -132,7 +132,11 @@ linha de assunto de um commit (assuntos resumem; o diff decide).
   (`git show <sha>^:<path>`, o caso que falha, o número errado);
 - **alternativa recusada**: ela existia e era possível nesta árvore;
 - **afirmação de escopo**: o que a mensagem diz estar fora do escopo de
-  fato falta no diff, e o que o diff faz está na mensagem.
+  fato falta no diff, e o que o diff faz está na mensagem;
+- **o que um verificador viu**: "o verificador Claude confirmou nas
+  transcrições", "o Codex não pôde ver". Isso se escreve pelo fato e
+  pela fonte ("a transcrição da sessão de 2026-10-16 registra…"), e
+  não pela procedência, que sozinha não prova nada.
 
 ## 4. A cadeia
 
