@@ -240,3 +240,21 @@ false`.
 `git-assunto-merge.test.bats`, ao lado do script, cria um repositório
 descartável com o hook no `.git/hooks`; `GIT_ASSUNTO_MERGE_SCRIPT` aponta a
 suíte para uma cópia sabotada.
+
+## condensar-transcricao
+
+Condensa uma transcrição JSONL do Claude Code para busca em texto.
+
+```sh
+condensar-transcricao [--corte-ferramenta N] [--corte-resultado N] <transcricao.jsonl>
+```
+
+Escreve na saída padrão o caminho absoluto e os blocos com a linha
+original, o timestamp e o papel. O texto do agente e do autor sai
+inteiro; a entrada e o resultado das ferramentas ficam limitados a 700
+e 900 caracteres, respectivamente. As opções mudam os limites e aceitam
+zero. O sufixo `[…+n]` conta os caracteres omitidos. Sai com 0 ao
+concluir e 2 por erro de leitura ou de uso, com mensagem em stderr.
+
+`condensar-transcricao.test.bats`, ao lado do script;
+`CONDENSAR_TRANSCRICAO_SCRIPT` aponta a suíte para uma cópia sabotada.

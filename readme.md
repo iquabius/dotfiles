@@ -28,7 +28,7 @@ Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Ro
 | `asdf` | `~/.tool-versions` (versões globais de nodejs, pnpm, yarn, deno, erlang e elixir) |
 | `darkman` | `~/.config/darkman` e os scripts de transição em `~/.local/share/{light,dark}-mode.d` **(Linux)** |
 | `openwhispr` | `~/.config/autostart/openwhispr-fontconfig.desktop` e `~/.config/open-whispr/fonts.conf` **(Linux)** |
-| `bin` | `~/.local/bin/`: `skills-sync`, que liga as skills de agente do perfil da máquina (ver *Skills de agente*); `git-revisao`, que guarda o ciclo de ramo, revisão e merge do `AGENTS.md`; `git-assunto-merge`, que exige o assunto do commit de merge em português; e `claude-revisao-guarda`, o hook do Claude Code que recusa pular os hooks do git |
+| `bin` | `~/.local/bin/`: `skills-sync`, que liga as skills de agente do perfil da máquina (ver *Skills de agente*); `git-revisao`, que guarda o ciclo de ramo, revisão e merge do `AGENTS.md`; `git-assunto-merge`, que exige o assunto do commit de merge em português; `claude-revisao-guarda`, o hook do Claude Code que recusa pular os hooks do git; e `condensar-transcricao`, que condensa transcrições do Claude Code |
 | `claude` | `~/.claude/settings.json`, que registra o `claude-revisao-guarda`; **só na máquina sem a camada privada**, que liga o dela |
 
 Detalhes que valem saber:

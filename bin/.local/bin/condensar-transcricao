@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""condensar-transcricao — condensa uma transcrição .jsonl do Claude Code.
+
+Uso: condensar-transcricao [--corte-ferramenta N] [--corte-resultado N]
+                          <transcricao.jsonl>
+
+Escreve na saída padrão o caminho absoluto e um bloco por texto,
+ferramenta ou resultado, com a linha original, o timestamp e o papel.
+O texto do agente e do autor sai inteiro. A entrada JSON da ferramenta
+e o resultado ficam limitados a 700 e 900 caracteres, respectivamente;
+as opções mudam esses limites. O sufixo […+n] conta os caracteres
+omitidos. Os limites aceitam zero. Sem timestamp, role ou name, usa ?
+no timestamp, no papel ou no nome da ferramenta, respectivamente.
+
+O comando enfileirado (o anexo queued_command: a notificação de uma
+tarefa, o relatório de um subagente, a mensagem do autor durante o
+turno) sai como mensagem do papel user, com o tipo fila e a origem
+(origin.kind, ou commandMode, ou ?), e o texto inteiro.
+
+Pula linhas que não são JSON, os outros anexos, mensagens sem message e
+blocos vazios.
+Pula também os blocos de outros tipos, como thinking e image: só saem
+texto, ferramenta e resultado. Num resultado em lista, só os itens de
+texto saem, e um resultado só de imagem fica vazio e se pula; uma
+ferramenta sem input sai como {}.
+Sai com 0 ao concluir e com 2 e uma mensagem em stderr por erro de
+leitura ou de uso.
+"""
+
+import argparse
+import json
+import os
+import sys
+
+
+class Argumentos(argparse.ArgumentParser):
+    def format_help(self):
+        return __doc__ + "\n"
+
+    def error(self, mensagem):
+        self.exit(2, f"{self.prog}: {mensagem}; consulte --help.\n")
+
+
+def corta(texto, limite):
+    if len(texto) <= limite:
+        return texto
+    return texto[:limite] + f" […+{len(texto) - limite}]"
+
+
+def blocos(mensagem, corte_ferramenta, corte_resultado):
+    conteudo = mensagem.get("content")
+    if isinstance(conteudo, str):
+        yield "texto", conteudo
+        return
+    if not isinstance(conteudo, list):
+        return
+    for bloco in conteudo:
+        if not isinstance(bloco, dict):
+            continue
+        tipo = bloco.get("type")
+        if tipo == "text":
+            texto = bloco.get("text", "")
+            if isinstance(texto, str):
+                yield "texto", texto
+        elif tipo == "tool_use":
+            entrada = json.dumps(bloco.get("input", {}), ensure_ascii=False)
+            yield f"ferramenta {bloco.get('name') or '?'}", corta(entrada, corte_ferramenta)
+        elif tipo == "tool_result":
+            resultado = bloco.get("content", "")
+            if isinstance(resultado, list):
+                resultado = " ".join(
+                    item.get("text", "")
+                    for item in resultado
+                    if isinstance(item, dict) and isinstance(item.get("text"), str)
+                )
+            if isinstance(resultado, str) and resultado.strip():
+                yield "resultado", corta(resultado, corte_resultado)
+
+
+def condensada(transcricao, corte_ferramenta, corte_resultado):
+    caminho = os.path.abspath(os.path.expanduser(transcricao))
+    with open(caminho, encoding="utf-8") as entrada:
+        yield f"# {caminho}\n"
+        for numero, linha in enumerate(entrada, 1):
+            try:
+                registro = json.loads(linha)
+            except ValueError:
+                continue
+            if not isinstance(registro, dict):
+                continue
+            mensagem = registro.get("message")
+            anexo = registro.get("attachment")
+            fila = None
+            if isinstance(anexo, dict) and anexo.get("type") == "queued_command":
+                # O que chega à conversa durante o turno (a notificação de
+                # uma tarefa, o relatório de um subagente, a mensagem do
+                # autor) é um anexo, sem message.
+                origem = anexo.get("origin")
+                if isinstance(origem, dict) and origem.get("kind"):
+                    fila = f"fila {origem['kind']}"
+                else:
+                    fila = f"fila {anexo.get('commandMode') or '?'}"
+                mensagem = {"role": "user", "content": anexo.get("prompt")}
+            if not isinstance(mensagem, dict):
+                continue
+            timestamp = registro.get("timestamp") or "?"
+            papel = mensagem.get("role") or "?"
+            for tipo, texto in blocos(mensagem, corte_ferramenta, corte_resultado):
+                tipo = fila or tipo
+                if texto.strip():
+                    yield f"### L{numero} {timestamp} {papel} {tipo}\n{texto}\n"
+
+
+def main():
+    parser = Argumentos()
+    parser.add_argument("transcricao")
+    parser.add_argument("--corte-ferramenta", type=int, default=700)
+    parser.add_argument("--corte-resultado", type=int, default=900)
+    args = parser.parse_args()
+    if args.corte_ferramenta < 0 or args.corte_resultado < 0:
+        parser.error("os limites não podem ser negativos")
+    # O JSON aceita um surrogate solto (\ud800), que não se codifica:
+    # ele sai escrito como \ud800, em vez de derrubar a saída.
+    sys.stdout.reconfigure(errors="backslashreplace")
+    saida = condensada(
+        args.transcricao, args.corte_ferramenta, args.corte_resultado
+    )
+    # Só a leitura fica no try: o BrokenPipeError do print também é um
+    # OSError, e um cano fechado (| head) não é erro de leitura.
+    while True:
+        try:
+            texto = next(saida)
+        except StopIteration:
+            break
+        except (OSError, UnicodeError) as erro:
+            print(f"condensar-transcricao: não foi possível ler o arquivo: {erro}",
+                  file=sys.stderr)
+            return 2
+        print(texto)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        codigo = main()
+        sys.stdout.flush()
+    except BrokenPipeError:
+        with open(os.devnull, "w") as destino:
+            os.dup2(destino.fileno(), sys.stdout.fileno())
+        codigo = 0
+    sys.exit(codigo)
