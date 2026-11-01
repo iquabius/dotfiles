@@ -239,6 +239,15 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		"bash -c 'git commit -n -m x' <<< 'echo ok'" \
 		"echo \"\$(printf ')'; git commit -n -m x)\"" \
 		"git config \$'core.\\x68ooksPath' /tmp/hooks" "git \$'co\\x6dmit' -n" \
+		'git commit $"--no-verify" -m x' 'git $"commit" -n' 'gh $"auth" token' \
+		'gh pr $"merge" 3' 'gh $"pr" merge 3' 'gh config get -h x $"oauth_token"' 'gh alias $"set" t pr' \
+		"gh \$'auth\\0x' token" "gh \$'auth\\x00' token" "gh\$'\\0' auth token" "gh pr \$'merge\\0x' 3" \
+		"gh config get -h x \$'oauth_token\\0'" "gh alias \$'set\\c@' t pr" "git commit \$'--no-verify\\000' -m x" \
+		"gh \$'auth\\x0' token" "gh \$'auth\\u0' token" "gh \$'auth\\U0' login" \
+		"gh config get -h github.com \$'oauth_token\\x0'" \
+		"gh alias \$'set\\x0' p 'pr '" "gh \$'pr\\x0' merge 3" \
+		"git commit \$'--no-verify\\x0' -m x" "gh \$'auth\\400' token" "gh \$'auth\\0\\x' token" \
+		"gh config get -h x \$'oauth_token\\0\\u'" \
 		"git -c alias.x='commit -n -m x' x" 'git -c alias.p="!git commit --no-verify" p'; do
 		run guarda "$c"
 		recusa
@@ -347,17 +356,103 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 @test "merge pelo GitHub é recusado" {
 	for c in 'gh pr merge 12 --squash' 'gh api -X PUT repos/o/r/pulls/3/merge' \
 		'gh api repos/o/r/merges -f base=main -f head=x' \
+		'gh api -X POST repos/o/r/merge-upstream -f branch=main' \
+		'gh api -X PUT repos/o/r/pulls//3/merge' 'gh api --method PUT repos/o/r/pulls/3/./merge' \
+		'gh api -X PUT repos/o/r/pulls/3/x/../merge' 'gh api -X PUT repos/o/r/pulls/3/%2e%2e/3/merge' \
+		'gh api -X PUT repos/o/r/pulls/3/%6Derge' 'gh api -X PUT repos/o/r/pull%73/3/merge' \
+		'gh api -X POST repos/o/r/merg%65s -f base=main -f head=x' 'gh api -X PUT repos/o/r/PULLS/3/MERGE' \
+		"gh api -X PUT 'repos/o/r/pulls/3/merge?x=/../y'" \
+		'gh repo sync o/r' 'gh repo sync o/r --force' 'gh-escrita repo sync o/r' \
 		"gh api graphql -f query='mutation { mergePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
+		"gh api graphql -f query='mutation { enqueuePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
+		"gh api graphql -f query='mutation { mergeBranch(input: {repositoryId: \"x\", base: \"main\", head: \"y\"}) { clientMutationId } }'" \
 		"'gh' pr merge 12" 'timeout 5 gh pr merge 1' 'if gh pr merge 1; then :; fi' \
-		'gh pr -R o/r merge 3' "gh alias set m 'pr merge'"; do
+		'gh pr -R o/r merge 3' 'gh -b x pr merge 3' \
+		'gh --verbose pr merge 3' "gh '' pr merge 3" 'gh pr -b x --verbose y merge 3' \
+		'gh -R o/r -ds pr merge 3' 'gh pr -R o/r -ds merge 3' 'gh -R o/r -Ro/r pr merge 3' \
+		'gh -R o/r api -X PUT repos/o/r/pulls/3/merge' 'gh-escrita api -X PUT repos/o/r/pulls/3/merge' \
+		"$HOME/.local/bin/gh-escrita api repos/o/r/merges -f base=main -f head=x"; do
+		echo "comando: $c"
 		run guarda "$c"
 		recusa
 	done
-	for c in 'gh pr view 12' "gh alias set co 'pr checkout'" 'gh api repos/o/r/pulls/3'; do
+	for c in 'gh pr view 12' 'gh api repos/o/r/pulls/3' 'gh alias list' \
+		'gh-escrita api -X POST repos/o/r/issues -f title=x' \
+		'gh pr view merge' 'gh pr --title=merge view' 'gh search prs merge'; do
+		echo "comando: $c"
 		run guarda "$c"
 		[ -z "$output" ]
 	done
+}
+
+# O gh põe os argumentos da chamada no fim da expansão do alias: o alias
+# inocente dá depois a forma recusada (gh alias set p 'pr ', gh p merge 3).
+@test "criar alias do gh é recusado" {
+	for c in "gh alias set m 'pr merge'" "gh alias set m -- '-b x pr merge'" \
+		"gh alias set co 'pr checkout'" "gh alias set p 'pr '" "gh alias set t 'auth '" \
+		"gh alias set v 'api \$1 -X PUT'" 'gh alias import a.yml' "gh -R o/r alias set y pr" \
+		"gh-escrita alias set y pr" \
+		"gh alias set t - <<< 'auth token'" 'printf x | gh alias set r -' \
+		"gh '' alias set t 'auth token'" "gh alias '' set t 'auth token'" "gh '' alias import a.yml" \
+		"gh alias set --shell=true t \"eval 'gh auth token'\"" \
+		"gh --shell t -ss alias set 'gh auth token'" "gh alias --shell t -ss set 'gh auth token'"; do
+		echo "comando: $c"
+		run guarda "$c"
+		recusa
+	done
+}
+
+@test "gh auth que mexe no token é recusado; o status passa" {
+	for c in 'gh auth token' 'gh auth token -h github.com' 'gh auth git-credential get' \
+		'gh auth login --with-token' 'gh auth refresh -s admin:public_key' \
+		'gh auth logout -h github.com' 'gh auth switch' 'gh auth setup-git' \
+		'gh auth status -t' 'gh auth status --show-token' 'gh auth status -at' \
+		'gh auth status --show-token=true' 'distrobox-host-exec gh auth token' \
+		"sh -c 'gh auth token'" 'echo $(gh auth token)' \
+		'gh auth token --help --help=false' 'gh auth login -s --help' 'gh auth foo' \
+		'gh auth status -th github.com' 'gh auth status -thgithub.com' 'gh auth status -ath x' \
+		'gh auth status -at=true --json hosts' 'gh auth status -t=false' \
+		'gh auth status --json hosts -t' 'gh auth status -hgithub.com -t' \
+		'gh auth -h status token -h github.com' 'gh auth token -- --help' 'gh auth token -h --help' \
+		'gh auth --hostname status refresh --hostname github.com -s delete_repo' \
+		'gh -h github.com auth token' \
+		'gh --hostname github.com auth refresh -s delete_repo' 'gh -h github.com auth status -t' \
+		'gh -u eu auth switch' 'gh auth -h status novo' 'gh-escrita auth token' \
+		"$HOME/.local/bin/gh-escrita auth status -t" 'gh-escrita -h x config get oauth_token' \
+		'gh -h github.com -hgithub.com auth token' 'gh --show-token=true auth status' \
+		'gh -at auth status' 'gh auth setup-git -- x --help' 'gh "" auth setup-git' \
+		'gh auth status -h -t' 'gh auth status -- -t' 'gh auth status -hat' \
+		'gh auth --hostname github.com status' 'gh auth token --help' \
+		'gh auth -h status -hgithub.com token' \
+		'gh config set -h github.com oauth_token x' 'gh config get -h github.com oauth_token' \
+		'gh -h x -hx config get oauth_token' 'gh search issues auth'; do
+		echo "comando: $c"
+		run guarda "$c"
+		recusa
+	done
+	for c in 'gh auth status' 'gh auth status -a -h github.com' 'gh auth status --json hosts' \
+		'gh auth status --jq .hosts -a' 'gh auth status --hostname=github.com --active' \
+		'gh auth status --template x' 'gh help auth token' 'gh help auth status -t' \
+		'gh auth --help' 'gh auth' 'gh pr view 3' 'gh -R o/r pr view 3' \
+		'gh search code oauth_token' "echo 'gh auth token'"; do
+		echo "comando: $c"
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+}
+
+# A leitura do gh é uma passada só: centenas de opções antes do subcomando
+# não estouram o prazo do hook.
+@test "muitas opções no gh não estouram o tempo do hook" {
+	SECONDS=0
+	run guarda "gh $(printf -- '-b %s ' $(seq 1500))pr merge 3"
+	recusa
+	run guarda "gh $(printf -- '-x w%s ' $(seq 1500))pr view 3"
+	[ -z "$output" ]
+	run guarda "gh $(printf -- '-h %s ' $(seq 1500))config get oauth_token"
+	recusa
+	[ "$SECONDS" -lt 3 ]
 }
 
 @test "git revisao excecao pergunta ao autor; pronto e pendente passam" {

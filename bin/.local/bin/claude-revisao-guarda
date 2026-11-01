@@ -17,20 +17,31 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   notes.rewriteRef, que forjaria uma marca;
 - recusa o merge pelo GitHub (gh pr merge, a API REST ou a GraphQL), que
   leva código ao main sem passar pelo pre-push;
+- recusa o gh com a palavra auth fora do gh help, do gh auth sozinho ou
+  com --help e do gh auth status sem o token, e o oauth_token do gh config
+  (gh_auth): o escopo do token que o autor deu ao gh é o limite do que o
+  agente faz pela API; o login, o refresh e o switch o trocam, o token, o
+  git-credential e o status -t o tiram do gh, e o logout e o setup-git
+  mexem nele;
+- recusa criar alias do gh, que põe os argumentos da chamada no fim da
+  expansão;
+- lê o gh-escrita, da camada privada, que roda o gh api com um token de
+  escrita, como o gh;
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
   revisão de pé é decisão dele.
 
 O push sem revisão fica com o pre-push, que estas regras protegem do
 --no-verify e de hook.*. Elas pegam as formas diretas: separam o
 comando em palavras pelas aspas, separadores, comentários e heredocs do
-shell (analisar), acham o git, o gh, o git-revisao, os shells e os
-prefixos (RODADOS) onde estiverem nas palavras de um comando, e leem cada
-chamada do git palavra por palavra; um script gravado em arquivo e depois
-executado, o git chamado por uma variável, os argumentos ou o comando que
-chegam por um pipe ao xargs, a um shell ou ao source, o comando que um
-programa recebe como um texto só e passa a um shell (watch '...', su -c)
-e as outras formas que o bin/readme.md lista passam por elas, e o portão
-que segura de fato é o pre-push do push, que é do autor.
+shell (analisar), acham o git, o gh, o gh-escrita, o git-revisao, os
+shells e os prefixos (RODADOS) onde estiverem nas palavras de um
+comando, e leem cada chamada do git palavra por palavra; um script
+gravado em arquivo e depois executado, o git chamado por uma variável,
+os argumentos ou o comando que chegam por um pipe ao xargs, a um shell
+ou ao source, o comando que um programa recebe como um texto só e passa
+a um shell (watch '...', su -c) e as outras formas que o bin/readme.md
+lista passam por elas, e o portão que segura de fato é o pre-push do
+push, que é do autor.
 
 Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
 a decisão na saída padrão; sem nada a dizer, sai calado com 0.
@@ -43,6 +54,7 @@ import sys
 from collections import namedtuple
 from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
+from urllib.parse import unquote
 
 # A variável que troca a configuração global do git: o arquivo, as chaves
 # do ambiente, ou o HOME e o XDG_CONFIG_HOME, onde o git a procura.
@@ -60,6 +72,12 @@ ENV_CONFIG = ("Recusado: trocar a configuração global do git pelo ambiente "
 CLAUDECODE = "Recusado: CLAUDECODE é como o pre-commit do git-revisao reconhece o agente."
 GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; junte no "
             "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
+GH_AUTH = ("Recusado: este gh (o gh auth, ou o oauth_token do gh config) pode ler, "
+           "criar, trocar ou apagar o token do gh, o que é do autor. Passam o gh auth "
+           "status com -a, --active, -h ou --hostname <host>, --json, --jq ou "
+           "--template, o gh auth --help, e a ajuda pelo gh help auth <subcomando>.")
+GH_ALIAS = ("Recusado: o alias do gh roda depois, com os argumentos da chamada no fim "
+            "da expansão, fora do que o guarda lê agora; criar alias é do autor.")
 NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"
 REF_DAS_NOTAS = ("Recusado: o core.notesRef ou o notes.rewriteRef apontado às notas da "
                  "revisão grava nelas ou copia a marca para um commit reescrito, que "
@@ -150,12 +168,60 @@ HERE_STRING = re.compile(r"(?:\d*|\{\w+\})<<<(.*)", re.S)
 
 
 def ansi_c(m):
-    """O $'...' do bash com os escapes resolvidos (\\x68 é h), entre aspas."""
-    try:
-        valor = m[1].encode("latin-1", "backslashreplace").decode("unicode_escape")
-    except UnicodeDecodeError:
-        valor = m[1]
-    return shlex.quote(valor)
+    """O $'...' do bash com os escapes e seus limites de dígitos resolvidos.
+    Corta só este trecho no primeiro NUL e devolve o valor entre aspas."""
+    cru = m[1].encode("utf-8", "surrogateescape")
+    simples = {
+        ord("a"): 7, ord("b"): 8, ord("e"): 27, ord("E"): 27,
+        ord("f"): 12, ord("n"): 10, ord("r"): 13, ord("t"): 9, ord("v"): 11,
+        ord("\\"): 92, ord("'"): 39, ord('"'): 34, ord("?"): 63,
+    }
+    valor, i = bytearray(), 0
+    while i < len(cru):
+        letra = cru[i]
+        i += 1
+        if letra != ord("\\") or i == len(cru):
+            valor.append(letra)
+            continue
+        letra = cru[i]
+        i += 1
+        if letra in simples:
+            valor.append(simples[letra])
+        elif letra == ord("c") and i < len(cru):
+            controle = cru[i]
+            i += 1
+            if controle == ord("\\") and cru[i:i + 1] == b"\\":
+                i += 1
+            valor.append(127 if controle == ord("?") else controle & 31)
+        elif letra in b"01234567xuU":
+            octal = letra in b"01234567"
+            inicio = i - 1 if octal else i
+            limite = 3 if octal else {ord("x"): 2, ord("u"): 4, ord("U"): 8}[letra]
+            digitos = b"01234567" if octal else b"0123456789abcdefABCDEF"
+            fim = inicio
+            while fim < min(inicio + limite, len(cru)) and cru[fim] in digitos:
+                fim += 1
+            if fim == inicio:
+                valor.extend((ord("\\"), letra))
+                continue
+            numero = int(cru[inicio:fim], 8 if octal else 16)
+            i = fim
+            if octal or letra == ord("x"):
+                valor.append(numero & 255)
+            elif numero < 128:
+                valor.append(numero)
+            elif numero < 0x80000000:
+                # O bash emite UTF-8 de até seis bytes, mesmo fora do Unicode.
+                tamanho = 2
+                while numero >= 1 << (5 * tamanho + 1):
+                    tamanho += 1
+                valor.append((255 << (8 - tamanho) & 255) | numero >> (6 * (tamanho - 1)))
+                valor.extend(128 | (numero >> deslocamento & 63)
+                             for deslocamento in range(6 * (tamanho - 2), -1, -6))
+        else:
+            valor.extend((ord("\\"), letra))
+    # Conserva também os bytes que não formam um caractere UTF-8.
+    return shlex.quote(valor.split(b"\0", 1)[0].decode("utf-8", "surrogateescape"))
 
 
 def desaspa(cru):
@@ -334,12 +400,14 @@ def analisar(texto):
             aspa = None if c == '"' else aspa
             i += 1
             continue
-        # Fora de aspas.
-        if c in "'\"" or texto.startswith("$'", i):
+        # Fora de aspas. O $'...' guarda o $, que o desaspa resolve; o $"..."
+        # do bash (a tradução pelo locale) é uma aspa dupla, e o $ some.
+        if c in "'\"" or texto.startswith(("$'", '$"'), i):
             if c == "$":
-                cru.append(c)
+                if texto[i + 1] == "'":
+                    cru.append(c)
                 i += 1
-                c = "'"
+                c = texto[i]
             aspa = c
             cru.append(c)
             i += 1
@@ -448,7 +516,10 @@ ENV_SEPARA = {"-S", "--split-string"}
 # find -exec git, stdbuf bash -c), e nenhuma lista de prefixos os esgota.
 # Os prefixos que são do próprio shell (command, exec, builtin) ficam de
 # fora: outro programa não os roda.
-RODADOS = {"git", "gh", "git-revisao"} | SHELLS | (
+# O gh-escrita, da camada privada, roda o gh api com os argumentos que
+# recebe e um token de escrita: as regras do gh valem para ele.
+GH = {"gh", "gh-escrita"}
+RODADOS = {"git", "git-revisao"} | GH | SHELLS | (
     set(PREFIXOS) - {"command", "exec", "builtin"})
 
 
@@ -782,29 +853,108 @@ def par_gravado(args):
     return (ps[0], ps[1]) if len(ps) >= 2 else None
 
 
-def gh_posicionais(args):
-    """As palavras do gh que não são opção nem o argumento do -R/--repo."""
-    posicionais, pular = [], False
-    for a in args:
-        if pular:
-            pular = False
-        elif a in ("-R", "--repo"):
-            pular = True
-        elif not a.startswith("-"):
-            posicionais.append(a)
-    return posicionais
-
-
 def gh_junta(args):
-    """O gh que faz o merge de um pull request: gh pr merge, ou a API REST
-    (/pulls/N/merge, /merges) ou a GraphQL (mergePullRequest)."""
-    posicionais = gh_posicionais(args)
-    if posicionais[:2] == ["pr", "merge"]:
+    """O gh que faz o merge pelo GitHub: gh pr merge, gh repo sync (o
+    merge-upstream num repositório do GitHub), ou a API REST
+    (/pulls/N/merge, /merges, /merge-upstream) ou a GraphQL
+    (mergePullRequest, o auto-merge, a fila de merge, o mergeBranch), em uma
+    das leituras de gh_pode (gh -R o/r pr merge 3, gh -b x pr merge 3, gh -R
+    o/r -ds pr merge 3)."""
+    if gh_pode(args, "pr", "merge") or gh_pode(args, "repo", "sync"):
         return True
-    texto = " ".join(args)
-    return posicionais[:1] == ["api"] and bool(
-        re.search(r"/(?:pulls/\d+/merge|merges)\b|mergePullRequest|enablePullRequestAutoMerge",
-                  texto))
+    # O gh manda o caminho como vem escrito, e um servidor pode juntar as
+    # barras, tirar o /./ e o segmento antes do /../ ou decodificar o
+    # percentual (pulls//3/merge, pulls/3/./merge, pulls/3/x/../merge,
+    # %6Derge): a busca vê o caminho já normalizado. Vê também o texto como
+    # veio, porque o /../ da consulta (merge?x=/../y) não é do caminho, e a
+    # normalização o tiraria junto com o merge.
+    cru = " ".join(args)
+    texto = re.sub(r"/(?:\./)+", "/", unquote(cru))
+    texto = re.sub(r"/{2,}", "/", texto)
+    anterior = None
+    while texto != anterior:
+        anterior, texto = texto, re.sub(r"/[^/\s]+/\.\.(?=/|\s|$)", "", texto)
+    return gh_pode(args, "api") and any(
+        re.search(r"/(?:pulls/\d+/merge|merges|merge-upstream)\b|mergePullRequest"
+                  r"|enablePullRequestAutoMerge|enqueuePullRequest|mergeBranch", t,
+                  re.IGNORECASE) for t in (cru, texto))
+
+
+def gh_pode(args, primeiro, segundo=None):
+    """Se o gh pode achar o subcomando `primeiro` (e `segundo` depois dele)
+    em alguma leitura das opções. O cobra acha os subcomandos pulando a
+    palavra depois de uma opção que ele não conhece como booleana (gh -h
+    github.com auth token roda o token), o pflag lê um grupo curto como
+    booleanas ou como opção com o valor colado (gh -R o/r -ds pr merge 3,
+    gh -R o/r -Ro/r pr merge 3), e o guarda não sabe quais são quais: a
+    palavra que não começa com - depois de uma opção sem = pode ser o valor
+    dela ou um posicional. O primeiro posicional é uma palavra solta cujas
+    soltas de antes podem todas ser valor; o segundo, uma solta depois dele
+    cujas soltas do meio também podem. A palavra vazia o cobra pula ao
+    achar o subcomando (gh '' pr merge 3), e esta leitura também. É uma
+    passada só pelas palavras: o hook tem prazo, e enumerar as leituras de
+    um comando com centenas de opções o estouraria."""
+    ps = [a for a in args if a != ""]
+    # procura: as soltas até aqui podem todas ser valor, e esta pode ser o
+    # primeiro; armado: há uma leitura com o primeiro achado e as soltas
+    # depois dele todas valor, e esta pode ser o segundo.
+    procura, armado = True, False
+    for k, a in enumerate(ps):
+        if a.startswith("-"):
+            continue
+        valor = k > 0 and ps[k - 1].startswith("-") and "=" not in ps[k - 1]
+        if armado:
+            if a == segundo:
+                return True
+            armado = valor
+        if procura:
+            if a == primeiro:
+                if segundo is None:
+                    return True
+                armado = True
+            procura = valor
+        if not (procura or armado):
+            return False
+    return False
+
+
+# O gh auth status que passa: estas opções, e as que levam valor com ele
+# na palavra seguinte, que não começa com -, ou depois do =.
+STATUS_SEM_VALOR = {"-a", "--active"}
+STATUS_COM_VALOR = {"-h", "--hostname", "--json", "--jq", "--template"}
+
+
+def gh_auth(args):
+    """O gh com a palavra auth que pode mexer no token. O gh_pode acha o
+    subcomando, mas não lê as opções que vêm depois dele como o pflag as lê
+    (gh auth status -th github.com mostra o token: o -t num grupo curto), e
+    conhecer cada opção de cada subcomando do auth deixaria escapar a que
+    uma versão nova do gh trouxer: o guarda falha fechado. Passam só o gh
+    help, o gh auth sozinho ou com --help, e o gh auth status com as opções
+    de STATUS_SEM_VALOR e STATUS_COM_VALOR; o resto com a palavra auth se
+    recusa, também um texto qualquer igual a auth. O oauth_token do gh
+    config (gh config set -h x oauth_token y) guarda ou lê o token sem a
+    palavra auth, e se recusa também. Como as outras regras, esta lê as
+    palavras escritas: a que o shell monta (gh {auth,token}, gh $(echo auth)
+    token) passa, e o que segura é o escopo do token."""
+    if "oauth_token" in args and gh_pode(args, "config"):
+        return True
+    if "auth" not in args or args[:1] == ["help"]:
+        return False
+    if args in (["auth"], ["auth", "--help"]):
+        return False
+    if args[:2] != ["auth", "status"]:
+        return True
+    resto, i = args[2:], 0
+    while i < len(resto):
+        a = resto[i]
+        if a in STATUS_SEM_VALOR or ("=" in a and a.split("=", 1)[0] in STATUS_COM_VALOR):
+            i += 1
+        elif a in STATUS_COM_VALOR and resto[i + 1:i + 2] and not resto[i + 1].startswith("-"):
+            i += 2
+        else:
+            return True
+    return False
 
 
 def decidir(decisao, motivo):
@@ -1007,16 +1157,17 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
         for script in scripts_do_shell(ps) or entradas:
             yield from decisoes(script, nivel + 1, do_shell)
         return
-    if nome == "gh":
+    if nome in GH:
         if gh_junta(ps[1:]):
             yield "deny", GH_MERGE
-        posicionais = gh_posicionais(ps[1:])
-        if posicionais[:2] == ["alias", "set"] and len(posicionais) >= 4:
-            # O alias do gh roda depois, quando chamado: confere-se já.
-            alias = posicionais[3]
-            shell = alias.startswith("!") or any(a in ("-s", "--shell") for a in ps[1:])
-            yield from decisoes_do_texto(alias.removeprefix("!") if shell else "gh " + alias,
-                                         nivel + 1, ambiente)
+        if gh_auth(ps[1:]):
+            yield "deny", GH_AUTH
+        # O alias do gh roda depois, quando chamado, com os argumentos da
+        # chamada no fim da expansão (gh alias set p 'pr ', depois gh p merge
+        # 3), ou vem da entrada padrão ou de um arquivo, que o guarda não lê.
+        # Conferir a expansão não basta: criar alias é do autor.
+        if gh_pode(ps[1:], "alias", "set") or gh_pode(ps[1:], "alias", "import"):
+            yield "deny", GH_ALIAS
         return
     if nome == "git":
         for pares, sub, args in chamadas_do_git(ps[1:], ambiente, estrita=no_meio):
