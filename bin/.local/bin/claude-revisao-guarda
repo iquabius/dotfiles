@@ -54,6 +54,7 @@ import sys
 from collections import namedtuple
 from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
+from urllib.parse import unquote
 
 # A variável que troca a configuração global do git: o arquivo, as chaves
 # do ambiente, ou o HOME e o XDG_CONFIG_HOME, onde o git a procura.
@@ -811,10 +812,22 @@ def gh_junta(args):
     o/r -ds pr merge 3)."""
     if gh_pode(args, "pr", "merge") or gh_pode(args, "repo", "sync"):
         return True
-    texto = " ".join(args)
-    return gh_pode(args, "api") and bool(
+    # O gh manda o caminho como vem escrito, e um servidor pode juntar as
+    # barras, tirar o /./ e o segmento antes do /../ ou decodificar o
+    # percentual (pulls//3/merge, pulls/3/./merge, pulls/3/x/../merge,
+    # %6Derge): a busca vê o caminho já normalizado. Vê também o texto como
+    # veio, porque o /../ da consulta (merge?x=/../y) não é do caminho, e a
+    # normalização o tiraria junto com o merge.
+    cru = " ".join(args)
+    texto = re.sub(r"/(?:\./)+", "/", unquote(cru))
+    texto = re.sub(r"/{2,}", "/", texto)
+    anterior = None
+    while texto != anterior:
+        anterior, texto = texto, re.sub(r"/[^/\s]+/\.\.(?=/|\s|$)", "", texto)
+    return gh_pode(args, "api") and any(
         re.search(r"/(?:pulls/\d+/merge|merges|merge-upstream)\b|mergePullRequest"
-                  r"|enablePullRequestAutoMerge|enqueuePullRequest|mergeBranch", texto))
+                  r"|enablePullRequestAutoMerge|enqueuePullRequest|mergeBranch", t,
+                  re.IGNORECASE) for t in (cru, texto))
 
 
 def gh_pode(args, primeiro, segundo=None):
