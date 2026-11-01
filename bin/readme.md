@@ -107,10 +107,15 @@ expansão, e o alias inocente dá depois a forma recusada (`gh alias set p
 config` se leem com a palavra que não começa com `-` depois de cada
 opção sem `=` como valor dela ou como posicional, em todas as leituras
 (`gh -R o/r pr merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge
-3`), numa passada só pelas palavras. As mesmas regras do `gh` valem para
-o `gh-escrita` da camada privada, que roda o `gh api` com um token de
-escrita. Ler a configuração do git (`get`, `list`, `--get*`, `--list`, a
-chave sozinha) passa, também com redirecionamento.
+3`), numa passada só pelas palavras. O caminho do merge pela API se
+procura como veio e normalizado, sem caixa, com as barras juntas, sem
+o `/./`, com o `/../` resolvido e com o percentual decodificado
+(`pulls//3/merge`, `pulls/3/x/../merge`, `%6Derge`): o `/../` de uma
+consulta (`merge?x=/../y`) não tira o `merge` da busca. As mesmas regras
+do `gh` valem para o `gh-escrita` da camada privada, que roda o `gh api`
+com um token de escrita. Ler a configuração do git (`get`, `list`,
+`--get*`, `--list`, a chave sozinha) passa, também com
+redirecionamento.
 
 O comando se separa em palavras com as regras do shell que mudam o que
 roda: as aspas protegem o que está dentro, o separador entre aspas não

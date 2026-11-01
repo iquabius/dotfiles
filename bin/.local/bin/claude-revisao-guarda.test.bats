@@ -348,6 +348,11 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	for c in 'gh pr merge 12 --squash' 'gh api -X PUT repos/o/r/pulls/3/merge' \
 		'gh api repos/o/r/merges -f base=main -f head=x' \
 		'gh api -X POST repos/o/r/merge-upstream -f branch=main' \
+		'gh api -X PUT repos/o/r/pulls//3/merge' 'gh api --method PUT repos/o/r/pulls/3/./merge' \
+		'gh api -X PUT repos/o/r/pulls/3/x/../merge' 'gh api -X PUT repos/o/r/pulls/3/%2e%2e/3/merge' \
+		'gh api -X PUT repos/o/r/pulls/3/%6Derge' 'gh api -X PUT repos/o/r/pull%73/3/merge' \
+		'gh api -X POST repos/o/r/merg%65s -f base=main -f head=x' 'gh api -X PUT repos/o/r/PULLS/3/MERGE' \
+		"gh api -X PUT 'repos/o/r/pulls/3/merge?x=/../y'" \
 		'gh repo sync o/r' 'gh repo sync o/r --force' 'gh-escrita repo sync o/r' \
 		"gh api graphql -f query='mutation { mergePullRequest(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
 		"gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {pullRequestId: \"x\"}) { clientMutationId } }'" \
