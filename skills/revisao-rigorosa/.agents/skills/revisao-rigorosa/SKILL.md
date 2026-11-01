@@ -132,9 +132,12 @@ repositório (código de aplicação, ferramentas em Python, instruções para
 agentes, ferramentas de LaTeX), foram 48 rodadas dos quatro eixos contra
 os defeitos que a revisão original tinha consertado. O Claude Haiku 4.5
 achou 3 de 39, com evidência inventada e checagens que impunham o próprio
-nome no trailer de atribuição; o Claude Sonnet 5.5 achou 25 e o Claude
-Opus 5.5 achou 32,5, à frente nos quatro eixos, com a maior vantagem em
-Especificação e História, ao custo de no máximo 11% mais tokens.
+nome no trailer de atribuição. Somados os achados dos quatro eixos, o
+Claude Sonnet 5.5 chegou a 25 e o Claude Opus 5.5 a 32,5; nessa soma, um
+defeito achado por dois eixos conta duas vezes, e em defeitos distintos
+são cerca de 18 e 26,5 de 39. O Opus ficou à frente nos quatro eixos,
+com a maior vantagem em Especificação e História, ao custo de no máximo
+11% mais tokens.
 
 **Normas.** Dê a ele o comando do diff, a lista de commits, a lista dos
 arquivos de normas e o texto inteiro da base Linus colado. Brief: "Aponte

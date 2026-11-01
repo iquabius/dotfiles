@@ -36,17 +36,18 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
 
 - `exec`, não `codex review`: `codex exec review --commit <sha>
   "<prompt>"` recusa o prompt ("the argument '--commit <SHA>' cannot
-  be used with '[PROMPT]'"), então não recebe este brief, nem a
-  especificação, nem a língua da resposta; nem `codex review` nem `codex
-  exec review` têm a flag `--sandbox`.
+  be used with '[PROMPT]'"; com `--base` não foi testado), então, com
+  `--commit`, não recebe este brief, nem a especificação, nem a língua da
+  resposta; nem `codex review` nem `codex exec review` têm a flag
+  `--sandbox`.
 - `--sandbox read-only` deixa o Codex ler a árvore e rodar `git log`,
   `git show` e `git diff` sozinho, e recusa toda escrita. O Codex lê o
   diff do repositório; não o cole no brief.
 - `--ephemeral` não guarda sessão; `-o` guarda só a mensagem final; `-`
   lê o prompt do stdin. O log leva a transcrição inteira (o brief, cada
-  comando e a saída dele: 1.602 linhas para um commit de 488 linhas
-  acrescentadas), então vai para um arquivo; leia só o cabeçalho dele
-  (`head -11`: modelo, sandbox, esforço) e as linhas de que precisar.
+  comando e a saída dele), então vai para um arquivo; leia só o cabeçalho
+  dele (`head -11`: modelo, sandbox, esforço) e as linhas de que
+  precisar.
 - Modelo: a mesma regra de nível dos outros eixos, o modelo mais forte
   abaixo do carro-chefe. Em 2026-10-26, pelas descrições em `codex debug
   models`, era o `gpt-6.1-sol` ("workhorse"), abaixo do `gpt-6-astra`
@@ -65,10 +66,11 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
 - O Codex acha sozinho as skills instaladas em `~/.agents/skills`: em
   2026-10-26, com um brief sem a linha que proíbe abrir skills, ele abriu
   o `SKILL.md` desta skill e o seguiu em vez do brief. Como esse arquivo
-  traz este eixo, segui-lo é rodar o Codex de novo. A única chave de
-  `codex features list` que nomeia o interruptor,
-  `skip_host_skill_discovery`, está "under development", então o brief
-  proíbe abri-las. Procure no log um `cat` de um `SKILL.md`.
+  traz este eixo, segui-lo é rodar o Codex de novo. A chave de `codex
+  features list` que mais parece nomear o interruptor,
+  `skip_host_skill_discovery`, está "under development" (a
+  `skill_search`, stable, não foi testada), então o brief proíbe
+  abri-las. Procure no log um `cat` de um `SKILL.md`.
 - Fora de um repositório git (um plano sem código), acrescente
   `--skip-git-repo-check` e tire o `-C`.
 
@@ -132,9 +134,10 @@ cuja citação o diff não contém ou cuja linha não diz o que o Codex
 afirma. Ao Codex não se diz nada dos outros eixos, e os achados dele não
 se comparam com os dos outros eixos: um achado que só o Codex levantou e
 que sobrevive à conferência conta como qualquer outro. Uma chamada é uma
-amostra: duas rodadas do mesmo brief sobre o mesmo commit, em 2026-10-26,
-devolveram dois achados bloqueantes e depois um deles. Um relatório limpo
-do Codex não prova que a mudança está limpa.
+amostra: duas rodadas sobre o mesmo commit, em 2026-10-26 (a segunda com
+a linha que proíbe abrir skills, que a primeira não tinha), devolveram
+dois achados bloqueantes e depois um deles. Um relatório limpo do Codex
+não prova que a mudança está limpa.
 
 Sob `## Codex`, primeiro uma linha: modelo, esforço, `codex --version`,
 quantos achados voltaram e quantos caíram na conferência. Depois os
@@ -142,12 +145,14 @@ achados que sobraram, por gravidade.
 
 Quando o eixo não rodou, `## Codex` diz só isso e por quê: `codex` não
 instalado, não logado, ou a chamada falhou (o código de saída e a
-primeira linha `ERROR:` do log, ou um arquivo `-o` ausente ou vazio; um
-modelo que a conta não serve sai com 1 e `model_not_found` e não escreve
-o arquivo `-o`). Uma rodada ainda em curso quando os outros eixos já
-terminaram e foram conferidos ganha mais cinco minutos, depois é parada e
-conta como falha. Nunca escreva pelo Codex achados ou veredito que a saída
-dele não contenha.
+primeira linha `ERROR:` do log, ou um arquivo `-o` ausente ou vazio: a
+chamada com um modelo inexistente sai com 1 e `model_not_found` e não
+escreve o arquivo `-o`, e a de um CLI desatualizado a um modelo novo
+falha com "not supported when using Codex with a ChatGPT account", como
+no item Modelo de "A chamada"). Uma rodada ainda em curso quando os
+outros eixos já terminaram e foram conferidos ganha mais cinco minutos,
+depois é parada e conta como falha. Nunca escreva pelo Codex achados ou
+veredito que a saída dele não contenha.
 
 ## No veredito
 
