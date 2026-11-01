@@ -152,6 +152,16 @@ saída dirigida ao orquestrador é descartado e rodado de novo por um
 agente novo, noutro modelo quando houver; o agente principal nunca
 completa o que um lote deixou de fora.
 
+Todo lote devolve um objeto por afirmação, os corretos incluídos,
+cada um com a citação que o decide: um relatório só com os achados
+com problema está fora do formato, porque um correto ausente não se
+casa com o veredito do outro provedor. Antes da etapa 4, o agente
+principal confere que cada arquivo de relatório existe, não está vazio
+e tem o bloco json com um objeto por afirmação (`jq length`). Um relatório
+lido antes de o lote terminar conta como lote que falhou: em
+2026-10-31, o patch dos fatos de uma banca saiu com o relatório do
+Claude vazio, e o Codex que o escreveu só tinha o próprio.
+
 **3. Vereditos.** Um por afirmação:
 
 - **falso**: a primária a contradiz, ou a afirmação não está lá.
