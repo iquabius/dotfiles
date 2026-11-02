@@ -121,7 +121,7 @@ limitam:
 
 - **O repositório prevalece.** Uma norma documentada do repositório vence;
   onde ela endossa algo que a base apontaria, retire você mesmo o item da
-  base antes de colá-la no prompt de Normas e no brief do Codex.
+  base antes de colá-la no prompt de Normas e nas instruções do Codex.
 - **Os itens da base são questões de julgamento.** Rotule-os como tais
   ("possível insanidade de caso especial"), nunca como violações duras. Só
   a quebra de uma norma documentada pode ser dura.
@@ -165,7 +165,7 @@ subagente, sem contar o preço por token, que muda com o modelo.
 
 **Normas.** Dê a ele o comando do diff, a lista de commits, a lista dos
 arquivos de normas e o texto da base Linus colado, sem os itens que o
-passo 3 retirou. Brief: "Aponte
+passo 3 retirou. Instruções: "Aponte
 cada lugar em que o diff viola uma norma documentada, citando o arquivo e
 a regra, e cada item da base que você notar, nomeando-o e citando o hunk.
 Marque as quebras de norma documentada como duras e os itens da base como
@@ -173,7 +173,7 @@ questões de julgamento. Pule o que as ferramentas impõem. Cite
 `caminho:linha` em cada achado. Menos de 400 palavras."
 
 **Especificação.** Dê a ele o comando do diff, a lista de commits e a
-especificação (o caminho ou o texto buscado). Brief: "Aponte (a) os
+especificação (o caminho ou o texto buscado). Instruções: "Aponte (a) os
 requisitos que a especificação pede e que faltam ou estão pela metade,
 (b) o comportamento no diff que ninguém pediu e (c) os requisitos que
 parecem implementados, mas cuja implementação parece errada. Cite a linha
@@ -181,7 +181,7 @@ da especificação e `caminho:linha` em cada achado. Menos de 400 palavras."
 
 **História.** Só quando o intervalo tem commits. Dê a ele a lista de
 commits, as regras sobre commits que os arquivos de normas trazem, e
-mande-o ler cada commit com `git show`. Brief: "Para cada commit,
+mande-o ler cada commit com `git show`. Instruções: "Para cada commit,
 aponte (a) mais de uma mudança lógica num commit, quando as partes se
 separam de forma limpa: cada commit da divisão é o seu pai mais linhas do
 diff final, e compila e passa nos próprios testes. Nomeie os commits em
@@ -208,20 +208,21 @@ fornece numa linha sozinha, logo acima do bloco de trailers; essa linha
 não é achado, nem um trailer de atribuição (`Co-Authored-By:`) no bloco
 de trailers. Cite o sha curto do commit. Menos de 300 palavras."
 
-Ao brief da História, acrescente duas coisas que só você sabe. Quando a
-skill `mensagem-de-commit` estiver instalada, o caminho do `SKILL.md`
-dela, como a norma de (d). E se o ramo é rascunho (passo 7), com o
-remédio para (c) que vale para ele: num rascunho, o remédio é dobrar o
-commit posterior no que ele conserta, não manter os dois, e o achado o
-diz; num ramo em que outros se apoiam, o commit posterior fica, e a
-mensagem dele nomeia o commit que ele conserta.
+Às instruções da História, acrescente duas coisas que só você sabe.
+Quando a skill `mensagem-de-commit` estiver instalada, o caminho do
+`SKILL.md` dela, como a norma de (d). E se o ramo é rascunho (passo 7),
+com o remédio para (c) que vale para ele: num rascunho, o remédio é
+dobrar o commit posterior no que ele conserta, não manter os dois, e o
+achado o diz; num ramo em que outros se apoiam, o commit posterior fica,
+e a mensagem dele nomeia o commit que ele conserta.
 
 **Fatos.** Só quando o intervalo tem commits e as skills
 `checagem-de-fatos` e `mensagem-de-commit` estão instaladas; quando não
-roda, `## Fatos` diz isso e por quê. Dê a ele o brief do cartucho de
-mensagem de commit, com o intervalo e o repositório preenchidos. O brief
-mora na skill `mensagem-de-commit`
-(`cartuchos-de-fatos/mensagem-de-commit.md`, "O brief do subagente").
+roda, `## Fatos` diz isso e por quê. Dê a ele as instruções do cartucho
+de mensagem de commit, com o intervalo e o repositório preenchidos. Elas
+moram na skill `mensagem-de-commit`
+(`cartuchos-de-fatos/mensagem-de-commit.md`, "As instruções do
+subagente").
 Ele confere contra a árvore cada fato que as mensagens afirmam: um sha
 citado e o que ele fez, um caminho e o que ele diz, uma regra citada de
 um arquivo de instruções e o verbo dela, uma contagem, uma data, "só
@@ -236,11 +237,11 @@ novo no passo 7.
 
 **Codex.** Um segundo provedor de modelo, para que a revisão não dependa
 de um modelo só. Siga [references/codex.md](references/codex.md): confira
-que o `codex` está instalado e logado, escreva o brief dele (as três
-perguntas, a lista de caminhos das normas, a especificação, a base Linus,
-o intervalo) num arquivo e rode `codex exec --sandbox read-only` sobre
-ele em segundo plano, junto com os subagentes. Ele é cego: não lhe diga
-nada do que os outros eixos acham. Se o `codex` faltar, não estiver
+que o `codex` está instalado e logado, escreva as instruções dele (as
+três perguntas, a lista de caminhos das normas, a especificação, a base
+Linus, o intervalo) num arquivo e rode `codex exec --sandbox read-only`
+sobre ele em segundo plano, junto com os subagentes. Ele é cego: não lhe
+diga nada do que os outros eixos acham. Se o `codex` faltar, não estiver
 logado ou a chamada falhar, a revisão segue com um provedor e o diz;
 nunca escreva um resultado que o Codex não devolveu.
 
@@ -295,8 +296,8 @@ base Linus (questões de julgamento) e o comportamento que ninguém pediu
 não bloqueiam: ficam no eixo deles, para o autor decidir. Num ramo em
 que outros se apoiam, os achados da História também não bloqueiam, porque
 a história dele não se reescreve; ficam como nota para os próximos
-commits. O brief do Codex define "bloqueante" pela mesma régua, nos
-tipos de achado que ele faz.
+commits. As instruções do Codex definem "bloqueante" pela mesma régua,
+nos tipos de achado que ele faz.
 
 Um achado do Codex que sobreviveu ao passo 5 conta como qualquer outro: um
 achado bloqueante conferido bloqueia o merge, seja qual for o provedor que
@@ -385,10 +386,10 @@ interfaces tocadas e o caminho de volta. Depois julgue:
 - **Compatibilidade e implantação.** Que comportamento, dado ou interface
   existente muda? Como se migra, e como se volta atrás?
 
-Rode o eixo Codex sobre o plano também, com a variante de plano do brief
-em [references/codex.md](references/codex.md), antes de escrever o seu
-próprio julgamento, e confira os pontos dele contra o texto do plano do
-mesmo jeito. Relate com o mesmo bloco de Veredito, linhas Provedores e
-Divergência incluídas, mas com a linha de veredito de plano: "Se
-sustenta | Não se sustenta: <o que tem de mudar no plano, o mais
-importante primeiro>", que diz se vale a pena fazer e por quê.
+Rode o eixo Codex sobre o plano também, com a variante de plano das
+instruções em [references/codex.md](references/codex.md), antes de
+escrever o seu próprio julgamento, e confira os pontos dele contra o
+texto do plano do mesmo jeito. Relate com o mesmo bloco de Veredito,
+linhas Provedores e Divergência incluídas, mas com a linha de veredito
+de plano: "Se sustenta | Não se sustenta: <o que tem de mudar no plano,
+o mais importante primeiro>", que diz se vale a pena fazer e por quê.

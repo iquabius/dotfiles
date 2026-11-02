@@ -229,12 +229,12 @@ ramo principal, cada um barato porque o artefato é curto:
 1b. **Antes de um commit feito direto no ramo principal**, que nenhuma
    revisão de ramo vai ler (a prosa de um texto acadêmico, o rastreador
    de tarefas): um subagente só de leitura, sem nada do contexto da
-   sessão, sobre o rascunho e a mudança que ele descreve (o brief abaixo,
-   com o rascunho no lugar do intervalo). Ele roda depois do momento 1 e
-   antes de a mensagem ir ao autor; onde o commit espera a aprovação do
-   diff pelo autor, a mensagem vai com o diff, e a aprovação cobre os
-   dois. É o contexto limpo que falta ao momento 1, na única hora em que
-   uma correção ainda sai de graça nesse ramo.
+   sessão, sobre o rascunho e a mudança que ele descreve (as instruções
+   abaixo, com o rascunho no lugar do intervalo). Ele roda depois do
+   momento 1 e antes de a mensagem ir ao autor; onde o commit espera a
+   aprovação do diff pelo autor, a mensagem vai com o diff, e a
+   aprovação cobre os dois. É o contexto limpo que falta ao momento 1,
+   na única hora em que uma correção ainda sai de graça nesse ramo.
 2. **Na revisão do ramo, um subagente só de leitura sobre a série** (o
    eixo Fatos da `revisao-rigorosa`, ou avulso num ramo só de
    documentação, que uma revisão de código pularia). Ele extrai e confere
@@ -273,25 +273,25 @@ quando esta checagem roda sozinha e não como o eixo Fatos; lotes de 4–8
 afirmações acima de ~30 afirmações, todos lançados numa mensagem só. A
 passada do agente autor (momento 1) não usa subagente.
 
-O Codex roda ao lado do subagente nos momentos 1b, 2 e 3, com o brief
-abaixo depois do preâmbulo do motor (SKILL.md da `checagem-de-fatos`,
-"O segundo provedor:
+O Codex roda ao lado do subagente nos momentos 1b, 2 e 3, com as
+instruções abaixo depois do preâmbulo do motor (SKILL.md da
+`checagem-de-fatos`, "O segundo provedor:
 Codex"), e não no momento 1. Quando o verificador extrai por conta
 própria, as duas listas se casam por `sha:line` e pela citação da
 afirmação. Como eixo Fatos da `revisao-rigorosa` a regra é a mesma: quem
 lança o subagente de Fatos lança esta chamada do Codex ao lado dele, à
 parte de qualquer eixo Codex da própria revisão.
 
-O subagente trabalha em lotes, como o brief diz: cada turno relê o
-contexto inteiro dele, então um turno poupado é uma releitura dele
+O subagente trabalha em lotes, como as instruções dizem: cada turno relê
+o contexto inteiro dele, então um turno poupado é uma releitura dele
 poupada. Medido em 2026-10-26 sobre três ramos juntados de um
-repositório, o mesmo brief com o parágrafo dos lotes levou 24, 34 e 24
-turnos contra 29, 49 e 47, e 13%, 24% e 43% menos tokens, ponderados pelo
-preço (leituras de cache a um décimo, escritas de cache a 1,25, saída a
-5); as leituras de cache foram 78%, 92% e 80% dessa economia. Em dois
-ramos, cada rodada achou algo que a outra deixou passar; no terceiro, a
-rodada sem lotes achou uma imprecisão a mais. Uma rodada só nunca prova
-uma série limpa.
+repositório, as mesmas instruções com o parágrafo dos lotes levaram 24,
+34 e 24 turnos contra 29, 49 e 47, e 13%, 24% e 43% menos tokens,
+ponderados pelo preço (leituras de cache a um décimo, escritas de cache
+a 1,25, saída a 5); as leituras de cache foram 78%, 92% e 80% dessa
+economia. Em dois ramos, cada rodada achou algo que a outra deixou
+passar; no terceiro, a rodada sem lotes achou uma imprecisão a mais. Uma
+rodada só nunca prova uma série limpa.
 
 ## 9. Onde fica o relatório e em que língua
 
@@ -300,7 +300,7 @@ correção como a frase exata a trocar, só fatos. Numa revisão de ramo, sob
 o título Fatos do relatório da revisão. A língua é a dos commits do
 repositório.
 
-## O brief do subagente
+## As instruções do subagente
 
 ~~~markdown
 Você é o verificador hostil das mensagens de commit de {{RANGE}} em

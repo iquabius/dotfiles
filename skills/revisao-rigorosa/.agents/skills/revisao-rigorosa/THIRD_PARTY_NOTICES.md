@@ -10,8 +10,9 @@ Esta skill adapta material de dois projetos sob a licença MIT.
 - Adaptado: o processo de fixar um ponto de partida, localizar a
   especificação e as normas, rodar eixos de revisão separados em
   subagentes paralelos, as regras de que o repositório prevalece sobre a
-  base e de que os itens da base são questões de julgamento, os briefs
-  dos subagentes e a regra contra reordenar achados entre eixos.
+  base e de que os itens da base são questões de julgamento, as
+  instruções dos subagentes e a regra contra reordenar achados entre
+  eixos.
 
 ```
 MIT License
