@@ -188,7 +188,11 @@ diff final, e compila e passa nos próprios testes. Nomeie os commits em
 que você o dividiria. Podem ficar num commit só as partes que
 compartilham uma mesma reestruturação (um commit intermediário precisaria
 de código que não está nem no pai nem na ponta), quando a mensagem diz
-por que vão juntas. (b) Movimentação, renomeação ou reformatação que
+por que vão juntas. Em texto e documentação, a unidade é a decisão do
+autor: aponte a carona (um termo, uma página ou uma frase de outra
+seção junto de um movimento) e a mensagem que precisa de uma lista com
+itens de partes diferentes, de "na mesma passada" ou de um assunto com
+dois objetos. (b) Movimentação, renomeação ou reformatação que
 esconde a lógica: mesmo com as opções do diff que olham através dela
 (`-w`, `--color-moved`, `--word-diff`), o leitor tem de ler as linhas
 mecânicas para achar a mudança; ou uma reformatação ampla feita por uma

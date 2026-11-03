@@ -74,7 +74,14 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
    arquivos é um. Se as partes são de uma mesma reestruturação e um commit
    intermediário precisaria de código que não está nem no pai nem na
    mudança terminada, elas ficam num commit só, e o corpo diz por que vão
-   juntas.
+   juntas. Em texto, a unidade é a decisão do autor: a citação nova, o
+   corte de um parágrafo e a troca de um termo são três commits, e a
+   reescrita de uma subseção é um. A carona (um termo, uma página, um
+   ano, aspas) vai num commit próprio. Se a mensagem precisa de uma lista
+   com itens de partes diferentes, de "na mesma passada" ou de um assunto
+   com dois objetos, divida. Onde o commit espera o aprovo de alguém,
+   commite cada grupo logo depois do aprovo dele: dividir no fim custa
+   mais.
 3. **Não deixe o movimento esconder a modificação.** Uma renomeação, um
    deslocamento ou uma reformatação vai num commit próprio, antes da
    mudança de lógica, quando esconderia a mudança: quando, mesmo com as
