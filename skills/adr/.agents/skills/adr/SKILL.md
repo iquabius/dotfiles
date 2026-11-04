@@ -54,9 +54,8 @@ Fontes: <pesquisa, commit, ADR anterior>.
   número e sem o `.md`, tem até 70 caracteres e começa pela palavra que
   distingue o ADR dos vizinhos; listas e o que muda a cada redesenho vão
   para o corpo. Por exemplo,
-  `0023-rascunho-e-a-arvore-de-trabalho-e-o-commit-espera-a-revisao.md`
-  tem o título "O rascunho é a árvore de trabalho e o commit espera a
-  revisão".
+  `0007-sessoes-ficam-no-redis-ate-o-logout.md` tem o título "As sessões
+  ficam no Redis até o logout".
 - Título é a decisão, não a pergunta: "Android entra com Views e Compose",
   não "Qual toolkit no Android?".
 - Cada parte abre pelo que o leitor já reconhece; o nome técnico vem da
