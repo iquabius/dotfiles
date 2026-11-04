@@ -42,8 +42,7 @@ história dele se condensa antes do merge (passo 5).
 
    ```sh
    revisada=$(git rev-parse HEAD)
-   GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash \
-       --committer-date-is-author-date "$(git merge-base main HEAD)"
+   GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash "$(git merge-base main HEAD)"
    git diff "$revisada" HEAD   # tem de sair vazio
    ```
 
