@@ -131,13 +131,6 @@
 (add-hook 'text-mode-hook #'auto-fill-mode)
 (setq sentence-end-double-space nil)
 
-;; This machine's private layer, optional: the rules of a document that lives
-;; outside these dotfiles, such as how M-q and auto-fill break its Org sentences.
-;; Without the file, M-q stays ErgoEmacs's and auto-fill follows Org's defaults.
-;; An error in the file is only reported, so the rest of this init still runs.
-(with-demoted-errors "emacs-local.el: %S"
-  (load "~/.config/emacs-local.el" t))
-
 ;; A file:x.org::text link searches the text of x.org, as a source matrix (one
 ;; Org note per source) links each entry to the start of a paragraph.
 ;; By default Org matches only headlines in an Org file, offers to create
