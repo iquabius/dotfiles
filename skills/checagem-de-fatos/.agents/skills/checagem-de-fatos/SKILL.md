@@ -9,7 +9,7 @@ description: >-
   e, onde houver, no Codex como segundo provedor, dá o veredito com a
   evidência, audita a cadeia do argumento e relata; nunca reescreve as
   decisões do autor. Carrega o "cartucho" do registro, que mora na skill
-  dele. Use antes de um marco (tag, entrega, merge), quando pedirem para
+  dele. Use antes de um marco (versão, entrega, merge), quando pedirem para
   "checar os fatos" ou uma "checagem adversarial", para conferir o que
   uma mensagem de commit ou um ramo afirma, ou quando um eixo da revisão
   precisar dos fatos de uma mensagem. Não é revisão de estilo
