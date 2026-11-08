@@ -90,6 +90,18 @@ Detalhes que valem saber:
   ```bash
   git clone https://github.com/SystemCrafters/crafted-emacs ~/.config/crafted-emacs
   ```
+
+  Para testar a configuração sem janela, carregue o init de verdade no
+  host, onde o Emacs roda (num contêiner, por `distrobox-host-exec`):
+
+  ```bash
+  emacs --batch -l ~/.config/emacs/early-init.el --eval '(package-activate-all)' \
+      -l ~/.config/emacs/init.el -l teste.el
+  ```
+
+  Sem o `package-activate-all`, o `require` do ergoemacs falha; o
+  `teste.el` que lê variáveis locais de arquivo começa com `(setq
+  enable-local-variables :all)`.
 - **O `fish_plugins` não instala nada sozinho.** O fisher não vem versionado
   aqui; enquanto não for instalado à mão, o arquivo fica inerte (passo 5).
 
