@@ -121,7 +121,7 @@ limitam:
 
 - **O repositório prevalece.** Uma norma documentada do repositório vence;
   onde ela endossa algo que a base apontaria, retire você mesmo o item da
-  base antes de colá-la no prompt de Normas e no pedido ao Codex.
+  base antes de colá-la no pedido de Normas e no pedido ao Codex.
 - **Os itens da base são questões de julgamento.** Rotule-os como tais
   ("possível insanidade de caso especial"), nunca como violações duras. Só
   a quebra de uma norma documentada pode ser dura.
@@ -129,12 +129,12 @@ limitam:
 ### 4. Rode os eixos em paralelo
 
 Abra um subagente por eixo, todos de uma vez, para que os contextos fiquem
-separados. Cada prompt tem de se bastar: o subagente não vê mais nada.
-Por isso o prompt leva as decisões do autor que mudam o que se revisa, e
+separados. Cada pedido tem de se bastar: o subagente não vê mais nada.
+Por isso o pedido leva as decisões do autor que mudam o que se revisa, e
 cada fonte fora do diff vem pela versão no git (`<sha>:<caminho>`), e
 não pelo checkout nem pela skill instalada, que podem estar noutro ramo.
 Antes de lançar, confira que cada fonte indicada está ao alcance do eixo.
-Todo eixo é só de leitura, e cada prompt o diz: o subagente não edita
+Todo eixo é só de leitura, e cada pedido o diz: o subagente não edita
 arquivos, não troca de commit nem de ramo e lê os commits com `git show`.
 O "compila e passa nos próprios testes" da História é julgamento a partir
 do diff, não execução.

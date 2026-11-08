@@ -41,7 +41,7 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
 ```
 
 - `exec`, não `codex review`: `codex exec review --commit <sha>
-  "<prompt>"` recusa o prompt ("the argument '--commit <SHA>' cannot
+  "<prompt>"` recusa o pedido ("the argument '--commit <SHA>' cannot
   be used with '[PROMPT]'"; com `--base` não foi testado), então, com
   `--commit`, não recebe este pedido, nem a especificação, nem a
   língua da resposta; nem `codex review` nem `codex exec review` têm a
@@ -50,10 +50,10 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
   `git show` e `git diff` sozinho, e recusa toda escrita. O Codex lê o
   diff do repositório; não o cole no pedido.
 - `--ephemeral` não guarda sessão; `-o` guarda só a mensagem final; `-`
-  lê o prompt do stdin. O log leva a transcrição inteira (o pedido,
-  cada comando e a saída dele), então vai para um arquivo; leia só o
-  cabeçalho dele (`head -11`: modelo, sandbox, esforço) e as linhas de
-  que precisar.
+  lê o pedido da entrada padrão. O log leva a transcrição inteira (o
+  pedido, cada comando e a saída dele), então vai para um arquivo; leia
+  só o cabeçalho dele (`head -11`: modelo, sandbox, esforço) e as linhas
+  de que precisar.
 - Modelo: a mesma regra de nível dos outros eixos, o modelo mais forte
   abaixo do carro-chefe. Em 2026-10-26, pelas descrições em `codex debug
   models`, era o `gpt-6.1-sol` ("workhorse"), abaixo do `gpt-6-astra`

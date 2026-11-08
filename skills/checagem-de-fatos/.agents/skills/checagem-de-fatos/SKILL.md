@@ -420,7 +420,7 @@ codex exec --sandbox read-only --ephemeral --color never \
 
 - `--sandbox read-only` deixa os comandos que o Codex roda lerem e recusa
   toda escrita; `--ephemeral` mantém a sessão fora de `~/.codex`.
-- `-` lê o pedido da entrada padrão, para que nenhum prompt longo
+- `-` lê o pedido da entrada padrão, para que nenhum pedido longo
   vá na linha de comando, e a entrada padrão vinda de um arquivo impede o
   `exec` de esperar pelo terminal.
 - `-o` guarda só a última mensagem, o bloco json; o log guarda o
