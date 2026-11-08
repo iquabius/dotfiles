@@ -314,6 +314,16 @@ Codex, segue as regras de força e de "nada novo" e a conferência pelo
 `forca-no-patch` da seção "O Codex que escreve o conserto" de
 `references/codex.md`.
 
+A revisão de novo depois dos consertos tem fim à vista. Passadas umas
+três rodadas sem "Pronto para o merge", e antes de abrir a próxima, diga
+ao autor em que rodada está, o padrão dos achados e as opções: fechar o
+resto com `git revisao excecao`, que é decisão dele, ou seguir. O autor
+pode pôr um teto de rodadas. O sinal é cada rodada achar um caso mais
+raro do mesmo filtro heurístico, que não converge (num parse de TeX,
+em 2026-10-29, a revisão passou de cinco rodadas e de umas cinco horas,
+e o autor limitou a nove): ali, prefira uma garantia estrutural, como
+validar a saída inteira, a uma regra por achado.
+
 ### 7. Condense antes do merge
 
 Um ramo que ainda não chegou ao ramo principal e em que ninguém mais se
