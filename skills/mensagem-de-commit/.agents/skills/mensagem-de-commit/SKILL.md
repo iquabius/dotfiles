@@ -190,7 +190,7 @@ prova (`git show <sha>`, `git show :<path>`, `git show HEAD:<path>`, a
 execução dos testes) e tenha a saída em mãos. O cartucho de checagem de
 fatos desta skill (`cartuchos-de-fatos/mensagem-de-commit.md`, que a
 skill `checagem-de-fatos` carrega) lista as categorias de afirmação, os
-comandos e as instruções do subagente; esta passada é o primeiro momento
+comandos e o pedido ao subagente; esta passada é o primeiro momento
 dele, feito só pelo agente que escreve, enquanto o amend ainda sai de
 graça.
 Uma mensagem no ramo principal nunca se reescreve, e por isso um fato
