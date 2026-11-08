@@ -102,6 +102,10 @@ Detalhes que valem saber:
   Sem o `package-activate-all`, o `require` do ergoemacs falha; o
   `teste.el` que lê variáveis locais de arquivo começa com `(setq
   enable-local-variables :all)`.
+
+  Função ou variável nova do init leva o prefixo `gambi/`
+  (`gambi/org-tex-commented-p`); as antigas com `my/` ficam como estão,
+  até alguém pedir para renomeá-las.
 - **O `fish_plugins` não instala nada sozinho.** O fisher não vem versionado
   aqui; enquanto não for instalado à mão, o arquivo fica inerte (passo 5).
 
