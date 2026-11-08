@@ -94,8 +94,12 @@ Fontes: <pesquisa, commit, ADR anterior>.
   também. O texto dele se lê no pai do commit que o tirou: `git show
   <commit>^:docs/adr/<arquivo>`.
 - O título que muda troca o nome do arquivo, com o caminho em todas as
-  referências, num commit só de movimento, antes do que muda o texto. A
-  troca não ganha linha no histórico: o `git log --follow` a acha.
+  referências, num commit que leva, além do movimento, só a costura
+  curta: a linha do título e a frase que abre a decisão, alinhadas ao
+  nome novo. O resto do que muda o texto vai depois, num commit próprio,
+  para o movimento não esconder a mudança. A troca não ganha linha no
+  histórico: o `git log --follow` a acha, desde que o `git diff -M
+  --stat` do commit a mostre como troca de nome (`antigo => novo`).
 - Número: o maior em `docs/adr/` mais um, com quatro dígitos; a numeração
   tem lacunas, e o número de um ADR que saiu não volta. Slug em
   minúsculas, sem acento, com hífens. Sem índice: `ls docs/adr/` é o índice.
