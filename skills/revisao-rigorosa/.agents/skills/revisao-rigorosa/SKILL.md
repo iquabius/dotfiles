@@ -232,8 +232,11 @@ Ele confere contra a árvore cada fato que as mensagens afirmam: um sha
 citado e o que ele fez, um caminho e o que ele diz, uma regra citada de
 um arquivo de instruções e o verbo dela, uma contagem, uma data, "só
 comentário". A História fica com (a)–(e) e não confere os fatos de novo.
-Uma mensagem no ramo principal nunca se reescreve, então este eixo é a
-última chance de consertar um fato errado com um amend ou um fixup. Ao
+Por padrão, uma mensagem no ramo principal não se reescreve, e o
+repositório que abre exceção para a mensagem ainda não enviada a faz
+depender do aprovo do autor (seção 6 do cartucho de mensagem de commit,
+"Correções e quem aprova"); então este eixo é a última chance de
+consertar um fato errado de graça, com um amend ou um fixup. Ao
 lado do subagente, lance a chamada do Codex que o cartucho manda (a seção
 "Lotes e modelo" dele, com o preâmbulo da seção "O segundo provedor:
 Codex" da `checagem-de-fatos`), à parte do eixo Codex desta revisão. Os
@@ -399,7 +402,9 @@ merge e o push ficam com o usuário ou com o fluxo do repositório.
 
 Pule este passo quando o repositório proibir reescrever um ramo não
 juntado, ou quando o ramo já tiver sido enviado por push para outros se
-apoiarem nele. Nunca reescreva o que já está no ramo principal.
+apoiarem nele. A condensação não toca o que já está no ramo principal;
+a mensagem que já está lá segue a seção 6 do cartucho de mensagem de
+commit.
 
 ## Revisão de plano
 

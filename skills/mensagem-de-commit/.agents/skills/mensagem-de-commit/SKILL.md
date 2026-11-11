@@ -193,8 +193,10 @@ skill `checagem-de-fatos` carrega) lista as categorias de afirmação, os
 comandos e o pedido ao subagente; esta passada é o primeiro momento
 dele, feito só pelo agente que escreve, enquanto o amend ainda sai de
 graça.
-Uma mensagem no ramo principal nunca se reescreve, e por isso um fato
-errado achado depois sobrevive como errata numa mensagem posterior. O
+Por padrão, uma mensagem no ramo principal não se reescreve, e por isso
+um fato errado achado depois sobrevive como errata numa mensagem
+posterior; o repositório pode abrir uma exceção só para a mensagem ainda
+não enviada, com o aprovo do autor (seção 6 do cartucho desta skill). O
 sha do mesmo ramo ainda não juntado é um alvo móvel, que o rebase de
 condensação reescreve: cite o assunto dele entre aspas ao lado, como faz
 o trailer `Fixes:`, e confira de novo depois do rebase. Toda mensagem
