@@ -80,7 +80,9 @@ O motor não enxerga o registro. Antes da etapa 1, um cartucho declara:
 7. **Passadas e momento**: quantas passadas, quando cada uma roda, o que
    dispara uma nova rodada.
 8. **Lotes e modelo**: o número de afirmações acima do qual a conferência
-   se divide em lotes de 4–8 afirmações, um subagente só de leitura cada;
+   se divide em lotes de 4–8 afirmações (ou, no cartucho cujo subagente
+   extrai as afirmações, o de linhas do artefato, em lotes que o
+   cartucho declara), um subagente só de leitura cada;
    abaixo dele, um subagente para o artefato inteiro. Onde quer que rode
    um subagente, o segundo provedor roda ao lado dele (ver "O segundo
    provedor: Codex").
@@ -100,6 +102,10 @@ cartucho. Os cartuchos de hoje:
   ainda não juntado, contra o repositório.
 - `adr/cartuchos-de-fatos/adr-e-notas.md` — um ADR ou uma nota do
   projeto contra o glossário, as decisões anteriores e o histórico.
+- `arquitetura-de-docs/cartuchos-de-fatos/documentacao.md` — a
+  documentação (README, `AGENTS.md`, página de entrada, nota, glossário,
+  SKILL.md) que um ramo ou um commit toca ou torna falsa, contra o
+  código, as outras notas e o glossário da ponta.
 - O de um capítulo acadêmico, que traz o procedimento completo, em
   português, para conferir um capítulo contra os PDFs que cita, mora na
   skill de escrita acadêmica.
@@ -569,7 +575,8 @@ formulário), como manda o pedido ao subagente.
 - **revisao-rigorosa** lança o subagente do cartucho de mensagem de
   commit como um eixo Fatos ao lado de Normas, Especificação e História,
   e de novo depois que o ramo é condensado, quando as mensagens são
-  reescritas a partir da árvore.
+  reescritas a partir da árvore. No mesmo eixo, lança o par do cartucho
+  de documentação, sobre o que o ramo toca ou torna falso.
 - **Uma oficina de texto adversarial** é o motor de crítica de
   qualidade; uma lente de evidência no painel dela é esta checagem, e a
   conferência byte a byte dos cartões, as lentes presas às ferramentas e

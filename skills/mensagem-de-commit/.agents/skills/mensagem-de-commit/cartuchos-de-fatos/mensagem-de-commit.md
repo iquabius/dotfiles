@@ -240,7 +240,10 @@ ramo principal, cada um barato porque o artefato é curto:
    documentação, que uma revisão de código pularia). Ele extrai e confere
    numa rodada só; acima de ~30 afirmações, o agente principal extrai e
    divide em lotes de 4–8. Esta passada tem o contexto limpo que falta à
-   primeira.
+   primeira. Nos dois casos, o par do cartucho de documentação da skill
+   `arquitetura-de-docs` (um subagente e o Codex ao lado) roda em
+   paralelo com este, sobre a documentação que o ramo toca ou torna
+   falsa.
 3. **De novo depois que o ramo é condensado**, sobre as mensagens finais,
    junto com o eixo História: o rebase reescreveu as mensagens a partir
    da árvore e mudou os shas da série, e uma mensagem reescrita nunca

@@ -128,7 +128,8 @@ limitam:
 
 ### 4. Rode os eixos em paralelo
 
-Abra um subagente por eixo, todos de uma vez, para que os contextos fiquem
+Abra os subagentes de todos os eixos de uma vez, um por eixo (no Fatos,
+os das mensagens e os da documentação), para que os contextos fiquem
 separados. Cada pedido tem de se bastar: o subagente não vê mais nada.
 Por isso o pedido leva as decisões do autor que mudam o que se revisa, e
 cada fonte fora do diff vem pela versão no git (`<sha>:<caminho>`), e
@@ -239,6 +240,19 @@ Codex" da `checagem-de-fatos`), à parte do eixo Codex desta revisão. Os
 achados das duas entram em `## Fatos`, passam pelo passo 5 e rodam de
 novo no passo 7.
 
+No mesmo eixo, em paralelo com o par das mensagens, um segundo par
+confere a documentação que o intervalo toca ou torna falsa: o subagente
+do cartucho de documentação, que mora na skill `arquitetura-de-docs`
+(`cartuchos-de-fatos/documentacao.md`, "O pedido ao subagente"), e o
+Codex ao lado dele, com o mesmo pedido. Ele roda sempre que o eixo
+Fatos roda, também no intervalo que muda só código, porque um README
+envelhece pelo código que descreve. Antes de lançar, monte o escopo
+como o cartucho manda (a seção 1 dele). Os achados entram em
+`## Fatos`, num bloco "Documentação", passam pelo passo 5 e bloqueiam pela régua do cartucho
+(a seção 6 dele); no passo 7, com a árvore igual à revisada, este par
+não roda de novo. Sem a skill `arquitetura-de-docs` instalada,
+`## Fatos` diz que a documentação não foi conferida.
+
 **Codex.** Um segundo provedor de modelo, para que a revisão não dependa
 de um modelo só. Siga [references/codex.md](references/codex.md): confira
 que o `codex` está instalado e logado, escreva o pedido a ele (as
@@ -294,7 +308,8 @@ Simplificação: a direção que elimina código ou casos especiais.
 Bloqueia o merge todo achado conferido que seja a quebra de uma norma
 documentada (dura); um requisito da especificação que falta, está pela
 metade ou foi implementado errado; um defeito (bug, regressão, chamador
-deixado para trás); um fato errado numa mensagem de commit; ou, num ramo
+deixado para trás); um fato errado numa mensagem de commit; um fato
+errado na documentação, pela régua do cartucho de documentação; ou, num ramo
 rascunho, um achado da História, cujo conserto é o passo 7. Os itens da
 base Linus (questões de julgamento) e o comportamento que ninguém pediu
 não bloqueiam: ficam no eixo deles, para o autor decidir. Num ramo em

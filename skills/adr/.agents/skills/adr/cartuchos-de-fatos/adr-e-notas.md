@@ -90,6 +90,12 @@ fatos (uma nota de referência longa). Um portão mecânico, onde o
 repositório tiver um, confere que a data é absoluta e que os números de
 ADR, os shas e os ids de tarefa citados existem.
 
+Na revisão de um ramo, o ADR e a nota que o ramo toca passam também
+pelo cartucho de documentação da skill `arquitetura-de-docs`, no eixo
+Fatos da `revisao-rigorosa`: o ADR e a seção datada de uma nota se
+conferem na data que levam, pelas categorias daqui, e o resto da nota,
+contra a ponta.
+
 ## 8. Lotes e modelo
 
 Um subagente para o artefato inteiro; lotes de 4–8 só para uma nota de
