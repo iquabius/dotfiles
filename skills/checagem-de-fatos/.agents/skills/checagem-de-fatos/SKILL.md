@@ -80,9 +80,9 @@ O motor não enxerga o registro. Antes da etapa 1, um cartucho declara:
 7. **Passadas e momento**: quantas passadas, quando cada uma roda, o que
    dispara uma nova rodada.
 8. **Lotes e modelo**: o número de afirmações acima do qual a conferência
-   se divide em lotes de 4–8 afirmações (ou, no cartucho cujo subagente
-   extrai as afirmações, o de linhas do artefato, em lotes que o
-   cartucho declara), um subagente só de leitura cada;
+   se divide em lotes de 4–8 afirmações (ou, no cartucho que mede o
+   artefato em linhas, o de linhas, em lotes que o cartucho declara), um
+   subagente só de leitura cada;
    abaixo dele, um subagente para o artefato inteiro. Onde quer que rode
    um subagente, o segundo provedor roda ao lado dele (ver "O segundo
    provedor: Codex").
@@ -130,8 +130,8 @@ original em inglês anterior a um ramo paralelo, e duas lentes
 compararam com o motor instalado de outro ramo; os cartões foram
 descartados a tempo.
 
-**1. Extraia.** O agente principal, sem subagente, lê o artefato inteiro
-uma vez e escreve cada afirmação conferível como uma linha num arquivo:
+**1. Extraia.** Por padrão, o agente principal, sem subagente, lê o
+artefato inteiro uma vez e escreve cada afirmação conferível como uma linha num arquivo:
 
 ```json
 {"id": "A01", "anchor": "intro.org:42", "quote": "texto literal da afirmação",
@@ -149,6 +149,15 @@ do cartucho; uma pista para o verificador, não uma prova. Regras:
   anunciam a estrutura.
 - Ordene por fonte e por tema, para que um lote leia a mesma fonte.
 - Escreva o mapa do argumento (etapa 5) na mesma sentada.
+
+Quando o cartucho declara, no item 8, que o subagente extrai as
+afirmações, a extração passa ao verificador, nos limites que o cartucho
+dá: ele lê o artefato e devolve cada afirmação com a âncora e a
+citação, junto do veredito. Na volta, o agente principal conta as
+afirmações por script e casa as listas dos dois provedores pela âncora
+e pela citação ("O segundo provedor: Codex"). O mapa do argumento
+continua com ele, que lê o artefato e liga cada elo às âncoras, em vez
+dos ids.
 
 **2. Confira em contextos limpos.** A conferência vai para subagentes,
 cada um com contexto limpo e ferramentas só de leitura: nenhum arquivo do
@@ -478,7 +487,7 @@ Nielsen venceu, na fila do autor, um "correto" com a página da NN/g, e o
 conserto aprovado voltou no Fatos das mensagens.
 
 Case as duas listas pelo id ou, quando o verificador extrai por conta
-própria (uma série de commits numa rodada só), pela âncora e pela citação.
+própria, pela âncora e pela citação.
 O mesmo veredito é um achado só, com as duas evidências. Um veredito
 diferente, ou uma afirmação que só um provedor listou, vai para a etapa 4:
 o agente principal reabre as duas evidências na fonte, byte a byte, e
