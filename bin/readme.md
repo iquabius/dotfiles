@@ -16,9 +16,10 @@ Vale no repositório que lista os caminhos de código em `.config/revisao`, um
 pathspec do git por linha (`#` comenta; diretório com curinga termina em
 `/*`), e ali declara, numa linha `teste: <comando>`, o teste do `pronto`.
 Repositório sem o arquivo fica de fora. A própria lista está nela, para que
-estreitá-la também passe pela revisão; e o pre-push junta a lista do remoto
-à da ponta, para que um push não a estreite e passe com o que ela deixou de
-fora.
+estreitá-la também passe pela revisão; e o pre-push conta como código o que
+a lista do remoto ou a da ponta conta, cada uma sozinha, para que um push
+não a estreite, tirando uma linha ou acrescentando uma exclusão, e passe com
+o que ela deixou de fora.
 
 - `git revisao pronto [<ponta>]`: marca a ponta revisada com o veredito
   *Pronto para o merge*, depois de o teste do repositório passar. O teste é a

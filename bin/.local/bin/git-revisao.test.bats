@@ -390,6 +390,42 @@ teste() {
 	[[ $output == *"bin/x"* ]]
 }
 
+@test "exclusão nova não tira da revisão o que a lista do remoto cobre" {
+	git switch -qc tarefa
+	echo ':!bin/x' >>.config/revisao
+	git commit -qam "exclui bin/x"
+	git revisao pronto
+	muda bin/x "escondido"
+	git switch -q main
+	git merge -q --ff-only tarefa
+	run git push origin main
+	[ "$status" -ne 0 ]
+	[[ $output == *"escondido"* ]]
+	[[ $output == *"bin/x"* ]]
+}
+
+@test "exclusão nova não esconde do pronto o código mudado fora do commit" {
+	teste 'true'
+	git switch -qc tarefa
+	echo ':!bin/x' >>.config/revisao
+	git commit -qam "exclui bin/x"
+	echo mais >>bin/x
+	run git revisao pronto
+	[ "$status" -ne 0 ]
+	[[ $output == *"bin/x"* ]]
+}
+
+@test "pre-commit: exclusão nova no índice não esconde o código da lista do HEAD" {
+	export CLAUDECODE=1
+	# Exclui também a própria lista, que, contada, já levaria à recusa.
+	printf '%s\n' ':!.config/revisao' ':!bin/x' >>.config/revisao
+	echo x >bin/x
+	git add .config/revisao bin/x
+	run git commit -qm x
+	[ "$status" -ne 0 ]
+	[[ $output == *"bin/x"* ]]
+}
+
 @test "repositório sem .config/revisao fica de fora" {
 	git rm -q .config/revisao && git commit -qm "sai da revisão"
 	git revisao excecao -m "sai"

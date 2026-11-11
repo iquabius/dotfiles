@@ -98,16 +98,20 @@ def config(rev):
 
 
 def caminhos(*revs):
-    """Os pathspecs de código, juntando o .config/revisao de cada rev.
+    """As listas de pathspecs de código, uma por .config/revisao das revs.
 
-    Juntar a versão nova e a velha impede que um push estreite a lista e
-    passe com o que ela deixou de fora. `rev` None não conta.
+    Contar a versão nova e a velha impede que um push estreite a lista e
+    passe com o que ela deixou de fora. Cada lista vale sozinha, e o
+    arquivo é código se alguma o conta: juntas num pathspec só, a exclusão
+    (:!x) que o ramo acrescenta valeria também para a lista do main, e o
+    x sairia da revisão. `rev` None e a lista vazia não contam.
     """
-    specs = []
+    listas = []
     for rev in revs:
-        if rev is not None:
-            specs += [s for s in config(rev)[0] if s not in specs]
-    return specs
+        specs = config(rev)[0] if rev is not None else []
+        if specs and specs not in listas:
+            listas.append(specs)
+    return listas
 
 
 def teste_de(*revs):
@@ -213,12 +217,26 @@ def codigos(shas):
 
 # Código tocado ---------------------------------------------------------------
 
-def codigo_tocado(lista, specs):
+def codigo_tocado(lista, listas):
     """{sha: [arquivos de código]} dos commits de `lista` que mexem no código.
 
-    `lista` é [(sha, pais)]. Commit comum conta pelo que muda; merge, só
-    pelo diff --cc, que fica vazio quando nenhum conflito foi resolvido à
-    mão (o --name-only listaria até o arquivo que se juntou sozinho).
+    `lista` é [(sha, pais)], e `listas`, as de caminhos(): o arquivo de
+    qualquer uma conta.
+    """
+    tocados = {}
+    for specs in listas:
+        for sha, arquivos in tocado_por(lista, specs).items():
+            atuais = tocados.setdefault(sha, [])
+            atuais += [a for a in arquivos if a not in atuais]
+    return tocados
+
+
+def tocado_por(lista, specs):
+    """{sha: [arquivos]} dos commits de `lista` que mexem em `specs`.
+
+    Commit comum conta pelo que muda; merge, só pelo diff --cc, que fica
+    vazio quando nenhum conflito foi resolvido à mão (o --name-only
+    listaria até o arquivo que se juntou sozinho).
     """
     tocados = {}
     simples = [sha for sha, pais in lista if len(pais) < 2]
@@ -243,16 +261,16 @@ def codigo_tocado(lista, specs):
     return tocados
 
 
-def descobertos(ponta, excluir, specs):
+def descobertos(ponta, excluir, listas):
     """[(sha, arquivos)] do código em ponta --not excluir sem marca que cubra."""
-    if not specs:
+    if not listas:
         return []
     lista = []
     for linha in git_s("rev-list", "--reverse", "--topo-order", "--parents",
                        ponta, "--not", *excluir).splitlines():
         sha, *pais = linha.split()
         lista.append((sha, pais))
-    tocados = codigo_tocado(lista, specs)
+    tocados = codigo_tocado(lista, listas)
     if not tocados:
         return []
     notas = marcas()
@@ -308,8 +326,8 @@ def recusas_do_push(remoto, linhas):
         # ramo de tarefa enviado sem revisão não pode entrar no main por ele.
         rastreio = resolver(f"refs/remotes/{remoto}/{ref_remota.removeprefix('refs/heads/')}")
         excluir = [velho or rastreio] if velho or rastreio else []
-        specs = caminhos(local_sha, velho)
-        for sha, arquivos in descobertos(local_sha, excluir, specs):
+        listas = caminhos(local_sha, velho)
+        for sha, arquivos in descobertos(local_sha, excluir, listas):
             achados.append((ref_remota, sha, arquivos))
     return achados, outros
 
@@ -335,11 +353,10 @@ def cmd_pre_commit(_args):
     ramo = git_s("symbolic-ref", "--short", "-q", "HEAD", ok=(0, 1))
     if ramo not in PRINCIPAIS or resolver("MERGE_HEAD"):
         return 0
-    specs = caminhos("HEAD" if resolver("HEAD") else None, "")
-    if not specs:
-        return 0
-    arquivos = git("diff", "--cached", "--name-only", "-z", "--", *specs).decode()
-    arquivos = [a for a in arquivos.split("\0") if a]
+    arquivos = []
+    for specs in caminhos("HEAD" if resolver("HEAD") else None, ""):
+        saida = git("diff", "--cached", "--name-only", "-z", "--", *specs).decode()
+        arquivos += [a for a in saida.split("\0") if a and a not in arquivos]
     if not arquivos:
         return 0
     print(f"pre-commit: recusado, commit de agente no {ramo} com código:", file=sys.stderr)
@@ -386,14 +403,16 @@ def testar(sha, base):
     comando = teste_de(*referencias)
     if not comando:
         return True
-    specs = caminhos(*referencias)
     # O teste roda no checkout: o que ele vê tem de ser a ponta.
     if sha != resolver("HEAD"):
         print(f"git revisao: o teste roda no checkout, e {sha[:9]} não é o HEAD;\n"
               f"troque para a ponta (git switch) e marque de lá", file=sys.stderr)
         return False
-    soltos = git_s("-c", "core.quotePath=false", "status", "--porcelain",
-                   "--untracked-files=all", "--", *specs).splitlines() if specs else []
+    soltos = []
+    for specs in caminhos(*referencias):
+        saida = git_s("-c", "core.quotePath=false", "status", "--porcelain",
+                      "--untracked-files=all", "--", *specs)
+        soltos += [l for l in saida.splitlines() if l not in soltos]
     if soltos:
         print("git revisao: código mudado fora do commit; o teste não veria a ponta:",
               file=sys.stderr)
