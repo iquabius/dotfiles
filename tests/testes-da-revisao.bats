@@ -141,6 +141,28 @@ bats bin/.local/bin/pelo-path.test.bats" ]
 	[ "$(cat "$LOG")" = "make check" ]
 }
 
+@test "ramo que exclui o que a lista da base conta ainda o vê mudar" {
+	# A base sem o .config/revisao na lista, cuja mudança, contada, levaria
+	# ao make check e esconderia se o a foi visto.
+	sed -i '/^\.config\/revisao$/d' .config/revisao
+	git commit -qam "base sem a lista na lista"
+	GIT_REVISAO_BASE=$(git rev-parse HEAD)
+	echo ':!bin/.local/bin/a' >>.config/revisao
+	git commit -qam "exclui o a"
+	muda bin/.local/bin/a
+	"$SCRIPT"
+	[ "$(cat "$LOG")" = "make lint
+bats bin/.local/bin/a.test.bats" ]
+}
+
+@test "base que o git não acha é a falha do script" {
+	muda bin/.local/bin/a
+	GIT_REVISAO_BASE=naoexiste
+	run "$SCRIPT"
+	[ "$status" -ne 0 ]
+	[ ! -e "$LOG" ]
+}
+
 @test "nome com acento escolhe a suíte dele" {
 	muda bin/.local/bin/ação
 	"$SCRIPT"
