@@ -3,8 +3,9 @@
 Cartucho de checagem de fatos do registro da skill `adr`. O motor, que
 não tem registro, é a skill `checagem-de-fatos`.
 
-O artefato é um registro de decisão (um ADR: um parágrafo com data
-absoluta, a decisão, o que ela substitui, "em vez de" e "custo") ou uma
+O artefato é um registro de decisão (um ADR, com data absoluta, o
+problema, os critérios, a decisão, as alternativas em "em vez de", o
+custo e, quando houver, as fontes) ou uma
 nota do projeto (uma nota de referência, uma nota de achados, uma nota de
 processo). Os dois prestam contas à verdade; a decisão em si e os motivos
 dela são do autor e não se conferem pelo mérito, só pelos fatos em que se
