@@ -94,7 +94,9 @@ Na revisão de um ramo, o ADR e a nota que o ramo toca passam também
 pelo cartucho de documentação da skill `arquitetura-de-docs`, no eixo
 Fatos da `revisao-rigorosa`: o ADR e a seção datada de uma nota se
 conferem na data que levam, pelas categorias daqui, e o resto da nota,
-contra a ponta.
+contra a ponta. No commit feito direto no ramo principal que muda uma
+nota, o subagente do momento 1b do cartucho `mensagem-de-commit` recebe
+também o pedido do cartucho de documentação.
 
 ## 8. Lotes e modelo
 

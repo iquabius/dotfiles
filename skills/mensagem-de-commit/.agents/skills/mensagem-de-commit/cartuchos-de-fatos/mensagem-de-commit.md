@@ -235,6 +235,13 @@ ramo principal, cada um barato porque o artefato é curto:
    aprovação do diff pelo autor, a mensagem vai com o diff, e a
    aprovação cobre os dois. É o contexto limpo que falta ao momento 1,
    na única hora em que uma correção ainda sai de graça nesse ramo.
+   Quando o commit muda documentação (uma nota, a página de entrada, o
+   glossário), o mesmo subagente recebe também o pedido do cartucho de
+   documentação da skill `arquitetura-de-docs`, com o escopo dele sobre
+   a árvore que o commit vai gravar (a seção 1 daquele cartucho), e o
+   Codex ao lado leva os dois pedidos. No commit só do
+   texto acadêmico, só das tarefas ou só da procedência das fontes, o
+   pedido de documentação não vai.
 2. **Na revisão do ramo, um subagente só de leitura sobre a série** (o
    eixo Fatos da `revisao-rigorosa`, ou avulso num ramo só de
    documentação, que uma revisão de código pularia). Ele extrai e confere
