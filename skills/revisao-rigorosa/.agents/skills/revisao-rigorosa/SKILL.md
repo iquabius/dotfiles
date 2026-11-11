@@ -327,7 +327,10 @@ o levantou. A linha Divergência mostra onde os dois modelos discordam; ela
 não anula o veredito. Quando o Codex não rodou, a linha Provedores diz
 "só Claude (<modelo>)" e por quê, e não há linha Divergência.
 
-Cada achado vira um conserto no ramo. Todo conserto, do agente ou do
+Cada achado bloqueante vira um conserto no ramo. O não bloqueante vai
+ao autor no relatório, e ele decide se o achado vira um conserto no
+ramo, numa sessão em paralelo, numa sessão em seguida, uma tarefa ou
+nada. Todo conserto, do agente ou do
 Codex, segue as regras de força e de "nada novo" e a conferência pelo
 `forca-no-patch` da seção "O Codex que escreve o conserto" de
 `references/codex.md`.

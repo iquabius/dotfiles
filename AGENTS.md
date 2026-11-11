@@ -32,9 +32,11 @@ história dele se condensa antes do merge (passo 5).
    `$(git merge-base main HEAD)...HEAD`. Ramo só de texto ou de
    configuração simples (readme, `settings.json` dos editores,
    `tmux.conf`, `latexmkrc`) dispensa a revisão, mas não o ramo.
-4. **Cada achado vira um conserto** no ramo: `git commit --fixup=<commit
-   que ele corrige>`, ou commit novo quando ele não corrige um commit só.
-   Revise de novo até o veredito **Pronto para o merge**.
+4. **Cada achado bloqueante vira um conserto** no ramo: `git commit
+   --fixup=<commit que ele corrige>`, ou commit novo quando ele não
+   corrige um commit só. Revise de novo até o veredito **Pronto para o
+   merge**. O achado não bloqueante vai ao autor, que decide o destino
+   dele (passo 6 da `revisao-rigorosa`).
 5. **Condense o ramo** antes de marcar (passo 7 da `revisao-rigorosa`): cada
    conserto entra no commit que ele corrige, e a série fica com uma
    mudança lógica por commit, com as mensagens escritas a partir da
