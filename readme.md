@@ -156,7 +156,7 @@ até alguém pedir para renomeá-las.
 ### O `fish_plugins` não instala nada sozinho
 
 O fisher não vem versionado aqui; enquanto não for instalado à mão, o arquivo
-fica inerte (passo 5).
+fica inerte (ver *5. Plugins do fish*).
 
 ## Skills de agente
 
