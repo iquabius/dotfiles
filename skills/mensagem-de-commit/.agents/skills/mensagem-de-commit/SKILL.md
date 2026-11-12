@@ -247,8 +247,8 @@ passou por um agente, e por qual.
 3. **Uma regra explícita vence.** Quando o usuário ou o repositório (um
    arquivo de instruções ou um guia de contribuição) proíbe a atribuição
    de IA, ou dá outra forma, como `Assisted-by:`, siga essa regra.
-   Precedente sozinho não é essa regra: uma história sem trailers de IA
-   em geral quer dizer que os commits anteriores foram escritos à mão.
+   Precedente sozinho não é essa regra: a história sem trailers de IA
+   não proíbe a atribuição, só não a mostra.
 
 A atribuição nunca vai no assunto, e nunca toma o lugar do corpo: a
 mensagem ainda tem de explicar a mudança sozinha.
