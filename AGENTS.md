@@ -1,6 +1,6 @@
 # Instruções para agentes: dotfiles
 
-Configuração pessoal em pacotes GNU Stow, em português: cada diretório da
+Configuração pessoal em pacotes GNU Stow, em português: cada pacote da
 raiz espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
 processo abaixo, o `git-assunto-merge`, o `claude-revisao-guarda`, o
 `skills-sync`, que liga as skills de agente, o `forca-no-patch`, que
@@ -25,8 +25,9 @@ história dele se condensa antes do merge (passo 5).
    erro, o fish carrega num terminal novo, o script roda e o `make
    check` passa (ver *Testes*).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
-   `.config/revisao`: hooks, Emacs Lisp, fish, scripts de shell, o
-   `Makefile`, o `bin/`, o `scripts/`, as suítes de `tests/`, o
+   `.config/revisao`: o próprio `.config/revisao`, hooks, Emacs Lisp,
+   fish, scripts de shell, o `Makefile`, o `bin/.local/bin/`, o
+   `scripts/`, as suítes de `tests/`, o `ssh/.ssh/rc`, o
    `git/.gitconfig`, que liga os hooks do ciclo, e o `claude/`, que
    registra o guarda), rode a skill `revisao-rigorosa` sobre
    `$(git merge-base main HEAD)...HEAD`. Ramo só de texto ou de
@@ -120,12 +121,14 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 ## Onde a mudança vale
 
 Os pacotes stow apontam para a árvore de trabalho: o que o ramo muda já
-vale na máquina. Arquivo novo num pacote só chega ao `$HOME` depois do
+vale na máquina. Arquivo novo que precisa de um link próprio (fora de
+uma pasta que o stow já ligou inteira) só chega ao `$HOME` depois do
 `stow` do pacote, e o checkout não volta ao `main` antes do merge, ou o
 link fica pendurado. Script novo em `bin/.local/bin/` chega ao `PATH` pelo
 `stow -R bin`, que o `post-merge` roda, aqui e na camada privada, depois
 de todo merge sem conflito no `~/.dotfiles` ou no `~/.dotfiles-private`
-que muda o `bin/`, e não numa worktree.
+que muda o `bin/`, e não numa worktree; sem `~/.local/bin`, ele só avisa
+e pula o stow.
 
 ## Testes
 
@@ -140,8 +143,10 @@ novo vira teste antes da correção, e todo teste novo é conferido contra
 uma cópia sabotada do script, que ele tem de reprovar: cada suíte diz a
 variável que troca o script testado (`SKILLS_SYNC_SCRIPT`,
 `GIT_REVISAO_SCRIPT`...). Durante o trabalho, `GIT_REVISAO_BASE=$(git
-merge-base main HEAD) scripts/testes-da-revisao` roda só as suítes do que
-o ramo mudou, as mesmas que o `git revisao pronto` vai rodar.
+merge-base main HEAD) scripts/testes-da-revisao` escolhe os testes pelo
+que o ramo mudou (o lint, as suítes desse código, e o `make check`
+inteiro quando muda o que todas usam ou um código sem suíte), os mesmos
+que o `git revisao pronto` vai rodar.
 
 ## Commits
 
