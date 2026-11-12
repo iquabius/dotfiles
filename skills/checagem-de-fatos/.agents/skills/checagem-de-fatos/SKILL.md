@@ -330,8 +330,9 @@ Lógica: n achados.
 **8. Passadas.** O cartucho as define. O padrão do capítulo são duas
 passadas em sequência, a segunda sobre o texto corrigido, com ids novos e
 subagentes novos que nunca veem o primeiro relatório; o padrão de uma
-série de commits é uma passada sobre a série final mais a conferência do
-próprio agente autor antes de cada commit. Rodar duas passadas sobre o
+série de commits é a conferência do próprio agente autor antes de cada
+commit, uma passada sobre a série na revisão do ramo e outra sobre a
+série condensada. Rodar duas passadas sobre o
 mesmo texto sem mudança gasta a segunda no que a primeira já achou.
 
 ## O pedido ao subagente
