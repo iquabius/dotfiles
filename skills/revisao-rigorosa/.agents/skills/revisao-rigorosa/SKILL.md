@@ -364,8 +364,8 @@ pedir:
   --fixup=<sha>` durante as rodadas da revisão, depois
   `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`; ou refaça a
   série à mão. O autosquash só junta os commits `fixup!`, `squash!` e
-  `amend!`: um conserto commitado sem `--fixup` pede a série refeita à
-  mão, e o `git log --oneline <base>..HEAD` da série nova tem de mostrar
+  `amend!`: um conserto commitado sem um desses prefixos pede a série
+  refeita à mão, e o `git log --oneline <base>..HEAD` da série nova tem de mostrar
   menos commits.
 - Deixe uma mudança lógica por commit e reescreva cada mensagem a partir
   da árvore que ela agora descreve (a skill `mensagem-de-commit`): as
@@ -389,7 +389,8 @@ pedir:
   ponta menos o que sai, e leia cada commit atrás de linhas em branco
   acrescentadas ou removidas:
   `git show --format= <sha> -- <arquivo> | grep '^[-+]$'`.
-- O git passa a mensagem reescrita pelo editor (`git commit --amend` sem
+- Com o `commit.cleanup` padrão, o git passa a mensagem reescrita pelo
+  editor (`git commit --amend` sem
   `-F`, o `reword` do `git rebase -i`, mesmo com `GIT_EDITOR` apontando
   para um script que copia um arquivo) pela limpeza `strip`, que descarta
   toda linha que começa com o `core.commentChar` (`#`): um título de
