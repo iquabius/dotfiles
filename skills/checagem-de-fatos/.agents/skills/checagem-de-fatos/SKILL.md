@@ -99,7 +99,7 @@ cartucho. Os cartuchos de hoje:
 
 - `mensagem-de-commit/cartuchos-de-fatos/mensagem-de-commit.md` — um
   rascunho de mensagem antes do `git commit`, ou a série de um ramo
-  ainda não juntado, contra o repositório.
+  ainda não mesclado, contra o repositório.
 - `adr/cartuchos-de-fatos/adr-e-notas.md` — um ADR ou uma nota do
   projeto contra o glossário, as decisões anteriores e o histórico.
 - `arquitetura-de-docs/cartuchos-de-fatos/documentacao.md` — a

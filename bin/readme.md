@@ -78,7 +78,7 @@ com `+=`), solta ou com `export`, `declare -x`, `env`, `env -S`, `printf
 -v`, `read`, `mapfile`, `getopts`, `let`, o `set` do fish (`set HOME
 /x`, `set -x`, com índice ou não) ou o `set home=` e o `setenv` do csh,
 ou tirada com `env -u`, `set -e` ou `set -u`, antes de um git que
-commita, junta, puxa ou envia, que desliga os da configuração; tirar
+commita, mescla, puxa ou envia, que desliga os da configuração; tirar
 `CLAUDECODE` do ambiente (`unset`, `env -u`, `env CLAUDECODE=`, `env
 -i`, `export -n`, `set -e`, `unsetenv`); escrever `refs/notes/revisao`
 sem o `git revisao`, com a ref que o git usaria (o último `--ref` antes

@@ -151,7 +151,7 @@ provedor, escolha o mesmo nível pelo nome; com modelos locais, o mais
 forte que responda em velocidade interativa. O subagente que herda o
 modelo herda o carro-chefe quando a sessão roda nele, o que custa mais e
 roda mais devagar do que uma revisão precisa. O menor nível não dá conta.
-Na medição de 2026-10-24, sobre quatro ramos já juntados de um
+Na medição de 2026-10-24, sobre quatro ramos já mesclados de um
 repositório (código de aplicação, ferramentas em Python, instruções para
 agentes, ferramentas de LaTeX), foram 48 rodadas dos quatro eixos contra
 os defeitos que a revisão original tinha consertado. O Claude Haiku 4.5
@@ -406,7 +406,7 @@ relate outra vez com o bloco do passo 6, com o veredito novo, e pare: o
 merge e o push ficam com o usuário ou com o fluxo do repositório.
 
 Pule este passo quando o repositório proibir reescrever um ramo não
-juntado, ou quando o ramo já tiver sido enviado por push para outros se
+mesclado, ou quando o ramo já tiver sido enviado por push para outros se
 apoiarem nele. A condensação não toca o que já está no ramo principal;
 a mensagem que já está lá segue a seção 6 do cartucho de mensagem de
 commit.

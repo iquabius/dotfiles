@@ -14,7 +14,7 @@ instalada à parte.
 
 Todo trabalho, de pessoa ou de agente, chega ao `main` assim (decisão de
 2026-10-07, revista em 2026-10-14). O que está no `main` ou foi enviado é
-registro e não se reescreve; o ramo ainda não juntado é rascunho, e a
+registro e não se reescreve; o ramo ainda não mesclado é rascunho, e a
 história dele se condensa antes do merge (passo 5).
 
 1. **Ramo no lugar.** Antes do primeiro commit, `git switch -c <tarefa>`
@@ -73,7 +73,7 @@ história dele se condensa antes do merge (passo 5).
 
 Nunca, no que já está no `main` ou foi enviado: `git commit --amend`,
 rebase ou outra reescrita da história, `git rebase main`, merge squash.
-Nunca, em lugar nenhum: `--no-verify`. No ramo ainda não juntado,
+Nunca, em lugar nenhum: `--no-verify`. No ramo ainda não mesclado,
 reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 
 ## Portões

@@ -5,7 +5,7 @@ Cartucho de checagem de fatos do registro desta skill, a
 `checagem-de-fatos`.
 
 O artefato é uma mensagem de commit: um rascunho antes do `git commit`,
-ou a série de um ramo ainda não juntado (`git log <base>..HEAD`, diff de
+ou a série de um ramo ainda não mesclado (`git log <base>..HEAD`, diff de
 três pontos contra o merge-base). A mensagem inteira presta contas à
 verdade: um assunto, uma descrição do problema, um motivo, uma
 alternativa recusada, uma frase de escopo e um teste são, cada um, uma
@@ -19,7 +19,7 @@ pede (ela pede que uma de duas implementações se escreva como a outra,
 para o par diferir o mínimo, e não pede que as duas tenham os mesmos
 métodos), e que atribuíam a um commit o que outro tinha feito. Os dois
 foram pegos por um eixo da revisão depois do commit, antes do merge. A
-regra do projeto deixava condensar o ramo ainda não juntado, mas o
+regra do projeto deixava condensar o ramo ainda não mesclado, mas o
 agente a leu como se proibisse reescrever o commit revisado, e cada
 erro ganhou errata numa mensagem posterior: um no mesmo ramo, o outro
 depois do merge. A checagem tem de rodar antes do commit,
@@ -103,7 +103,7 @@ linha de assunto de um commit (assuntos resumem; o diff decide).
 - **sha + o que ele fez**: "X entrou em `<sha>`" — o diff de `<sha>` tem
   de mostrar X entrando; se ele só tirou um qualificativo, `git log -S`
   acha o commit que acrescentou X. Um sha do **mesmo ramo ainda não
-  juntado** é alvo móvel: o rebase de condensação muda o sha. Depois do
+  mesclado** é alvo móvel: o rebase de condensação muda o sha. Depois do
   rebase, cada sha se confere de novo, e a mensagem que cita um commit do
   ramo cita ao lado o assunto dele entre aspas, como faz o trailer
   `Fixes:`;
@@ -181,7 +181,7 @@ pendências do relatório, com a fonte que faltou.
 - **Rascunho**: reescreva antes do commit. O agente autor corrige o
   próprio rascunho sem perguntar; a regra do autor sobre quando um commit
   espera aprovação não muda.
-- **Ramo ainda não juntado**: `--amend` na ponta, `--fixup=<sha>` para um
+- **Ramo ainda não mesclado**: `--amend` na ponta, `--fixup=<sha>` para um
   commit anterior, depois o rebase que condensa; a árvore não muda
   (`git diff <reviewed-tip> HEAD` vazio), então só os eixos História e
   Fatos rodam de novo.
@@ -198,7 +198,7 @@ pendências do relatório, com a fonte que faltou.
   reescrita mantém todas as árvores, e o sha velho se procura onde já foi
   citado (o rastreador de tarefas, as notas) e se troca.
 
-No rascunho e no ramo ainda não juntado, o agente autor aplica um achado
+No rascunho e no ramo ainda não mesclado, o agente autor aplica um achado
 pela etapa 6 do motor: confere a correção antes de ela entrar na
 mensagem e procura a mesma afirmação nas outras mensagens da série e nos
 arquivos que o commit escreve. Uma frase que uma segunda passada acha
@@ -296,7 +296,7 @@ parte de qualquer eixo Codex da própria revisão.
 
 O subagente trabalha em lotes, como o pedido diz: cada turno relê
 o contexto inteiro dele, então um turno poupado é uma releitura dele
-poupada. Medido em 2026-10-26 sobre três ramos juntados de um
+poupada. Medido em 2026-10-26 sobre três ramos mesclados de um
 repositório, o mesmo pedido com o parágrafo dos lotes levou 24,
 34 e 24 turnos contra 29, 49 e 47, e 13%, 24% e 43% menos tokens,
 ponderados pelo preço (leituras de cache a um décimo, escritas de cache
@@ -406,7 +406,7 @@ cada comando que você rodou e cada arquivo que abriu, um por linha.
   commit que mudou quantas vezes o termo aparece no arquivo, e o diff
   dele é o que acrescenta o termo ao item. Veredito: falso; correção: o
   sha. Nessa época, a regra do projeto deixava condensar o ramo ainda
-  não juntado; o agente a leu como proibição, e a errata entrou na
+  não mesclado; o agente a leu como proibição, e a errata entrou na
   próxima mensagem que tocou o item.
 - **Nome como na tarefa, não como na bibliografia.** Uma mensagem de um
   repositório de texto acadêmico citou uma fonte por dois sobrenomes e o

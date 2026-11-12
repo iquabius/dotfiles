@@ -99,7 +99,7 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
 4. **Depois de um squash ou rebase, escreva a partir da árvore, não das
    mensagens antigas.** Uma fileira de commits pequenos é um diário.
    Guarde uma frase antiga só quando ela ainda bate com o diff.
-5. **A correção de um commit anterior do mesmo ramo ainda não juntado não
+5. **A correção de um commit anterior do mesmo ramo ainda não mesclado não
    é uma mudança nova.** Quando o ramo não chegou ao ramo principal e
    ninguém mais constrói em cima dele, faça o commit da correção com
    `git commit --fixup=<sha>` (ou faça amend do último commit), para que o
@@ -198,7 +198,7 @@ Por padrão, uma mensagem no ramo principal não se reescreve, e por isso
 um fato errado achado depois sobrevive como errata numa mensagem
 posterior; o repositório pode abrir uma exceção só para a mensagem ainda
 não enviada, com o aprovo do autor (seção 6 do cartucho desta skill). O
-sha do mesmo ramo ainda não juntado é um alvo móvel, que o rebase de
+sha do mesmo ramo ainda não mesclado é um alvo móvel, que o rebase de
 condensação reescreve: cite o assunto dele entre aspas ao lado, como faz
 o trailer `Fixes:`, e confira de novo depois do rebase. Toda mensagem
 que o rebase de condensação reescreve passa de novo pela autoconferência, contra a árvore do próprio commit
@@ -277,7 +277,7 @@ mensagem ainda tem de explicar a mudança sozinha.
    hooks (`--no-verify`) nem mude a configuração do git. Nunca faça amend,
    rebase nem force push de história que já está no ramo principal ou foi
    enviada para outros, a menos que o usuário peça; condensar os fixups
-   num ramo ainda não juntado (Antes de escrever, passo 5) não é isso.
+   num ramo ainda não mesclado (Antes de escrever, passo 5) não é isso.
 
 ## Autoconferência antes de mostrar o rascunho
 
