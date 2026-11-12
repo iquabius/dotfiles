@@ -59,7 +59,7 @@ muda() {
 	[[ $output != *leia.org* ]]
 }
 
-@test "ramo marcado como pronto e juntado por fast-forward passa" {
+@test "ramo marcado como pronto e mesclado por fast-forward passa" {
 	git switch -qc tarefa
 	muda bin/x
 	muda bin/x "corrige o achado da revisão"
@@ -95,7 +95,7 @@ muda() {
 	[[ $output == *"depois da revisão"* ]]
 }
 
-@test "main andou: merge --no-ff de ramo marcado passa, mesmo com o arquivo juntado sozinho" {
+@test "main andou: merge --no-ff de ramo marcado passa, mesmo com o arquivo mesclado sozinho" {
 	seq 1 20 >bin/n
 	git add bin/n && git commit -qm n
 	git revisao excecao -m "base do teste"
@@ -105,7 +105,7 @@ muda() {
 	git switch -q main
 	sed -i 's/^1$/um/' bin/n && git commit -qam "começo"
 	git revisao pronto
-	git merge -q --no-ff tarefa -m "junta a tarefa"
+	git merge -q --no-ff tarefa -m "mescla a tarefa"
 	run git push origin main
 	[ "$status" -eq 0 ]
 }
@@ -121,10 +121,10 @@ muda() {
 	echo main >bin/n && git commit -qam main
 	git revisao pronto
 	run git merge -q --no-ff tarefa
-	echo resolvido >bin/n && git commit -qam "junta a tarefa"
+	echo resolvido >bin/n && git commit -qam "mescla a tarefa"
 	run git push origin main
 	[ "$status" -ne 0 ]
-	[[ $output == *"junta a tarefa"* ]]
+	[[ $output == *"mescla a tarefa"* ]]
 	git revisao pronto
 	run git push origin main
 	[ "$status" -eq 0 ]
@@ -218,7 +218,7 @@ muda() {
 	echo main >bin/n && git commit -qam main
 	git revisao pronto
 	run git merge -q --no-ff tarefa
-	echo resolvido >bin/n && git commit -qam "junta a tarefa"
+	echo resolvido >bin/n && git commit -qam "mescla a tarefa"
 	git revisao pronto
 	GIT_COMMITTER_DATE=2020-01-01T10:00:00 git commit -q --amend --no-edit
 	run git push origin main
@@ -544,6 +544,6 @@ teste() {
 	export CLAUDECODE=1
 	run git merge -q --no-ff tarefa
 	echo resolvido >bin/n && git add bin/n
-	run git commit -qm "junta a tarefa"
+	run git commit -qm "mescla a tarefa"
 	[ "$status" -eq 0 ]
 }

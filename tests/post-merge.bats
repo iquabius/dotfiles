@@ -114,7 +114,7 @@ nao_sincronizou() {
 	muda . leia.org
 	git switch -q main
 	muda . outro.org
-	git merge -q --no-ff -m junta tarefa
+	git merge -q --no-ff -m mescla tarefa
 	nao_sincronizou
 }
 

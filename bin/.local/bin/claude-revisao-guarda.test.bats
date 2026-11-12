@@ -314,7 +314,7 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		recusa
 	done
 	for c in 'git push' 'git push -n origin main' 'git push -u origin t' \
-		'git push origin -- --no-verify' 'git merge --no-ff -m "Junta o ramo t: x" t' \
+		'git push origin -- --no-verify' 'git merge --no-ff -m "Mescla o ramo t: x" t' \
 		'git config --global alias.st status' 'git config --get alias.p' \
 		'git push -o --no-verify origin main' 'git push -o ci.skip origin main'; do
 		run guarda "$c"

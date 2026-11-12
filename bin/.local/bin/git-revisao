@@ -236,7 +236,7 @@ def tocado_por(lista, specs):
 
     Commit comum conta pelo que muda; merge, só pelo diff --cc, que fica
     vazio quando nenhum conflito foi resolvido à mão (o --name-only
-    listaria até o arquivo que se juntou sozinho).
+    listaria até o arquivo que se mesclou sozinho).
     """
     tocados = {}
     simples = [sha for sha, pais in lista if len(pais) < 2]

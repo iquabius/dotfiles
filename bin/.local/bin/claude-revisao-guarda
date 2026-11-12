@@ -10,7 +10,7 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   git-assunto-merge, em core.hooksPath, que desliga os hooks do
   repositório, ou em include.*, que traz outra configuração; trocar
   a configuração global pelo ambiente (GIT_CONFIG_GLOBAL, GIT_CONFIG_COUNT,
-  HOME...) antes de um git que commita, junta, puxa ou envia, porque é a
+  HOME...) antes de um git que commita, mescla, puxa ou envia, porque é a
   global que liga os hooks do git-revisao; tirar CLAUDECODE do ambiente,
   pelo qual o pre-commit reconhece o agente; e escrever as notas da
   revisão sem o git revisao, ou apontar a elas o core.notesRef ou o
@@ -60,7 +60,7 @@ from urllib.parse import unquote
 # do ambiente, ou o HOME e o XDG_CONFIG_HOME, onde o git a procura.
 CONFIG_DO_GIT = re.compile(r"(?:GIT_CONFIG_(?:GLOBAL|SYSTEM|COUNT|KEY_\d+|VALUE_\d+|PARAMETERS)"
                            r"|HOME|XDG_CONFIG_HOME)=")
-# Os subcomandos do git que commitam, juntam ou enviam, e por isso rodam os
+# Os subcomandos do git que commitam, mesclam ou enviam, e por isso rodam os
 # hooks que a configuração global liga.
 GRAVA_SUBS = ("commit", "merge", "pull", "push", "cherry-pick", "revert", "am")
 # Os comandos do shell que exportam ou declaram variáveis para os seguintes.
@@ -70,7 +70,7 @@ ENV_CONFIG = ("Recusado: trocar a configuração global do git pelo ambiente "
               "desliga os hooks do git-revisao. Para um "
               "repositório de teste, use uma suíte bats ou um script.")
 CLAUDECODE = "Recusado: CLAUDECODE é como o pre-commit do git-revisao reconhece o agente."
-GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; junte no "
+GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; mescle no "
             "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
 GH_AUTH = ("Recusado: este gh (o gh auth, ou o oauth_token do gh config) pode ler, "
            "criar, trocar ou apagar o token do gh, o que é do autor. Passam o gh auth "
@@ -853,7 +853,7 @@ def par_gravado(args):
     return (ps[0], ps[1]) if len(ps) >= 2 else None
 
 
-def gh_junta(args):
+def gh_mescla(args):
     """O gh que faz o merge pelo GitHub: gh pr merge, gh repo sync (o
     merge-upstream num repositório do GitHub), ou a API REST
     (/pulls/N/merge, /merges, /merge-upstream) ou a GraphQL
@@ -1158,7 +1158,7 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
             yield from decisoes(script, nivel + 1, do_shell)
         return
     if nome in GH:
-        if gh_junta(ps[1:]):
+        if gh_mescla(ps[1:]):
             yield "deny", GH_MERGE
         if gh_auth(ps[1:]):
             yield "deny", GH_AUTH
