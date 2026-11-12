@@ -22,8 +22,8 @@ resto da raiz o Stow não liga.
 | Pacote | O que instala |
 | --- | --- |
 | `fish` | `~/.config/fish` (config, plugins) |
-| `emacs` | `~/.config/emacs` (precisa do crafted-emacs clonado à parte — ver nota) |
-| `git` | `~/.gitconfig` (sem identidade — ver nota), com os hooks do `git-revisao` e do `git-assunto-merge` |
+| `emacs` | `~/.config/emacs` (precisa do crafted-emacs clonado à parte — ver *Avisos por pacote*) |
+| `git` | `~/.gitconfig` (sem identidade — ver *Avisos por pacote*), com os hooks do `git-revisao` e do `git-assunto-merge` |
 | `tmux` | `~/.tmux.conf` |
 | `ssh` | `~/.ssh/rc` |
 | `vscode` | `~/.config/Code/User` (fonte única dos ajustes de editor) |
@@ -77,71 +77,86 @@ entra nele, para pedir a revisão do ramo.
 
 ## Avisos por pacote
 
-- **A identidade do git não está aqui.** O `.gitconfig` público não guarda
-  `user.name`, `user.email` nem credenciais — isso vem de uma camada privada,
-  configurada à parte.
-- **VS Code é fonte única.** `Code - OSS`, `VSCodium` e Cursor são symlinks
-  internos que apontam para o pacote `vscode`: editar os ajustes do Code vale
-  para os quatro, inclusive os atalhos de teclado.
-- **O pacote `darkman` não guarda a localização.** O `config.yaml` público não
-  tem `lat`/`lng`: as coordenadas vêm de `DARKMAN_LAT`/`DARKMAN_LNG`, que têm
-  precedência sobre o arquivo e ficam numa camada privada, fora deste repo:
+### A identidade do git não está aqui
 
-  ```bash
-  mkdir -p ~/.config/systemd/user/darkman.service.d
-  cat > ~/.config/systemd/user/darkman.service.d/location.conf <<'EOF'
-  [Service]
-  Environment=DARKMAN_LAT=-00.00
-  Environment=DARKMAN_LNG=-00.00
-  EOF
-  chmod 600 ~/.config/systemd/user/darkman.service.d/location.conf
-  systemctl --user daemon-reload
-  systemctl --user enable --now darkman.service
-  ```
+O `.gitconfig` público não guarda `user.name`, `user.email` nem credenciais —
+isso vem de uma camada privada, configurada à parte.
 
-  Sem esse arquivo o darkman sobe e roda, mas **nunca faz transição** — o
-  `config.yaml` traz `usegeoclue: false`, então não há outra fonte de
-  localização. Confira com `systemctl --user status darkman.service`: o log
-  imprime o próximo nascer e pôr do sol, e um sinal trocado aparece ali e em
-  mais lugar nenhum.
-- **O pacote `openwhispr` contorna o fontconfig embutido do app.** O
-  OpenWhispr traz um libfontconfig mais velho que não lê os caches do sistema,
-  e a janela abre sem texto. A entrada de autostart do pacote o lança com
-  `FONTCONFIG_FILE` apontando para um cache próprio. Ela tem nome diferente do
-  `open-whispr.desktop` do app porque o app reescreve aquele a cada partida;
-  por isso o "iniciar com o sistema" das preferências dele fica desligado.
-  Instale com `--no-folding`: sem ele, numa máquina onde `~/.config/open-whispr`
-  ainda não existe, o Stow faz do diretório um symlink para cá, e o app passa a
-  gravar banco, logs e o `.env` com token dentro deste repo:
+### VS Code é fonte única
 
-  ```bash
-  cd ~/.dotfiles && stow --no-folding openwhispr
-  ```
-- **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
-  `~/.config/crafted-emacs/modules/…`, que não está neste repo — é preciso clonar
-  [crafted-emacs](https://github.com/SystemCrafters/crafted-emacs) à parte:
+`Code - OSS`, `VSCodium` e Cursor são symlinks internos que apontam para o
+pacote `vscode`: editar os ajustes do Code vale para os quatro, inclusive os
+atalhos de teclado.
 
-  ```bash
-  git clone https://github.com/SystemCrafters/crafted-emacs ~/.config/crafted-emacs
-  ```
+### O pacote `darkman` não guarda a localização
 
-  Para testar a configuração sem janela, carregue o init de verdade no
-  host, onde o Emacs roda (num contêiner, por `distrobox-host-exec`):
+O `config.yaml` público não tem `lat`/`lng`: as coordenadas vêm de
+`DARKMAN_LAT`/`DARKMAN_LNG`, que têm precedência sobre o arquivo e ficam numa
+camada privada, fora deste repo:
 
-  ```bash
-  emacs --batch -l ~/.config/emacs/early-init.el --eval '(package-activate-all)' \
-      -l ~/.config/emacs/init.el -l teste.el
-  ```
+```bash
+mkdir -p ~/.config/systemd/user/darkman.service.d
+cat > ~/.config/systemd/user/darkman.service.d/location.conf <<'EOF'
+[Service]
+Environment=DARKMAN_LAT=-00.00
+Environment=DARKMAN_LNG=-00.00
+EOF
+chmod 600 ~/.config/systemd/user/darkman.service.d/location.conf
+systemctl --user daemon-reload
+systemctl --user enable --now darkman.service
+```
 
-  Sem o `package-activate-all`, o `require` do ergoemacs falha; o
-  `teste.el` que lê variáveis locais de arquivo começa com `(setq
-  enable-local-variables :all)`.
+Sem esse arquivo o darkman sobe e roda, mas **nunca faz transição** — o
+`config.yaml` traz `usegeoclue: false`, então não há outra fonte de
+localização. Confira com `systemctl --user status darkman.service`: o log
+imprime o próximo nascer e pôr do sol, e um sinal trocado aparece ali e em
+mais lugar nenhum.
 
-  Função ou variável nova do init leva o prefixo `gambi/`
-  (`gambi/org-tex-commented-p`); as antigas com `my/` ficam como estão,
-  até alguém pedir para renomeá-las.
-- **O `fish_plugins` não instala nada sozinho.** O fisher não vem versionado
-  aqui; enquanto não for instalado à mão, o arquivo fica inerte (passo 5).
+### O pacote `openwhispr` contorna o fontconfig embutido do app
+
+O OpenWhispr traz um libfontconfig mais velho que não lê os caches do sistema,
+e a janela abre sem texto. A entrada de autostart do pacote o lança com
+`FONTCONFIG_FILE` apontando para um cache próprio. Ela tem nome diferente do
+`open-whispr.desktop` do app porque o app reescreve aquele a cada partida; por
+isso o "iniciar com o sistema" das preferências dele fica desligado. Instale
+com `--no-folding`: sem ele, numa máquina onde `~/.config/open-whispr` ainda
+não existe, o Stow faz do diretório um symlink para cá, e o app passa a gravar
+banco, logs e o `.env` com token dentro deste repo:
+
+```bash
+cd ~/.dotfiles && stow --no-folding openwhispr
+```
+
+### O pacote `emacs` não é autossuficiente
+
+O `init.el` carrega `~/.config/crafted-emacs/modules/…`, que não está neste
+repo — é preciso clonar
+[crafted-emacs](https://github.com/SystemCrafters/crafted-emacs) à parte:
+
+```bash
+git clone https://github.com/SystemCrafters/crafted-emacs ~/.config/crafted-emacs
+```
+
+Para testar a configuração sem janela, carregue o init de verdade no
+host, onde o Emacs roda (num contêiner, por `distrobox-host-exec`):
+
+```bash
+emacs --batch -l ~/.config/emacs/early-init.el --eval '(package-activate-all)' \
+    -l ~/.config/emacs/init.el -l teste.el
+```
+
+Sem o `package-activate-all`, o `require` do ergoemacs falha; o
+`teste.el` que lê variáveis locais de arquivo começa com `(setq
+enable-local-variables :all)`.
+
+Função ou variável nova do init leva o prefixo `gambi/`
+(`gambi/org-tex-commented-p`); as antigas com `my/` ficam como estão,
+até alguém pedir para renomeá-las.
+
+### O `fish_plugins` não instala nada sozinho
+
+O fisher não vem versionado aqui; enquanto não for instalado à mão, o arquivo
+fica inerte (passo 5).
 
 ## Skills de agente
 
