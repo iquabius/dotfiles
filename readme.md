@@ -250,9 +250,10 @@ cd ~/.dotfiles && git config core.hooksPath .githooks
 ```
 
 O `pre-commit` recusa `/home/<user>/` e `/Users/<user>/` nas linhas
-adicionadas: caminho absoluto de home entrega o nome da conta da máquina que
-escreveu a linha, e três já tinham entrado aqui desse jeito. Só as linhas
-novas são olhadas, e `git commit --no-verify` passa por cima quando for
+adicionadas, fora das contas de sistema `linuxbrew`, `runner` e `root`:
+caminho absoluto de home entrega o nome da conta da máquina que escreveu a
+linha, e três já tinham entrado aqui desse jeito. Só as linhas novas são
+olhadas, e `git commit --no-verify` passa por cima quando for
 mesmo o caso. O `post-merge` roda o `stow -R bin`, daqui e da camada
 privada, depois de todo pull que muda o pacote `bin` de um dos dois, e o
 `skills-sync` depois de todo pull que muda as skills, os perfis ou o próprio
