@@ -118,12 +118,13 @@ pôr do sol, e um sinal trocado aparece ali e em mais lugar nenhum.
 
 O OpenWhispr traz um libfontconfig mais velho que não lê os caches do sistema,
 e a janela abre sem texto. A entrada de autostart do pacote o lança com
-`FONTCONFIG_FILE` apontando para um cache próprio. Ela tem nome diferente do
-`open-whispr.desktop` do app porque o app reescreve aquele a cada partida; por
-isso o "iniciar com o sistema" das preferências dele fica desligado. Instale
-com `--no-folding`: sem ele, numa máquina onde `~/.config/open-whispr` ainda
-não existe, o Stow faz do diretório um symlink para cá, e o app passa a gravar
-banco, logs e o `.env` com token dentro deste repo:
+`FONTCONFIG_FILE` apontando para um `fonts.conf` que declara um cache
+próprio. Ela tem nome diferente do `open-whispr.desktop` do app porque o app
+pode reescrever aquele ao abrir; por isso o "iniciar com o sistema" das
+preferências dele fica desligado. Instale com `--no-folding`: sem ele, numa
+máquina onde `~/.config/open-whispr` ainda não existe, o Stow faz do diretório
+um symlink para cá, e o app passa a gravar banco, logs e o `.env` com token
+dentro deste repo:
 
 ```bash
 cd ~/.dotfiles && stow --no-folding openwhispr
