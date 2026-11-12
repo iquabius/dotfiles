@@ -332,8 +332,8 @@ passadas em sequência, a segunda sobre o texto corrigido, com ids novos e
 subagentes novos que nunca veem o primeiro relatório; o padrão de uma
 série de commits é a conferência do próprio agente autor antes de cada
 commit, uma passada sobre a série na revisão do ramo e outra sobre a
-série condensada. Rodar duas passadas sobre o
-mesmo texto sem mudança gasta a segunda no que a primeira já achou.
+série condensada. Sobre o mesmo texto sem mudança, a segunda passada
+confere de novo as mesmas afirmações, e nenhuma correção.
 
 ## O pedido ao subagente
 
