@@ -159,7 +159,7 @@ segurança, uma migração de dados e um revert sempre levam corpo.
   mudar comportamento termina o corpo com "No functional change." A frase
   é uma promessa que o revisor vai conferir.
 - **Nunca descreva o diff.** "Added function X, modified Y, updated tests"
-  é para isso que existe o `git show --stat`. Se o corpo só lista
+  é para isso que existe o `git show`. Se o corpo só lista
   mudanças, apague-o e recomece do problema.
 - **Nada de verbo vazio.** Nunca escreva "improve", "enhance", "clean up"
   ou "refactor for maintainability" sem dizer o que era difícil antes.
