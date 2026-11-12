@@ -11,8 +11,9 @@ deste repositório e com instruções próprias.
 
 ## Como está montado
 
-Cada diretório na raiz é um **pacote Stow** cuja árvore espelha o `$HOME`. Rodar
-`stow <pacote>` cria os symlinks correspondentes no `$HOME`.
+Os diretórios da raiz que a tabela abaixo lista são **pacotes Stow**, cada um
+com a árvore que espelha o `$HOME`; os outros estão em *Detalhes que valem
+saber*. Rodar `stow <pacote>` cria os symlinks correspondentes no `$HOME`.
 
 | Pacote | O que instala |
 | --- | --- |
@@ -81,6 +82,10 @@ Detalhes que valem saber:
   `skills-sync` (ver *Skills de agente*).
 - **`scripts/` também não.** Scripts do repositório que não vão para o
   `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda.
+- **`tests/` também não.** Suítes bats do repositório, que o `make check`
+  roda junto das `*.test.bats` dos scripts, ao lado deles em `bin/`.
+- **`skills/` também não.** É uma stow dir própria, com um pacote por skill
+  (ver *Skills de agente*).
 - **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
   senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
