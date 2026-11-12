@@ -108,11 +108,11 @@ systemctl --user daemon-reload
 systemctl --user enable --now darkman.service
 ```
 
-Sem esse arquivo o darkman sobe e roda, mas **nunca faz transição** — o
-`config.yaml` traz `usegeoclue: false`, então não há outra fonte de
-localização. Confira com `systemctl --user status darkman.service`: o log
-imprime o próximo nascer e pôr do sol, e um sinal trocado aparece ali e em
-mais lugar nenhum.
+Sem esse arquivo, ou as mesmas variáveis por outro meio, o darkman sobe e
+roda, mas **nunca faz transição sozinho** — o `config.yaml` traz
+`usegeoclue: false`, então não há outra fonte de localização. Confira com
+`systemctl --user status darkman.service`: o log imprime o próximo nascer e
+pôr do sol, e um sinal trocado aparece ali e em mais lugar nenhum.
 
 ### O pacote `openwhispr` contorna o fontconfig embutido do app
 
