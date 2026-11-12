@@ -257,8 +257,8 @@ olhadas, e `git commit --no-verify` passa por cima quando for
 mesmo o caso. O `post-merge` roda o `stow -R bin`, daqui e da camada
 privada, depois de todo pull que muda o pacote `bin` de um dos dois, e o
 `skills-sync` depois de todo pull que muda as skills, os perfis ou o próprio
-`skills-sync` (ver *Skills de agente*); numa worktree ou num clone fora do
-`~/.dotfiles`, nada.
+`skills-sync` (ver *Skills de agente*); fora dos checkouts `~/.dotfiles` e
+`~/.dotfiles-private` (numa worktree, noutro clone), nada.
 
 ### 3. Aplicar os symlinks
 
