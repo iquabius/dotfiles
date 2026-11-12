@@ -222,8 +222,9 @@ sudo zypper install -y stow fish tmux git-delta starship zoxide fzf gh yt-dlp
 
 Em Debian/Ubuntu e Fedora os nomes são quase os mesmos; a exceção é o `delta`,
 que o `.gitconfig` usa como pager e o RPM chama de **`git-delta`** (`apt`:
-`git-delta`; binário `delta` nos dois). `starship`, `zoxide` e `fzf` são
-opcionais — o `config.fish` guarda cada um com `type -q`.
+`git-delta`; binário `delta` nos dois). `starship` e `zoxide` são opcionais
+— o `config.fish` guarda cada um com `type -q`; o `fzf` é dependência do
+plugin `fzf.fish` do `fish_plugins`.
 
 Nenhuma variante do VS Code está nos repos do Tumbleweed: para usar os pacotes
 `vscode*`, instale o Code pelo repo da Microsoft ou o VSCodium pelo dele.
