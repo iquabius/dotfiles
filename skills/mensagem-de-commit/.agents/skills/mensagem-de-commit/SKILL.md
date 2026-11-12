@@ -307,9 +307,10 @@ mensagem ainda tem de explicar a mudança sozinha.
      da execução.
   4. **Afirmações de sabotagem.** A frase que diz que um teste falha numa
      cópia quebrada, numa variante ou num caso: rode o teste nessa cópia.
-  5. **Escopo.** "Only", "no functional change", "does not touch":
-     `git diff --staged --stat` (ou `git show --stat <sha>`) contra a
-     frase.
+  5. **Escopo.** "Only" e "does not touch": `git diff --staged --stat`
+     (ou `git show --stat <sha>`) contra a frase. "No functional
+     change": também o diff lido, com `-w` ou `--color-moved`, atrás de
+     uma linha que mude comportamento, e os testes.
   6. **Outros commits.** Procure "next", "previous", "later", "not yet" (e
      as palavras da língua do repositório): a frase que só é verdadeira
      com outro commit da série sai, ou cita o assunto desse commit.
