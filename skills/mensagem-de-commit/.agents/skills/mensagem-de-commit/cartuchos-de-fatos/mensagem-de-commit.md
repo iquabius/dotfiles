@@ -185,10 +185,12 @@ pendências do relatório, com a fonte que faltou.
   commit anterior, depois o rebase que condensa; a árvore não muda
   (`git diff <reviewed-tip> HEAD` vazio), então só os eixos História e
   Fatos rodam de novo.
-- **Enviado para outros**: nunca reescrito. A errata vai na próxima
-  mensagem que tocar o assunto ("Errata de <sha>: …"), e a checagem vem
-  mais cedo da próxima vez. A errata cita a frase velha e o fato certo, e
-  a frase dela passa pelo momento 1 como qualquer outra.
+- **Enviado para outros**: não se reescreve para consertar a mensagem.
+  A errata vai na próxima mensagem que tocar o assunto ("Errata de
+  <sha>: …"), e a checagem vem mais cedo da próxima vez. A errata cita a
+  frase velha e o fato certo, e a frase dela passa pelo momento 1 como
+  qualquer outra. A reescrita da história que o usuário pede (passo 4 do
+  Fluxo do `SKILL.md`) é outra decisão, que um achado de Fatos não abre.
 - **Ramo principal, ainda não enviado**: decide a regra do repositório.
   Por padrão não se reescreve, e a errata vai como acima. Um repositório
   pode abrir uma janela só para a mensagem, com a aprovação do autor (um
