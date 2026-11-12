@@ -64,7 +64,8 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
 1. **Leia a própria mudança.** Prefira o retrato do que está no stage
    (`git diff --staged`); na falta dele, `git diff`. Ao reescrever a
    mensagem de um commit que já existe, leia-o contra o pai com
-   `git show <commit>`.
+   `git show <commit>` (num merge, contra o primeiro pai, com
+   `git show --diff-merges=first-parent <commit>`).
 2. **Diga a mudança em duas frases:** o que estava errado, e por que esta
    correção. Se não conseguir, o commit talvez tenha mais de uma mudança
    lógica. Divida-o quando as partes se separam limpamente, de modo que
