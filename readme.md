@@ -1,8 +1,9 @@
 # dotfiles
 
 Minha configuração pessoal, gerenciada com [GNU Stow](https://www.gnu.org/software/stow/).
-A identidade e as credenciais do git ficam numa **camada privada separada**, à parte
-deste repositório e com instruções próprias.
+A identidade e as credenciais do git ficam na **camada privada**: o repositório
+`~/.dotfiles-private`, à parte deste, com instruções próprias, que só as
+máquinas pessoais têm.
 
 > As instruções abaixo cobrem **macOS** e **Linux**. Comandos específicos de um
 > ou de outro estão marcados com **(macOS)** e **(Linux)**. Os passos de Linux
@@ -80,7 +81,7 @@ entra nele, para pedir a revisão do ramo.
 ### A identidade do git não está aqui
 
 O `.gitconfig` público não guarda `user.name`, `user.email` nem credenciais —
-isso vem de uma camada privada, configurada à parte.
+isso vem do `~/.gitconfig.local`, configurado à parte.
 
 ### VS Code é fonte única
 
@@ -91,8 +92,9 @@ atalhos de teclado.
 ### O pacote `darkman` não guarda a localização
 
 O `config.yaml` público não tem `lat`/`lng`: as coordenadas vêm de
-`DARKMAN_LAT`/`DARKMAN_LNG`, que têm precedência sobre o arquivo e ficam numa
-camada privada, fora deste repo:
+`DARKMAN_LAT`/`DARKMAN_LNG`, que têm precedência sobre o arquivo e ficam num
+drop-in do systemd, fora deste repo (nas máquinas pessoais, o da camada
+privada):
 
 ```bash
 mkdir -p ~/.config/systemd/user/darkman.service.d
@@ -306,7 +308,7 @@ mv "<arquivo em conflito>" ~/.dotfiles-backup/
 Dois conflitos são quase certos numa máquina já usada:
 
 - **`~/.gitconfig`** — normalmente já existe com a identidade dentro. Mova a
-  identidade para `~/.gitconfig.local` (a camada privada, incluída no fim do
+  identidade para `~/.gitconfig.local` (incluído no fim do
   `.gitconfig` público) antes de tirar o arquivo da frente.
 - **`~/.emacs`** — se existir, o Emacs **ignora** `~/.config/emacs` e não avisa:
   o caminho XDG só vale quando não há `~/.emacs`, `~/.emacs.el` nem
@@ -357,11 +359,12 @@ entram antes no `PATH`.
 
 ### 7. Camada privada e conferência
 
-Configure a **camada privada** à parte (identidade e credenciais do git), seguindo
-as instruções dela. Como o `[include]` dela é a **última** diretiva do
-`.gitconfig` público, ela também serve de camada de override por máquina — útil
-porque o `core.editor` daqui é `cursor --wait` e o difftool é o `code`, que nem
-sempre existem:
+A identidade e as credenciais do git vão no `~/.gitconfig.local`: nas
+máquinas pessoais, configure a **camada privada**, seguindo as instruções
+dela, que o liga; nas outras, escreva-o à mão. Como o `[include]` dele é a
+**última** diretiva do `.gitconfig` público, ele também serve de override
+por máquina — útil porque o `core.editor` daqui é `cursor --wait` e o
+difftool é o `code`, que nem sempre existem:
 
 ```ini
 # ~/.gitconfig.local, numa máquina sem Cursor nem VS Code
@@ -374,7 +377,7 @@ sempre existem:
 Em seguida confira:
 
 ```bash
-git config user.email   # deve estar preenchido pela camada privada
+git config user.email   # deve vir do ~/.gitconfig.local
 git config core.pager   # delta
 fish -c 'fisher list'   # seis plugins
 ```
