@@ -24,15 +24,13 @@ história dele se condensa antes do merge (passo 5).
 2. **Primeira versão commitada** assim que funciona: o Emacs abre sem
    erro, o fish carrega num terminal novo, o script roda e o `make
    check` passa (ver *Testes*).
-3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
-   `.config/revisao`: o próprio `.config/revisao`, hooks, Emacs Lisp,
-   fish, scripts de shell, o `Makefile`, o `pacotes/bin/.local/bin/`, o
-   `scripts/`, as suítes de `tests/`, o `pacotes/ssh/.ssh/rc`, o
-   `pacotes/git/.gitconfig`, que liga os hooks do ciclo, e o
-   `pacotes/claude/`, que registra o guarda), rode a skill
-   `revisao-rigorosa` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
-   só de texto ou de configuração simples (readme, `settings.json` dos
-   editores, `tmux.conf`, `latexmkrc`) dispensa a revisão, mas não o
+3. **Revisão do ramo inteiro.** Quando o ramo muda código (um caminho
+   que casa com uma linha do [`.config/revisao`](.config/revisao), como
+   os hooks, os scripts e as suítes, o `Makefile`, o Emacs Lisp, o fish,
+   o `pacotes/ssh/.ssh/rc` e a configuração que liga os portões), rode a
+   skill `revisao-rigorosa` sobre `$(git merge-base main HEAD)...HEAD`.
+   Ramo só de texto ou de configuração simples (readme, `settings.json`
+   dos editores, `tmux.conf`, `latexmkrc`) dispensa a revisão, mas não o
    ramo.
 4. **Cada achado bloqueante vira um conserto** no ramo: `git commit
    --fixup=<commit que ele corrige>`, ou commit novo quando ele não
