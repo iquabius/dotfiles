@@ -34,6 +34,23 @@ valem saber*. Rodar `stow <pacote>` cria os symlinks correspondentes no `$HOME`.
 
 Detalhes que valem saber:
 
+- **`.githooks/` não é pacote Stow.** É hook de repositório, ligado com
+  `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
+- **`.config/` também não.** O `.config/revisao` lista os caminhos de código
+  que pedem revisão do ramo antes do `main`; o ciclo está no `AGENTS.md`.
+- **`profiles/` também não.** Os perfis de skills de agente, lidos pelo
+  `skills-sync` (ver *Skills de agente*).
+- **`scripts/` também não.** Scripts do repositório que não vão para o
+  `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda.
+- **`tests/` também não.** Suítes bats do repositório, que o `make check`
+  roda junto das `*.test.bats` dos scripts, ao lado deles em `pacotes/bin/`.
+- **`skills/` também não.** É uma stow dir própria, com um pacote por skill
+  (ver *Skills de agente*).
+- **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
+  senhas ou cifrados com `age`.
+
+## Avisos por pacote
+
 - **A identidade do git não está aqui.** O `.gitconfig` público não guarda
   `user.name`, `user.email` nem credenciais — isso vem de uma camada privada,
   configurada à parte.
@@ -74,20 +91,6 @@ Detalhes que valem saber:
   ```bash
   cd ~/.dotfiles && stow --no-folding openwhispr
   ```
-- **`.githooks/` não é pacote Stow.** É hook de repositório, ligado com
-  `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
-- **`.config/` também não.** O `.config/revisao` lista os caminhos de código
-  que pedem revisão do ramo antes do `main`; o ciclo está no `AGENTS.md`.
-- **`profiles/` também não.** Os perfis de skills de agente, lidos pelo
-  `skills-sync` (ver *Skills de agente*).
-- **`scripts/` também não.** Scripts do repositório que não vão para o
-  `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda.
-- **`tests/` também não.** Suítes bats do repositório, que o `make check`
-  roda junto das `*.test.bats` dos scripts, ao lado deles em `pacotes/bin/`.
-- **`skills/` também não.** É uma stow dir própria, com um pacote por skill
-  (ver *Skills de agente*).
-- **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
-  senhas ou cifrados com `age`.
 - **O pacote `emacs` não é autossuficiente.** O `init.el` carrega
   `~/.config/crafted-emacs/modules/…`, que não está neste repo — é preciso clonar
   [crafted-emacs](https://github.com/SystemCrafters/crafted-emacs) à parte:
