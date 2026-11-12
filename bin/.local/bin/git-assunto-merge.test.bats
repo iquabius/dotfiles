@@ -27,12 +27,12 @@ setup() {
 	run git merge -q --no-ff tarefa
 	[ "$status" -ne 0 ]
 	[[ $output == *"Merge branch 'tarefa'"* ]]
-	[[ $output == *"git commit -m \"Junta o ramo tarefa: <o que o ramo traz>\""* ]]
+	[[ $output == *"git commit -m \"Mescla o ramo tarefa: <o que o ramo traz>\""* ]]
 	# O merge fica por concluir, e o comando da recusa o conclui.
 	git rev-parse -q --verify MERGE_HEAD
-	run git commit -q -m 'Junta o ramo tarefa: a tarefa feita'
+	run git commit -q -m 'Mescla o ramo tarefa: a tarefa feita'
 	[ "$status" -eq 0 ]
-	[ "$(git log -1 --format=%s)" = "Junta o ramo tarefa: a tarefa feita" ]
+	[ "$(git log -1 --format=%s)" = "Mescla o ramo tarefa: a tarefa feita" ]
 	[ "$(git rev-parse HEAD^2)" = "$(git rev-parse tarefa)" ]
 }
 
@@ -43,9 +43,9 @@ setup() {
 	[ "$status" -ne 0 ]
 	# Não há merge por concluir: o git commit -m faria um commit novo.
 	[[ $output != *"por concluir"* ]]
-	[[ $output == *"git commit --amend -m \"Junta o ramo tarefa: <o que o ramo traz>\""* ]]
+	[[ $output == *"git commit --amend -m \"Mescla o ramo tarefa: <o que o ramo traz>\""* ]]
 	[ "$(git rev-parse HEAD)" = "$merge" ]
-	run git commit -q --amend -m 'Junta o ramo tarefa: a tarefa feita'
+	run git commit -q --amend -m 'Mescla o ramo tarefa: a tarefa feita'
 	[ "$status" -eq 0 ]
 	[ "$(git rev-parse HEAD^2)" = "$(git rev-parse tarefa)" ]
 }
@@ -56,7 +56,7 @@ setup() {
 	# O HEAD não é merge: o --amend reescreveria o commit de antes.
 	[[ $output != *"--amend"* ]]
 	[[ $output != *"por concluir"* ]]
-	[[ $output == *"git commit -m \"Junta o ramo tarefa: <o que o ramo traz>\""* ]]
+	[[ $output == *"git commit -m \"Mescla o ramo tarefa: <o que o ramo traz>\""* ]]
 }
 
 @test "merge com HEAD solto: o ramo do comando não leva o into HEAD" {
@@ -64,23 +64,31 @@ setup() {
 	run git merge -q --no-ff tarefa
 	[ "$status" -ne 0 ]
 	[[ $output == *"Merge branch 'tarefa' into HEAD"* ]]
-	[[ $output == *"\"Junta o ramo tarefa: <o que o ramo traz>\""* ]]
+	[[ $output == *"\"Mescla o ramo tarefa: <o que o ramo traz>\""* ]]
 }
 
-@test "merge com o assunto Junta o ramo passa" {
-	run git merge -q --no-ff -m 'Junta o ramo tarefa: a tarefa feita' tarefa
+@test "merge com o assunto Mescla o ramo passa" {
+	run git merge -q --no-ff -m 'Mescla o ramo tarefa: a tarefa feita' tarefa
 	[ "$status" -eq 0 ]
-	[ "$(git log -1 --format=%s)" = "Junta o ramo tarefa: a tarefa feita" ]
+	[ "$(git log -1 --format=%s)" = "Mescla o ramo tarefa: a tarefa feita" ]
 }
 
-@test "Junta o ramo sem dizer o que o ramo traz é recusado" {
+@test "Mescla o ramo sem dizer o que o ramo traz é recusado" {
+	run git merge -q --no-ff -m 'Mescla o ramo tarefa:' tarefa
+	[ "$status" -ne 0 ]
+	[[ $output == *"o que o ramo traz"* ]]
+	run git commit -q -m 'Mescla o ramo tarefa: <o que o ramo traz>'
+	[ "$status" -ne 0 ]
+	run git commit -q -m 'Mescla o ramo tarefa:   '
+	[ "$status" -ne 0 ]
+	run git commit -q -m 'Mescla o ramo tarefa: a tarefa feita'
+	[ "$status" -eq 0 ]
+}
+
+@test "a forma antiga, Junta o ramo, passa e também se recusa vazia" {
 	run git merge -q --no-ff -m 'Junta o ramo tarefa:' tarefa
 	[ "$status" -ne 0 ]
 	[[ $output == *"o que o ramo traz"* ]]
-	run git commit -q -m 'Junta o ramo tarefa: <o que o ramo traz>'
-	[ "$status" -ne 0 ]
-	run git commit -q -m 'Junta o ramo tarefa:   '
-	[ "$status" -ne 0 ]
 	run git commit -q -m 'Junta o ramo tarefa: a tarefa feita'
 	[ "$status" -eq 0 ]
 }
@@ -96,7 +104,7 @@ setup() {
 	printf "# comentário do editor\n\nMerge branch 'tarefa'\n" >"$BATS_TEST_TMPDIR/msg"
 	run "$SCRIPT" commit-msg "$BATS_TEST_TMPDIR/msg"
 	[ "$status" -ne 0 ]
-	[[ $output == *"Junta o ramo tarefa"* ]]
+	[[ $output == *"Mescla o ramo tarefa"* ]]
 	printf '# comentário do editor\nConserta o teste\n' >"$BATS_TEST_TMPDIR/msg"
 	run "$SCRIPT" commit-msg "$BATS_TEST_TMPDIR/msg"
 	[ "$status" -eq 0 ]

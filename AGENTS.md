@@ -64,7 +64,7 @@ história dele se condensa antes do merge (passo 5).
    ```sh
    git switch main
    git merge --ff-only <tarefa> ||
-       git merge --no-ff -m "Junta o ramo <tarefa>: <o que o ramo traz>" <tarefa>
+       git merge --no-ff -m "Mescla o ramo <tarefa>: <o que o ramo traz>" <tarefa>
    git revisao pendente   # tem de dizer "nada pendente"
    git branch -d <tarefa>
    ```
@@ -96,8 +96,8 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   novas.
 - **commit-msg** (`git-assunto-merge`, hook global do pacote `git`):
   recusa no commit de merge o assunto "Merge branch '<ramo>'", que o git
-  escreve quando o merge vem sem `-m`, e o "Junta o ramo <ramo>:" que não
-  diz o que o ramo traz.
+  escreve quando o merge vem sem `-m`, e o "Mescla o ramo <ramo>:" (ou o
+  "Junta o ramo <ramo>:" antigo) que não diz o que o ramo traz.
 - **Hook do Claude** (`claude-revisao-guarda`, registrado no
   `~/.claude/settings.json` pelo pacote `claude` ou pelo da camada
   privada): recusa as formas diretas de pular os hooks (`git

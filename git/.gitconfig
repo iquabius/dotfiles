@@ -65,7 +65,7 @@
 	event = pre-commit
 	command = "$HOME/.dotfiles/bin/.local/bin/git-revisao pre-commit"
 
-# O merge de um ramo diz em português o que ele traz: "Junta o ramo <ramo>:
+# O merge de um ramo diz em português o que ele traz: "Mescla o ramo <ramo>:
 # ...", e não o "Merge branch" do git (git-assunto-merge, pacote bin). Vale
 # em todo repositório; um sai com `git config hook.assunto-merge.enabled false`.
 [hook "assunto-merge"]

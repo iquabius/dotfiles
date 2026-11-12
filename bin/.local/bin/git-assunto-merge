@@ -7,11 +7,13 @@ git, git 2.54 ou mais novo), no git commit e no git merge:
     git-assunto-merge commit-msg <arquivo da mensagem>
 
 Recusa o assunto "Merge branch '<ramo>'" (com ou sem " into <ramo>") que o
-git escreve sozinho quando o merge vem sem -m, e o "Junta o ramo <ramo>:"
-que não diz o que o ramo traz. O merge recusado fica por concluir, e a
-recusa dá o git commit -m que o conclui; no --amend de um merge já feito,
-dá o --amend -m. O merge de um pull ("Merge branch '<ramo>' of <url>"),
-o de um ramo remoto ("Merge remote-tracking branch"), o de vários ramos,
+git escreve sozinho quando o merge vem sem -m, e o "Mescla o ramo <ramo>:"
+que não diz o que o ramo traz, também na forma antiga, "Junta o ramo
+<ramo>:", que os merges feitos antes da troca de 2026-11-12 usam. O merge
+recusado pelo "Merge branch" fica por concluir, e a recusa dá o git commit
+-m "Mescla o ramo ..." que o conclui; no --amend de um merge já feito, dá o
+--amend -m. O merge de um pull ("Merge branch '<ramo>' of <url>"), o de um
+ramo remoto ("Merge remote-tracking branch"), o de vários ramos,
 o de um commit e o de uma tag passam. Um repositório sai com
 `git config hook.assunto-merge.enabled false`.
 """
@@ -21,7 +23,7 @@ import subprocess
 import sys
 
 MERGE_DO_GIT = re.compile(r"^Merge branch '([^']+)'(?: into \S+)?$")
-JUNTA = re.compile(r"^Junta o ramo \S+:(.*)$")
+MESCLA = re.compile(r"^(?:Mescla|Junta) o ramo \S+:(.*)$")
 RESUMO = "<o que o ramo traz>"
 
 
@@ -67,8 +69,8 @@ def cmd_commit_msg(args):
         return recusa(
             f'  "{s}" é o assunto que o git escreve sozinho; o merge diz em\n'
             f"  português o que o ramo traz. {estado}:\n"
-            f'  $ {comando} -m "Junta o ramo {m[1]}: {RESUMO}"')
-    m = JUNTA.match(s)
+            f'  $ {comando} -m "Mescla o ramo {m[1]}: {RESUMO}"')
+    m = MESCLA.match(s)
     if m and (not m[1].strip() or RESUMO in m[1]):
         return recusa(
             f'  "{s}" não diz o que o ramo traz: troque {RESUMO} por ele.')

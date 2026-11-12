@@ -227,16 +227,16 @@ uma cópia sabotada.
 O pacote `git` liga o hook global `commit-msg` (`[hook "assunto-merge"]`,
 git 2.54 ou mais novo), que o git chama no `git commit` e no `git merge`.
 Ele recusa o assunto "Merge branch '<ramo>'", com ou sem " into <ramo>", que
-o git escreve quando o merge vem sem `-m`, e o "Junta o ramo <ramo>:" que
-não diz o que o ramo traz. O merge recusado fica por concluir, e a recusa
-dá o `git commit -m "Junta o ramo <ramo>: <o que o ramo traz>"` que o
-conclui; no `git commit --amend` de um merge já feito (sem `MERGE_HEAD`),
-dá o `git commit --amend -m`, que mantém os pais. O merge de um pull ("Merge
-branch '<ramo>' of <url>"), o de um ramo remoto ("Merge remote-tracking
-branch"), o de vários ramos ("Merge branches"), o de um commit e o de uma
-tag passam: a regra é do merge de um ramo de tarefa. Vale em todo
-repositório; um repositório sai com `git config hook.assunto-merge.enabled
-false`.
+o git escreve quando o merge vem sem `-m`, e o "Mescla o ramo <ramo>:" (ou o
+"Junta o ramo <ramo>:" antigo) que não diz o que o ramo traz. O merge
+recusado pelo "Merge branch" fica por concluir, e a recusa dá o `git commit
+-m "Mescla o ramo <ramo>: <o que o ramo traz>"` que o conclui; no `git
+commit --amend` de um merge já feito (sem `MERGE_HEAD`), dá o `git commit
+--amend -m`, que mantém os pais. O merge de um pull ("Merge branch '<ramo>'
+of <url>"), o de um ramo remoto ("Merge remote-tracking branch"), o de
+vários ramos ("Merge branches"), o de um commit e o de uma tag passam: a
+regra é do merge de um ramo de tarefa. Vale em todo repositório; um
+repositório sai com `git config hook.assunto-merge.enabled false`.
 
 `git-assunto-merge.test.bats`, ao lado do script, cria um repositório
 descartável com o hook no `.git/hooks`; `GIT_ASSUNTO_MERGE_SCRIPT` aponta a
