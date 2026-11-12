@@ -1,8 +1,22 @@
 # bin
 
-Comandos que o stow liga em `~/.local/bin`. O `skills-sync` está no
-[readme da raiz](../../readme.md) (*Skills de agente*). Este arquivo e os testes
-(`*.test.bats`) ficam fora do `~/.local/bin` pelo `.stow-local-ignore`.
+Comandos que o stow liga em `~/.local/bin`. Este arquivo é a lista deles;
+o [readme da raiz](../../readme.md) e o [AGENTS.md](../../AGENTS.md)
+apontam para cá em vez de repeti-la.
+
+- `skills-sync` liga as skills de agente do perfil da máquina; está no
+  readme da raiz, em *Skills de agente*.
+- `git-revisao` e `claude-revisao-guarda` guardam o ciclo de ramo,
+  revisão e merge: o primeiro pelos hooks do git, o segundo como hook do
+  Claude Code que recusa pular os hooks do git.
+- `git-assunto-merge` recusa, no commit de merge, o assunto que o git
+  escreve sozinho e o "Mescla o ramo" (ou o "Junta o ramo" antigo) que
+  não diz o que o ramo traz.
+- `forca-no-patch` marca força, asserções, permissões e números num diff.
+- `condensar-transcricao` condensa transcrições do Claude Code.
+
+Este arquivo e os testes (`*.test.bats`) ficam fora do `~/.local/bin`
+pelo `.stow-local-ignore`.
 
 ## git-revisao e claude-revisao-guarda
 

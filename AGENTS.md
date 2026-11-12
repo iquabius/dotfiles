@@ -1,12 +1,11 @@
 # Instruções para agentes: dotfiles
 
 Configuração pessoal em pacotes GNU Stow, em português: cada pacote de
-`pacotes/` espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
-processo abaixo, o `git-assunto-merge`, o `claude-revisao-guarda`, o
-`skills-sync`, que liga as skills de agente, o `forca-no-patch`, que
-marca mudanças de força num diff, e o `condensar-transcricao`, que
-condensa transcrições do Claude Code, estão aqui, no pacote `bin`, com os
-hooks do git no pacote `git`. As skills de agente moram em `skills/`,
+`pacotes/` espelha o `$HOME` (`readme.md`). O ciclo é guardado pelo
+`git-revisao`, pelo `git-assunto-merge` e pelo `claude-revisao-guarda`,
+do pacote `bin` (a lista dos comandos está no
+[`pacotes/bin/readme.md`](pacotes/bin/readme.md)), com os hooks do git
+ligados pelo pacote `git`. As skills de agente moram em `skills/`,
 daqui e da camada privada; a identidade do git vem da camada privada,
 instalada à parte.
 
