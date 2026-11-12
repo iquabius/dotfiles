@@ -44,9 +44,12 @@ o que ela deixou de fora.
   levaria ao `main` sem marca que o cubra; sai com 1 se houver.
 - **pre-push** (`[hook "revisao-push"]` do pacote `git`): recusa o push ao
   `main` ou `master` que leve commit de código sem marca. Merge conta só
-  pelo diff `--cc`, que fica vazio quando nenhum conflito foi resolvido à
-  mão; quando não fica, a resolução se revisa (`git show --cc`) antes da
-  marca. Também recusa enviar `refs/notes/revisao`: as notas ficam no clone.
+  pelo `--remerge-diff`, a resolução contra a mesclagem automática, que
+  fica vazio no merge sem conflito nem mudança à mão e mostra também o
+  conflito que ficou inteiro com um dos lados, que o diff `--cc` omite;
+  quando não fica vazio, a resolução se revisa (`git show --remerge-diff`)
+  antes da marca. O octopus conta pelo `--cc`. Também recusa enviar
+  `refs/notes/revisao`: as notas ficam no clone.
 - **pre-commit** (`[hook "revisao-commit"]`): recusa o commit de agente
   (`CLAUDECODE` no ambiente, como no Bash do Claude Code) no `main` que
   mexa no código; o que entra no commit vem do índice, então `git commit

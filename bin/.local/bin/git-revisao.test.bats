@@ -130,6 +130,122 @@ muda() {
 	[ "$status" -eq 0 ]
 }
 
+@test "merge cujo conflito no código fica com um dos lados precisa de marca própria" {
+	echo 1 >bin/n
+	git add bin/n && git commit -qm n
+	git revisao pronto
+	git switch -qc tarefa
+	echo ramo >bin/n && git commit -qam ramo
+	git revisao pronto
+	git switch -q main
+	echo main >bin/n && git commit -qam main
+	git revisao pronto
+	run git merge -q --no-ff tarefa
+	# O --cc fica vazio: a resolução é o lado do main inteiro.
+	git checkout -q --ours bin/n && git add bin/n && git commit -qm "mescla a tarefa"
+	[ -z "$(git diff-tree --cc -r --no-commit-id HEAD)" ]
+	run git push origin main
+	[ "$status" -ne 0 ]
+	[[ $output == *"mescla a tarefa"* ]]
+	git revisao pronto
+	run git push origin main
+	[ "$status" -eq 0 ]
+}
+
+@test "merge que não se refaz recusa o push, em vez de passar sem marca" {
+	echo 1 >bin/n
+	git add bin/n && git commit -qm n
+	git revisao pronto
+	git switch -qc tarefa
+	echo ramo >bin/n && git commit -qam ramo
+	git revisao pronto
+	git switch -q main
+	echo main >bin/n && git commit -qam main
+	git revisao pronto
+	run git merge -q --no-ff tarefa
+	git checkout -q --ours bin/n && git add bin/n && git commit -qm "mescla a tarefa"
+	# Sem escrita no diretório de objetos, o --remerge-diff sai com 0 e
+	# a saída vazia.
+	chmod a-w .git/objects
+	run git push origin main
+	chmod u+w .git/objects
+	[ "$status" -ne 0 ]
+	[[ $output == *"git-revisao: falhou"* ]]
+}
+
+@test "merge com as mesmas árvores e outra base não herda a marca" {
+	# Na primeira história, a base tem f=a: o ramo p2 muda f para b, e a
+	# mesclagem automática dá f=b, sem conflito. Na segunda, a base tem
+	# f=c, os pais têm as mesmas árvores, e o f=b é a resolução de um
+	# conflito; o merge tem a mesma árvore e as mesmas árvores dos pais.
+	git switch -qc h1
+	printf 'a\n' >bin/f && printf '0\n' >bin/g && git add bin && git commit -qm x
+	git switch -qc p2 && printf 'b\n' >bin/f && git commit -qam p2
+	git switch -q h1 && printf '1\n' >bin/g && git commit -qam p1
+	git merge -q --no-ff p2 -m m1
+	git revisao excecao -m "primeira história" >/dev/null
+	git switch -q main
+	printf 'c\n' >bin/f && printf '0\n' >bin/g && git add bin && git commit -qm y
+	p1=$(git commit-tree -p HEAD -m p1 "h1^1^{tree}")
+	p2=$(git commit-tree -p HEAD -m p2 "p2^{tree}")
+	git revisao excecao -m "pais da segunda" "$p1" >/dev/null
+	git revisao excecao -m "pais da segunda" "$p2" >/dev/null
+	m2=$(git commit-tree -p "$p1" -p "$p2" -m m2 "h1^{tree}")
+	git merge -q --ff-only "$m2"
+	run git push origin main
+	[ "$status" -ne 0 ]
+	[[ $output == *"m2"* ]]
+}
+
+# herda_reescrito [<atributos>] — merge com conflito em bin/n, marcado, e
+# a cópia dele com os pais reescritos só na mensagem, levada ao main.
+herda_reescrito() {
+	if [ -n "${1-}" ]; then
+		echo "$1" >.gitattributes && git add .gitattributes && git commit -qm atributos
+	fi
+	echo 1 >bin/n
+	git add bin/n && git commit -qm n
+	git revisao pronto
+	git switch -qc tarefa
+	echo ramo >bin/n && git commit -qam ramo
+	git switch -qc outro main
+	echo main >bin/n && git commit -qam main
+	run git merge -q --no-ff tarefa
+	echo resolvido >bin/n && git commit -qam "mescla a tarefa"
+	git revisao excecao -m "merge revisado" >/dev/null
+	# Os pais reescritos só na mensagem mudam de sha, e com eles os
+	# rótulos dos marcadores do --remerge-diff.
+	p1=$(git commit-tree -p main -m "main de novo" "outro^1^{tree}")
+	p2=$(git commit-tree -p main -m "ramo de novo" "tarefa^{tree}")
+	git revisao excecao -m "pais reescritos" "$p1" >/dev/null
+	git revisao excecao -m "pais reescritos" "$p2" >/dev/null
+	m=$(git commit-tree -p "$p1" -p "$p2" -m "mescla de novo" "outro^{tree}")
+	git switch -q main
+	git merge -q --ff-only "$m"
+}
+
+@test "merge com conflito reescrito com os pais herda a marca" {
+	herda_reescrito
+	run git push origin main
+	[ "$status" -eq 0 ]
+}
+
+@test "a herança vale com outro conflict-marker-size" {
+	herda_reescrito "bin/n conflict-marker-size=32"
+	[[ $(git show --remerge-diff --format= HEAD) == *"$(printf '%32s' '' | tr ' ' '<') "* ]]
+	run git push origin main
+	[ "$status" -eq 0 ]
+}
+
+@test "octopus sem conflito passa sem marca própria" {
+	git switch -qc a && muda bin/a && git revisao pronto
+	git switch -q main && git switch -qc b && muda bin/b && git revisao pronto
+	git switch -q main
+	git merge -q --no-ff a b -m "mescla a e b"
+	run git push origin main
+	[ "$status" -eq 0 ]
+}
+
 @test "commit de código feito no main antes do ramo não entra na marca do ramo" {
 	muda bin/x "direto no main"
 	git switch -qc tarefa

@@ -29,8 +29,9 @@ commit de código chega ao main se alguma marca o cobre, ou se tem a mesma
 árvore e as mesmas árvores dos pais de um commit coberto: o reescrito só nas
 datas ou na mensagem, como por um rebase que só as refaz, herda a marca,
 mesmo quando o original já está no main do remoto e o push é forçado. Um
-merge só precisa de marca se a resolução de conflito mexeu no código (o
-diff --cc dele).
+merge só precisa de marca se a resolução mexeu no código contra a
+mesclagem automática (o --remerge-diff dele), inclusive quando o conflito
+ficou inteiro com um dos lados.
 
 O pronto roda o teste sempre que há um declarado: da raiz, pelo sh, com
 GIT_REVISAO_BASE (vazia sem base) e GIT_REVISAO_PONTA no ambiente. O comando
@@ -45,6 +46,7 @@ com CLAUDECODE no ambiente, como o Bash do Claude Code.
 
 import datetime as dt
 import os
+import re
 import subprocess
 import sys
 
@@ -57,9 +59,15 @@ VEREDITOS = ("pronto", "exceção")
 
 # Git -------------------------------------------------------------------------
 
-def git(*args, entrada=None, ok=(0,)):
-    p = subprocess.run(["git", *args], input=entrada, capture_output=True)
-    if p.returncode not in ok:
+def git(*args, entrada=None, ok=(0,), erro_no_stderr=False):
+    """A saída de git args; falha com o código fora de `ok` e, com
+    erro_no_stderr, também com uma linha error: ou fatal: no stderr, que
+    se lê sem tradução (LC_ALL=C)."""
+    ambiente = dict(os.environ, LC_ALL="C") if erro_no_stderr else None
+    p = subprocess.run(["git", *args], input=entrada, capture_output=True, env=ambiente)
+    erro = erro_no_stderr and any(
+        l.startswith((b"error:", b"fatal:")) for l in p.stderr.splitlines())
+    if p.returncode not in ok or erro:
         sys.stderr.write(p.stderr.decode(errors="replace"))
         raise SystemExit(f"git-revisao: falhou: git {' '.join(args)}")
     return p.stdout
@@ -199,7 +207,9 @@ def codigos(shas):
     Dois commits com a mesma chave têm o mesmo código e o mesmo diff, até
     o --cc de um merge: o que a revisão de um viu vale para o outro. É o que
     sobra de um commit reescrito só nas datas ou na mensagem, como os do
-    rebase que só refaz as datas ou as mensagens.
+    rebase que só refaz as datas ou as mensagens. O --remerge-diff de um
+    merge de dois pais depende também da história que refaz a mesclagem,
+    que a chave não guarda: ele se compara à parte (resolucao()).
     """
     if not shas:
         return {}
@@ -213,6 +223,21 @@ def codigos(shas):
                       entrada="".join(f"{p}^{{tree}}\n" for p in pais).encode())
         arvores.update(zip(pais, saida.splitlines()))
     return {sha: (arvore, tuple(arvores[p] for p in ps)) for sha, arvore, *ps in commits}
+
+
+# Sete caracteres por padrão, ou o conflict-marker-size do .gitattributes.
+MARCADOR = re.compile(rb"^([-+ ](?:<{7,}|\|{7,}|>{7,}))(?: .*)?$")
+
+
+def resolucao(sha):
+    """O --remerge-diff do merge `sha`, o que a revisão da resolução viu,
+    sem o que muda quando só os pais são reescritos: os rótulos dos
+    marcadores de conflito (sha e assunto de cada lado) e as linhas index,
+    cujos blobs os levam."""
+    patch = git("diff-tree", "--remerge-diff", "-r", "-p", "--no-commit-id", sha,
+                erro_no_stderr=True)
+    return b"\n".join(MARCADOR.sub(rb"\1", l) for l in patch.splitlines()
+                      if not l.startswith(b"index "))
 
 
 # Código tocado ---------------------------------------------------------------
@@ -234,8 +259,11 @@ def codigo_tocado(lista, listas):
 def tocado_por(lista, specs):
     """{sha: [arquivos]} dos commits de `lista` que mexem em `specs`.
 
-    Commit comum conta pelo que muda; merge, só pelo diff --cc, que fica
-    vazio quando nenhum conflito foi resolvido à mão (o --name-only
+    Commit comum conta pelo que muda; merge, só pelo que a resolução muda
+    contra a mesclagem automática, o --remerge-diff, que fica vazio no
+    merge sem conflito nem mudança à mão e lista o conflito que ficou
+    inteiro com um dos lados, que o diff --cc omite. O octopus, que o
+    --remerge-diff não refaz, conta pelo --cc (o --name-only dele
     listaria até o arquivo que se mesclou sozinho).
     """
     tocados = {}
@@ -252,10 +280,18 @@ def tocado_por(lista, specs):
     for sha, pais in lista:
         if len(pais) < 2:
             continue
-        patch = git_s("-c", "core.quotePath=false", "diff-tree", "--cc", "-r",
-                      "--no-commit-id", sha, "--", *specs)
-        arquivos = [l.removeprefix("diff --cc ") for l in patch.splitlines()
-                    if l.startswith("diff --cc ")]
+        if len(pais) == 2:
+            # A mesclagem que não se refaz (sem escrita no diretório de
+            # objetos, por exemplo) sai com 0 e a saída vazia, como a que
+            # não tem diferença; só o stderr as separa.
+            saida = git("diff-tree", "--remerge-diff", "-r", "--name-only", "-z",
+                        "--no-commit-id", sha, "--", *specs, erro_no_stderr=True)
+            arquivos = [c for c in saida.decode().split("\0") if c]
+        else:
+            patch = git_s("-c", "core.quotePath=false", "diff-tree", "--cc", "-r",
+                          "--no-commit-id", sha, "--", *specs)
+            arquivos = [l.removeprefix("diff --cc ") for l in patch.splitlines()
+                        if l.startswith("diff --cc ")]
         if arquivos:
             tocados[sha] = arquivos
     return tocados
@@ -281,8 +317,16 @@ def descobertos(ponta, excluir, listas):
         # original pode estar no main do remoto, atrás de `excluir` (o
         # push forçado do rebase que só refaz mensagens), então entra tudo
         # o que as marcas cobrem; só com o que conferir, pelo custo.
-        revisados = set(codigos(cobertos(notas, [])).values())
-        ok.update(sha for sha, chave in codigos(faltam).items() if chave in revisados)
+        # O merge de dois pais herda só de um revisado com a mesma
+        # resolução, que a chave não determina.
+        revisados = {}
+        for sha, chave in codigos(cobertos(notas, [])).items():
+            revisados.setdefault(chave, []).append(sha)
+        for sha, chave in codigos(faltam).items():
+            iguais = revisados.get(chave, [])
+            if iguais and (len(chave[1]) != 2 or
+                           any(resolucao(r) == resolucao(sha) for r in iguais)):
+                ok.add(sha)
     return [(sha, tocados[sha]) for sha in faltam if sha not in ok]
 
 
