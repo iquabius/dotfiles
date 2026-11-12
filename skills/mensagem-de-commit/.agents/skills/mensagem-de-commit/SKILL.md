@@ -15,9 +15,9 @@ description: >-
 
 # Mensagem de commit
 
-A mensagem é a única parte de uma mudança que sobrevive no `git log`, no
-`git blame` e no resultado do bisect que alguém lê anos depois, sem acesso
-ao pull request, ao ticket ou à conversa que a produziram. O diff diz o que
+A mensagem fica junto da mudança no `git log`, no `git blame` e no
+resultado do bisect que alguém lê anos depois, quando o pull request, o
+ticket e a conversa que a produziram já não estão à mão. O diff diz o que
 mudou. A mensagem diz por quê, e por que desse jeito. Escreva para esse
 leitor.
 
