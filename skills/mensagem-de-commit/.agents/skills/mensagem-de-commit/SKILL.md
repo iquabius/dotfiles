@@ -206,9 +206,10 @@ entra a frase sobre um commit posterior.
 
 Aplique pela etapa 6 da skill `checagem-de-fatos` um achado da checagem
 de Fatos sobre a sua própria mensagem: confira a correção antes de ela
-entrar, releia as palavras vizinhas e procure o mesmo deslize nas outras
-mensagens, e, na frase que volta de uma segunda passada, corte ou
-enfraqueça em vez de estreitar de novo.
+entrar, releia as palavras vizinhas e procure a mesma afirmação nas
+outras mensagens e nos arquivos que o commit escreve. A frase que uma segunda passada acha errada de novo segue a
+seção 6 do cartucho desta skill: sai, ou vira a frase mais fraca que um
+comando prova, sem se estreitar uma terceira vez.
 
 ## Trailers
 
