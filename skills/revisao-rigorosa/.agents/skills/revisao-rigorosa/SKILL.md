@@ -219,7 +219,7 @@ Quando a skill `mensagem-de-commit` estiver instalada, o caminho do
 com o remédio para (c) que vale para ele: num rascunho, o remédio é
 dobrar o commit posterior no que ele conserta, não manter os dois, e o
 achado o diz; num ramo em que outros se apoiam, o commit posterior fica,
-e a mensagem dele nomeia o commit que ele conserta.
+e o próximo commit que tocar o assunto nomeia o que ele conserta.
 
 **Fatos.** Só quando o intervalo tem commits e as skills
 `checagem-de-fatos` e `mensagem-de-commit` estão instaladas; quando não
@@ -317,8 +317,9 @@ rascunho, um achado da História, cujo conserto é o passo 7. Os itens da
 base Linus (questões de julgamento) e o comportamento que ninguém pediu
 não bloqueiam: ficam no eixo deles, para o autor decidir. Num ramo em
 que outros se apoiam, os achados da História também não bloqueiam, porque
-a história dele não se reescreve; ficam como nota para os próximos
-commits. O pedido ao Codex define "bloqueante" pela mesma régua,
+a história dele não se reescreve; vão ao autor como os outros não
+bloqueantes (abaixo), sem o conserto no ramo, que a reescreveria. O
+pedido ao Codex define "bloqueante" pela mesma régua,
 nos tipos de achado que ele faz.
 
 Um achado do Codex que sobreviveu ao passo 5 conta como qualquer outro: um
