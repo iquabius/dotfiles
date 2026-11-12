@@ -56,9 +56,9 @@ história dele se condensa antes do merge (passo 5).
 6. **Marque a ponta**: `git revisao pronto`, da ponta, sem código mudado
    fora do commit. Ele roda antes o teste da linha `teste:` do
    `.config/revisao` (`scripts/testes-da-revisao`, que escolhe as suítes
-   pelo diff do ramo) e não marca se o teste falha. Achado que o autor
-   decide deixar de pé: `git revisao excecao -m "<motivo do autor>"`. O
-   agente não decide isso sozinho.
+   pelo diff do ramo) e não marca se o teste falha. Achado bloqueante
+   que o autor decide deixar de pé: `git revisao excecao -m "<motivo do
+   autor>"`. O agente não decide isso sozinho.
 7. **Merge no main**, sem rebase nem squash na hora do merge:
 
    ```sh
