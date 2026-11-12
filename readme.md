@@ -313,8 +313,9 @@ Dois conflitos são quase certos numa máquina já usada:
   identidade para `~/.gitconfig.local` (incluído no fim do
   `.gitconfig` público) antes de tirar o arquivo da frente.
 - **`~/.emacs`** — se existir, o Emacs **ignora** `~/.config/emacs` e não avisa:
-  o caminho XDG só vale quando não há `~/.emacs`, `~/.emacs.el` nem
-  `~/.emacs.d/init.el`. O Stow não reclama disso, porque não é um alvo dele.
+  o caminho XDG só vale quando não há `~/.emacs` nem o diretório
+  `~/.emacs.d` (o `~/.emacs.el` não o desliga, ao contrário do que diz o
+  manual). O Stow não reclama disso, porque não é um alvo dele.
   Apague ou renomeie antes de usar o pacote `emacs`.
 
 ### 5. Plugins do fish
