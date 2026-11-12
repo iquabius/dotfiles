@@ -11,9 +11,13 @@ deste repositório e com instruções próprias.
 
 ## Como está montado
 
-Os diretórios de `pacotes/`, que a tabela abaixo lista, são **pacotes Stow**,
-cada um com a árvore que espelha o `$HOME`; os da raiz estão em *Detalhes que
-valem saber*. Rodar `stow <pacote>` cria os symlinks correspondentes no `$HOME`.
+A raiz separa o que vai para o `$HOME` do que é do próprio repositório.
+`pacotes/` é a *stow dir*: cada pasta dela é um **pacote**, com a árvore que
+espelha o `$HOME`. O `.stowrc` da raiz aponta o Stow para ela, e `stow
+<pacote>`, rodado em `~/.dotfiles`, cria no `$HOME` os symlinks do pacote. O
+resto da raiz o Stow não liga.
+
+### Pacotes
 
 | Pacote | O que instala |
 | --- | --- |
@@ -32,22 +36,44 @@ valem saber*. Rodar `stow <pacote>` cria os symlinks correspondentes no `$HOME`.
 | `bin` | `~/.local/bin/`: os comandos do repositório, listados no [`pacotes/bin/readme.md`](pacotes/bin/readme.md) |
 | `claude` | `~/.claude/settings.json`, que registra o `claude-revisao-guarda`; **só na máquina sem a camada privada**, que liga o dela |
 
-Detalhes que valem saber:
+### O resto da raiz
 
-- **`.githooks/` não é pacote Stow.** É hook de repositório, ligado com
-  `git config core.hooksPath .githooks` (passo 2) — não vai para o `$HOME`.
-- **`.config/` também não.** O `.config/revisao` lista os caminhos de código
-  que pedem revisão do ramo antes do `main`; o ciclo está no `AGENTS.md`.
-- **`profiles/` também não.** Os perfis de skills de agente, lidos pelo
-  `skills-sync` (ver *Skills de agente*).
-- **`scripts/` também não.** Scripts do repositório que não vão para o
-  `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda.
-- **`tests/` também não.** Suítes bats do repositório, que o `make check`
-  roda junto das `*.test.bats` dos scripts, ao lado deles em `pacotes/bin/`.
-- **`skills/` também não.** É uma stow dir própria, com um pacote por skill
-  (ver *Skills de agente*).
-- **Segredos (tokens, chaves privadas) não entram aqui.** Ficam no gerenciador de
-  senhas ou cifrados com `age`.
+| Caminho | Papel |
+| --- | --- |
+| `skills/` | a outra stow dir: um pacote por skill de agente, que o `skills-sync` liga (ver *Skills de agente* e o [`skills/readme.md`](skills/readme.md)) |
+| `profiles/` | os perfis de skills (`<perfil>.pkgs`), que o `skills-sync` lê |
+| `scripts/` | scripts do repositório que não vão para o `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda |
+| `tests/` | as suítes bats do hook `post-merge`, da configuração, dos `scripts/` e do `skills-sync`; o `make check` as roda junto das `*.test.bats` de `pacotes/bin/.local/bin/` |
+| `Makefile` | o `make check`: ShellCheck e shfmt nos scripts de shell da lista `SCRIPTS`, e as suítes bats |
+| `.githooks/` | os hooks deste repositório, ligados com `git config core.hooksPath .githooks` (ver *2. Clonar*) |
+| `.config/revisao` | os caminhos que pedem a revisão do ramo antes do `main`, e o teste que o `git revisao pronto` roda |
+| `.stowrc` | diz ao Stow que os pacotes estão em `pacotes/` e que o alvo é o `$HOME` |
+| `AGENTS.md` (e o link `CLAUDE.md`) | as regras de trabalho: o ciclo de ramo, revisão e merge, os testes, os commits |
+| `.profile.local`, `.pkgs.local` | o perfil e as skills desta máquina, fora do git (ver *Skills de agente*) |
+
+Segredos (tokens, chaves privadas) não entram aqui: ficam no gerenciador de
+senhas ou cifrados com `age`.
+
+### Onde pôr algo novo
+
+- **Configuração que vai para o `$HOME`:** no pacote da ferramenta, em
+  `pacotes/<ferramenta>/`, no caminho que ela tem a partir do `$HOME`. A
+  ferramenta nova ganha um pacote e uma linha na tabela de pacotes; o
+  `stow` dela vai em *3. Aplicar os symlinks*, ou no aviso do pacote
+  quando ele pede opção própria.
+- **Comando para o `PATH`:** `pacotes/bin/.local/bin/<nome>`, com a suíte
+  ao lado (`<nome>.test.bats`) e uma linha no
+  [`pacotes/bin/readme.md`](pacotes/bin/readme.md).
+- **Script que só o repositório usa:** `scripts/`.
+- **Teste que não é de um comando só** (de um hook, de uma configuração, de
+  vários scripts): `tests/`.
+- **Skill de agente:** `skills/<nome>/`, no formato do
+  [`skills/readme.md`](skills/readme.md), e o nome dela no `.pkgs` de um
+  perfil em `profiles/`.
+
+O script de shell novo, num lugar ou noutro, entra no `SCRIPTS` do
+`Makefile`; o arquivo de código novo fora dos caminhos do `.config/revisao`
+entra nele, para pedir a revisão do ramo.
 
 ## Avisos por pacote
 
