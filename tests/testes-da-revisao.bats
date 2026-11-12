@@ -26,13 +26,13 @@ setup() {
 	export PATH=$BIN:$PATH REVISAO_CONTAINERENV=$BATS_TEST_TMPDIR/nenhum
 	git init -q "$BATS_TEST_TMPDIR/repo"
 	cd "$BATS_TEST_TMPDIR/repo"
-	mkdir -p .config bin/.local/bin tests scripts outro pacote/.config \
+	mkdir -p .config pacotes/bin/.local/bin tests scripts outro pacote/.config \
 		skills/s/.agents/skills/s/scripts skills/s/.agents/skills/s/tests \
 		skills/t/.agents/skills/t/scripts
-	for f in Makefile bin/.local/bin/a bin/.local/bin/a.test.bats \
-		bin/.local/bin/b scripts/c tests/c.bats tests/ajuda.bash \
-		bin/.local/bin/sobe bin/.local/bin/ação bin/.local/bin/ação.test.bats \
-		bin/.local/bin/fala pacote/.config/liga.conf liga.conf \
+	for f in Makefile pacotes/bin/.local/bin/a pacotes/bin/.local/bin/a.test.bats \
+		pacotes/bin/.local/bin/b scripts/c tests/c.bats tests/ajuda.bash \
+		pacotes/bin/.local/bin/sobe pacotes/bin/.local/bin/ação pacotes/bin/.local/bin/ação.test.bats \
+		pacotes/bin/.local/bin/fala pacote/.config/liga.conf liga.conf \
 		skills/s/.agents/skills/s/scripts/x.py skills/s/.agents/skills/s/tests/test_x.py \
 		skills/t/.agents/skills/t/scripts/y outro/z leia.org; do
 		echo 0 >"$f"
@@ -43,16 +43,16 @@ setup() {
 	# arquivo da raiz, outra que cita só esse nome, e outra que cita o
 	# auxiliar de tests/; e outro/, um caminho de código que nenhuma suíte
 	# cita.
-	echo 'ln -s "$BATS_TEST_DIRNAME/../bin/.local/bin/sobe" x' >tests/usa.bats
-	echo 'ln -s "$BATS_TEST_DIRNAME/sobe" x' >bin/.local/bin/vizinha.test.bats
+	echo 'ln -s "$BATS_TEST_DIRNAME/../pacotes/bin/.local/bin/sobe" x' >tests/usa.bats
+	echo 'ln -s "$BATS_TEST_DIRNAME/sobe" x' >pacotes/bin/.local/bin/vizinha.test.bats
 	printf '%s\n' 'export PATH="$BATS_TEST_DIRNAME:$PATH"' \
 		'run liga  # o liga chama o fala, que acha no PATH' \
-		>bin/.local/bin/pelo-path.test.bats
+		>pacotes/bin/.local/bin/pelo-path.test.bats
 	echo 'grep -q x "$BATS_TEST_DIRNAME/../pacote/.config/liga.conf"' >tests/liga.bats
 	echo 'echo liga.conf >x' >tests/so-o-nome.bats
-	echo '. "$BATS_TEST_DIRNAME/../../../tests/ajuda.bash"' >bin/.local/bin/a.test.bats
+	echo '. "$BATS_TEST_DIRNAME/../../../../tests/ajuda.bash"' >pacotes/bin/.local/bin/a.test.bats
 	printf '# código\nteste: x\n%s\n' .config/revisao Makefile .githooks/ \
-		bin/.local/bin/ scripts/ tests/ outro/ pacote/.config/liga.conf liga.conf \
+		pacotes/bin/.local/bin/ scripts/ tests/ outro/ pacote/.config/liga.conf liga.conf \
 		'skills/*/.agents/skills/*/scripts/*' 'skills/*/.agents/skills/*/tests/*' \
 		>.config/revisao
 	git add . && git commit -qm raiz
@@ -67,18 +67,32 @@ muda() {
 }
 
 @test "script com suíte ao lado roda o lint e a suíte" {
-	muda bin/.local/bin/a
+	muda pacotes/bin/.local/bin/a
 	run "$SCRIPT"
 	[ "$status" -eq 0 ]
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/a.test.bats" ]
+bats pacotes/bin/.local/bin/a.test.bats" ]
+}
+
+@test "repositório com o pacote bin na raiz, como a camada privada: roda a suíte ao lado" {
+	mkdir -p bin/.local/bin
+	echo 0 >bin/.local/bin/p
+	echo 0 >bin/.local/bin/p.test.bats
+	echo bin/.local/bin/ >>.config/revisao
+	git add . && git commit -qm privado
+	GIT_REVISAO_BASE=$(git rev-parse HEAD)
+	muda bin/.local/bin/p
+	run "$SCRIPT"
+	[ "$status" -eq 0 ]
+	[ "$(cat "$LOG")" = "make lint
+bats bin/.local/bin/p.test.bats" ]
 }
 
 @test "suíte que mudou roda, uma vez só" {
-	muda bin/.local/bin/a bin/.local/bin/a.test.bats
+	muda pacotes/bin/.local/bin/a pacotes/bin/.local/bin/a.test.bats
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/a.test.bats" ]
+bats pacotes/bin/.local/bin/a.test.bats" ]
 }
 
 @test "script de scripts/ e a suíte dele rodam a suíte de tests/" {
@@ -89,7 +103,7 @@ bats tests/c.bats" ]
 }
 
 @test "script sem suíte roda o make check" {
-	muda bin/.local/bin/b
+	muda pacotes/bin/.local/bin/b
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make check" ]
 }
@@ -120,17 +134,17 @@ python3 -B -m unittest discover -s tests -q" ]
 }
 
 @test "a suíte que roda o script pelo caminho roda também" {
-	muda bin/.local/bin/sobe
+	muda pacotes/bin/.local/bin/sobe
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/vizinha.test.bats tests/usa.bats" ]
+bats pacotes/bin/.local/bin/vizinha.test.bats tests/usa.bats" ]
 }
 
 @test "a suíte que roda outro script, que chama este pelo PATH, roda também" {
-	muda bin/.local/bin/fala
+	muda pacotes/bin/.local/bin/fala
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/pelo-path.test.bats" ]
+bats pacotes/bin/.local/bin/pelo-path.test.bats" ]
 }
 
 @test "ramo que tira o .config/revisao da lista ainda roda o make check" {
@@ -147,16 +161,16 @@ bats bin/.local/bin/pelo-path.test.bats" ]
 	sed -i '/^\.config\/revisao$/d' .config/revisao
 	git commit -qam "base sem a lista na lista"
 	GIT_REVISAO_BASE=$(git rev-parse HEAD)
-	echo ':!bin/.local/bin/a' >>.config/revisao
+	echo ':!pacotes/bin/.local/bin/a' >>.config/revisao
 	git commit -qam "exclui o a"
-	muda bin/.local/bin/a
+	muda pacotes/bin/.local/bin/a
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/a.test.bats" ]
+bats pacotes/bin/.local/bin/a.test.bats" ]
 }
 
 @test "base que o git não acha é a falha do script" {
-	muda bin/.local/bin/a
+	muda pacotes/bin/.local/bin/a
 	GIT_REVISAO_BASE=naoexiste
 	run "$SCRIPT"
 	[ "$status" -ne 0 ]
@@ -164,10 +178,10 @@ bats bin/.local/bin/a.test.bats" ]
 }
 
 @test "nome com acento escolhe a suíte dele" {
-	muda bin/.local/bin/ação
+	muda pacotes/bin/.local/bin/ação
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/ação.test.bats" ]
+bats pacotes/bin/.local/bin/ação.test.bats" ]
 }
 
 @test "arquivo de configuração roda o lint e as suítes que citam o caminho dele" {
@@ -205,7 +219,7 @@ python3 -B -m unittest discover -s tests -q" ]
 }
 
 @test "suíte apagada não trava o script" {
-	git rm -q bin/.local/bin/a.test.bats
+	git rm -q pacotes/bin/.local/bin/a.test.bats
 	git commit -qm apaga
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint" ]
@@ -222,16 +236,16 @@ python3 -B -m unittest discover -s tests -q" ]
 }
 
 @test "olha só o intervalo, e não a árvore de trabalho" {
-	muda bin/.local/bin/a
-	echo solto >>bin/.local/bin/b
+	muda pacotes/bin/.local/bin/a
+	echo solto >>pacotes/bin/.local/bin/b
 	"$SCRIPT"
 	[ "$(cat "$LOG")" = "make lint
-bats bin/.local/bin/a.test.bats" ]
+bats pacotes/bin/.local/bin/a.test.bats" ]
 }
 
 @test "falha da suíte é a falha do script" {
 	printf '#!/bin/sh\nexit 3\n' >"$BIN/bats"
-	muda bin/.local/bin/a
+	muda pacotes/bin/.local/bin/a
 	run "$SCRIPT"
 	[ "$status" -eq 3 ]
 }
@@ -242,11 +256,11 @@ bats bin/.local/bin/a.test.bats" ]
 	printf '#!/bin/sh\necho distrobox-host-exec >>"%s"\ncd /\nexec env -u GIT_REVISAO_BASE -u GIT_REVISAO_PONTA "$@"\n' \
 		"$LOG" >"$BIN/distrobox-host-exec"
 	touch "$REVISAO_CONTAINERENV"
-	muda bin/.local/bin/a
+	muda pacotes/bin/.local/bin/a
 	# Depois da ponta, o script sem suíte pediria o make check.
-	muda bin/.local/bin/b
+	muda pacotes/bin/.local/bin/b
 	GIT_REVISAO_PONTA=HEAD~1 "$SCRIPT"
 	[ "$(cat "$LOG")" = "distrobox-host-exec
 make lint
-bats bin/.local/bin/a.test.bats" ]
+bats pacotes/bin/.local/bin/a.test.bats" ]
 }

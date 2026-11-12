@@ -60,17 +60,17 @@
 # repositório que lista os caminhos de código em .config/revisao.
 [hook "revisao-push"]
 	event = pre-push
-	command = "$HOME/.dotfiles/bin/.local/bin/git-revisao pre-push"
+	command = "$HOME/.dotfiles/pacotes/bin/.local/bin/git-revisao pre-push"
 [hook "revisao-commit"]
 	event = pre-commit
-	command = "$HOME/.dotfiles/bin/.local/bin/git-revisao pre-commit"
+	command = "$HOME/.dotfiles/pacotes/bin/.local/bin/git-revisao pre-commit"
 
 # O merge de um ramo diz em português o que ele traz: "Mescla o ramo <ramo>:
 # ...", e não o "Merge branch" do git (git-assunto-merge, pacote bin). Vale
 # em todo repositório; um sai com `git config hook.assunto-merge.enabled false`.
 [hook "assunto-merge"]
 	event = commit-msg
-	command = "$HOME/.dotfiles/bin/.local/bin/git-assunto-merge commit-msg"
+	command = "$HOME/.dotfiles/pacotes/bin/.local/bin/git-assunto-merge commit-msg"
 
 # Identidade e credenciais ficam na camada privada (~/.dotfiles-private → ~/.gitconfig.local)
 [include]

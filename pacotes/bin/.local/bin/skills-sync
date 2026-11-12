@@ -59,13 +59,13 @@ esac
 
 command -v stow >/dev/null 2>&1 || die "stow não encontrado no PATH"
 
-# O script mora em <repo>/bin/.local/bin/ e costuma ser chamado pelo symlink
-# que o stow põe em ~/.local/bin, daí o readlink -f.
+# O script mora em <repo>/pacotes/bin/.local/bin/ e costuma ser chamado pelo
+# symlink que o stow põe em ~/.local/bin, daí o readlink -f.
 if [ -n "${SKILLS_SYNC_REPO:-}" ]; then
     repo=$SKILLS_SYNC_REPO
 else
     self=$(readlink -f "$0") || die "não consegui resolver o caminho de $0"
-    repo=$(dirname "$self")/../../..
+    repo=$(dirname "$self")/../../../..
 fi
 repo=$(cd "$repo" && pwd -P) || die "repositório não encontrado: $repo"
 target=${SKILLS_SYNC_TARGET:-$HOME}

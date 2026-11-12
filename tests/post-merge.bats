@@ -22,10 +22,10 @@ setup() {
 	mkdir -p "$HOME/.local/bin"
 	cd "$BATS_TEST_TMPDIR"
 	git init -q -b main up
-	mkdir -p up/bin/.local/bin up/skills/a up/profiles
+	mkdir -p up/pacotes/bin/.local/bin up/skills/a up/profiles
 	printf '#!/bin/sh\necho chamado >>"$SYNC_LOG"\n[ -z "$SYNC_FALHA" ]\n' \
-		>up/bin/.local/bin/skills-sync
-	chmod +x up/bin/.local/bin/skills-sync
+		>up/pacotes/bin/.local/bin/skills-sync
+	chmod +x up/pacotes/bin/.local/bin/skills-sync
 	echo a >up/skills/a/SKILL.md
 	echo a >up/profiles/base.pkgs
 	echo texto >up/leia.org
@@ -103,7 +103,7 @@ nao_sincronizou() {
 }
 
 @test "pull que muda o próprio skills-sync roda o skills-sync" {
-	echo "# conserto" >>../up/bin/.local/bin/skills-sync
+	echo "# conserto" >>../up/pacotes/bin/.local/bin/skills-sync
 	git -C ../up commit -qam "conserta o skills-sync"
 	git pull -q
 	sincronizou
@@ -134,7 +134,7 @@ nao_sincronizou() {
 }
 
 @test "sem ORIG_HEAD o hook roda o stow" {
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	git pull -q
 	rm "$HOME/.local/bin/novo"
 	git update-ref -d ORIG_HEAD
@@ -185,17 +185,17 @@ nao_sincronizou() {
 }
 
 @test "pull que traz script novo em bin o liga em ~/.local/bin" {
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	git pull -q
 	[ -L "$HOME/.local/bin/novo" ]
-	[ "$(readlink -f "$HOME/.local/bin/novo")" = "$(readlink -f bin/.local/bin/novo)" ]
+	[ "$(readlink -f "$HOME/.local/bin/novo")" = "$(readlink -f pacotes/bin/.local/bin/novo)" ]
 }
 
 @test "pull que apaga um script de bin tira o link pendurado" {
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	git pull -q
 	[ -L "$HOME/.local/bin/novo" ]
-	git -C ../up rm -q bin/.local/bin/novo
+	git -C ../up rm -q pacotes/bin/.local/bin/novo
 	git -C ../up commit -qm "apaga novo"
 	git pull -q
 	[ ! -L "$HOME/.local/bin/novo" ]
@@ -209,33 +209,33 @@ nao_sincronizou() {
 
 @test "sem ~/.local/bin: avisa, não roda o stow, e o merge não falha" {
 	rmdir "$HOME/.local/bin"
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	run git pull -q
 	[ "$status" -eq 0 ]
 	[[ $output == *"sem ~/.local/bin"* ]]
 	[ ! -e "$HOME/.local/bin" ]
-	[ -f bin/.local/bin/novo ]
+	[ -f pacotes/bin/.local/bin/novo ]
 }
 
 @test "stow que falha: avisa, e o merge não falha" {
 	echo meu >"$HOME/.local/bin/novo"
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	run git pull -q
 	[ "$status" -eq 0 ]
-	[[ $output == *"stow -R bin de $HOME/.dotfiles falhou"* ]]
+	[[ $output == *"stow -R bin de $HOME/.dotfiles/pacotes falhou"* ]]
 	[ "$(cat "$HOME/.local/bin/novo")" = meu ]
-	[ -f bin/.local/bin/novo ]
+	[ -f pacotes/bin/.local/bin/novo ]
 }
 
 @test "merge numa worktree que traz script e skill não roda o stow nem o sync" {
 	git worktree add -q -b tarefa ../wt
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	muda ../up skills/b/SKILL.md
 	git fetch -q
 	run git -C ../wt merge -q origin/main
 	[ "$status" -eq 0 ]
 	[ -z "$output" ]
-	[ -f ../wt/bin/.local/bin/novo ]
+	[ -f ../wt/pacotes/bin/.local/bin/novo ]
 	[ ! -e "$HOME/.local/bin/novo" ]
 	nao_sincronizou
 }
@@ -246,7 +246,7 @@ nao_sincronizou() {
 	cd outro
 	git config pull.rebase false
 	cp ../.dotfiles/.git/hooks/post-merge .git/hooks/post-merge
-	muda ../up bin/.local/bin/novo
+	muda ../up pacotes/bin/.local/bin/novo
 	muda ../up skills/b/SKILL.md
 	run git pull -q
 	[ "$status" -eq 0 ]
@@ -279,25 +279,25 @@ nao_sincronizou() {
 	nao_sincronizou
 }
 
-# aponta_para <script> <checkout> — o link em ~/.local/bin resolve para o
-# script daquele checkout.
+# aponta_para <script> <pacote bin> — o link em ~/.local/bin resolve para o
+# script daquele pacote bin.
 aponta_para() {
-	[ "$(readlink -f "$HOME/.local/bin/$1")" = "$(readlink -f "$2/bin/.local/bin/$1")" ]
+	[ "$(readlink -f "$HOME/.local/bin/$1")" = "$(readlink -f "$2/.local/bin/$1")" ]
 }
 
 @test "script que passa do privado ao público, com o público puxado antes" {
 	privado
 	muda ../up-privado bin/.local/bin/x
 	git pull -q
-	aponta_para x "$HOME/.dotfiles-private"
-	muda ../up bin/.local/bin/x
+	aponta_para x "$HOME/.dotfiles-private/bin"
+	muda ../up pacotes/bin/.local/bin/x
 	run git -C "$HOME/.dotfiles" pull -q
 	[ "$status" -eq 0 ]
-	[[ $output == *"stow -R bin de $HOME/.dotfiles falhou"* ]]
+	[[ $output == *"stow -R bin de $HOME/.dotfiles/pacotes falhou"* ]]
 	git -C ../up-privado rm -q bin/.local/bin/x
 	git -C ../up-privado commit -qm "x sai"
 	git pull -q
-	aponta_para x "$HOME/.dotfiles"
+	aponta_para x "$HOME/.dotfiles/pacotes/bin"
 }
 
 @test "script que passa do privado ao público, com o privado puxado antes" {
@@ -308,9 +308,9 @@ aponta_para() {
 	git -C ../up-privado commit -qm "x sai"
 	git pull -q
 	[ ! -e "$HOME/.local/bin/x" ]
-	muda ../up bin/.local/bin/x
+	muda ../up pacotes/bin/.local/bin/x
 	git -C "$HOME/.dotfiles" pull -q
-	aponta_para x "$HOME/.dotfiles"
+	aponta_para x "$HOME/.dotfiles/pacotes/bin"
 }
 
 @test ".profile.local ainda no privado: o aviso manda movê-lo, e o sync não roda" {

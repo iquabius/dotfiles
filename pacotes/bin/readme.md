@@ -1,14 +1,14 @@
 # bin
 
 Comandos que o stow liga em `~/.local/bin`. O `skills-sync` está no
-[readme da raiz](../readme.md) (*Skills de agente*). Este arquivo e os testes
+[readme da raiz](../../readme.md) (*Skills de agente*). Este arquivo e os testes
 (`*.test.bats`) ficam fora do `~/.local/bin` pelo `.stow-local-ignore`.
 
 ## git-revisao e claude-revisao-guarda
 
 Código só chega ao `main` (ou `master`) de um ramo revisado com a skill
 `revisao-rigorosa`. O ciclo inteiro, de ramo a merge, está no
-[AGENTS.md](../AGENTS.md); a decisão é de 2026-10-07. Duas peças o guardam.
+[AGENTS.md](../../AGENTS.md); a decisão é de 2026-10-07. Duas peças o guardam.
 
 ### git-revisao
 

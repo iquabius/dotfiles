@@ -10,7 +10,7 @@
 
 # CLAUDE_SETTINGS troca o arquivo testado (útil para conferir, com uma cópia
 # sabotada, que o teste de fato pega a falha).
-PACOTE="${CLAUDE_SETTINGS:-$BATS_TEST_DIRNAME/../claude/.claude/settings.json}"
+PACOTE="${CLAUDE_SETTINGS:-$BATS_TEST_DIRNAME/../pacotes/claude/.claude/settings.json}"
 
 @test "o settings.json do pacote é JSON válido" {
 	python3 -m json.tool "$PACOTE" >/dev/null
@@ -25,7 +25,7 @@ cmds = [h["command"] for m in d["hooks"]["PreToolUse"] if m.get("matcher") == "B
 print("\n".join(cmds))' "$PACOTE"
 	[ "$status" -eq 0 ]
 	[[ $output == *'$HOME/.local/bin/claude-revisao-guarda'* ]]
-	[ -x "$BATS_TEST_DIRNAME/../bin/.local/bin/claude-revisao-guarda" ]
+	[ -x "$BATS_TEST_DIRNAME/../pacotes/bin/.local/bin/claude-revisao-guarda" ]
 }
 
 @test "nesta máquina, ~/.claude/settings.json ainda é o symlink do pacote" {
@@ -34,11 +34,11 @@ print("\n".join(cmds))' "$PACOTE"
 	# Com a camada privada, o arquivo é do pacote dela, que o confere.
 	[ ! -d "$HOME/.dotfiles-private" ] || skip "a camada privada liga o arquivo"
 	case $(readlink "$alvo" 2>/dev/null) in
-	*/.dotfiles/claude/.claude/settings.json) ;;
+	*/.dotfiles/pacotes/claude/.claude/settings.json) ;;
 	*) [ -L "$alvo" ] && skip "ligado por outro pacote" ;;
 	esac
 	[ -L "$alvo" ] || {
-		echo "$alvo virou arquivo comum: compare com o pacote, junte as mudanças em claude/ e rode stow -R claude" >&2
+		echo "$alvo virou arquivo comum: compare com o pacote, junte as mudanças em pacotes/claude/ e rode stow -R claude" >&2
 		return 1
 	}
 	[ "$(readlink -f "$alvo")" = "$(readlink -f "$PACOTE")" ]

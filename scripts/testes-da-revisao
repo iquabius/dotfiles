@@ -6,12 +6,14 @@
 # - nada, quando nenhum caminho de código mudou;
 # - o lint;
 # - a suíte que mudou, se ela ainda existe;
-# - de cada script que mudou (bin/.local/bin/<n>, scripts/<n>,
-#   .githooks/<n>), a bin/.local/bin/<n>.test.bats, a tests/<n>.bats e toda
-#   suíte que cita <n>, como a do pre-commit de um repositório pode citar o
-#   script que ele chama;
+# - de cada script que mudou (bin/.local/bin/<n> de um pacote bin, em
+#   pacotes/ aqui ou na raiz da camada privada, scripts/<n>,
+#   .githooks/<n>), a <n>.test.bats ao lado dele, a tests/<n>.bats e
+#   toda suíte que cita <n>, como a do pre-commit de um repositório pode
+#   citar o script que ele chama;
 # - de cada outro arquivo de código que mudou fora da raiz (a configuração
-#   de um pacote, como o git/.gitconfig ou o claude/.claude/settings.json),
+#   de um pacote, como o pacotes/git/.gitconfig ou o
+#   pacotes/claude/.claude/settings.json),
 #   toda suíte que cita o caminho dele;
 # - a unittest da skill cujos scripts ou testes mudaram, no repositório que
 #   guarda skills com scripts, como a camada privada (a skill sem testes
@@ -66,7 +68,8 @@ if [ -z "$mudados" ]; then
     echo "testes da revisão: nenhum caminho de código mudou" >&2
     exit 0
 fi
-todas=$(ls bin/.local/bin/*.test.bats tests/*.bats 2>/dev/null || true)
+todas=$(ls pacotes/bin/.local/bin/*.test.bats bin/.local/bin/*.test.bats \
+    tests/*.bats 2>/dev/null || true)
 
 suites=
 skills=
@@ -80,12 +83,12 @@ while IFS= read -r f; do
         [ ! -d "$raiz/tests" ] || skills="$skills
 $raiz"
         ;;
-    bin/.local/bin/*.test.bats | tests/*.bats)
+    pacotes/bin/.local/bin/*.test.bats | bin/.local/bin/*.test.bats | tests/*.bats)
         # A suíte apagada não tem o que rodar.
         [ ! -e "$f" ] || suites="$suites
 $f"
         ;;
-    bin/.local/bin/* | scripts/* | .githooks/*)
+    pacotes/bin/.local/bin/* | bin/.local/bin/* | scripts/* | .githooks/*)
         n=${f##*/}
         # As suítes do nome e as que citam o script como palavra; sem
         # nenhuma, só o make check inteiro o confere. A citação, e não o
@@ -94,7 +97,7 @@ $f"
         # custo é a suíte que só fala do script, como a do git-revisao fala
         # do pre-commit, rodar a mais.
         achadas=$(
-            for s in "bin/.local/bin/$n.test.bats" "tests/$n.bats"; do
+            for s in "${f%/*}/$n.test.bats" "tests/$n.bats"; do
                 [ ! -e "$s" ] || echo "$s"
             done
             # shellcheck disable=SC2086 # um caminho por linha, sem espaço

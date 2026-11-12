@@ -1,5 +1,5 @@
 # Verificações dos scripts de shell. `make` roda tudo.
-SCRIPTS := bin/.local/bin/skills-sync scripts/testes-da-revisao \
+SCRIPTS := pacotes/bin/.local/bin/skills-sync scripts/testes-da-revisao \
            .githooks/pre-commit .githooks/post-merge
 
 .PHONY: check lint fmt test
@@ -14,4 +14,4 @@ fmt:
 	shfmt -i 4 -w $(SCRIPTS)
 
 test:
-	bats tests/ bin/.local/bin/
+	bats tests/ pacotes/bin/.local/bin/

@@ -1,7 +1,7 @@
 # Instruções para agentes: dotfiles
 
-Configuração pessoal em pacotes GNU Stow, em português: cada pacote da
-raiz espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
+Configuração pessoal em pacotes GNU Stow, em português: cada pacote de
+`pacotes/` espelha o `$HOME` (`readme.md`). O `git-revisao`, que guarda o
 processo abaixo, o `git-assunto-merge`, o `claude-revisao-guarda`, o
 `skills-sync`, que liga as skills de agente, o `forca-no-patch`, que
 marca mudanças de força num diff, e o `condensar-transcricao`, que
@@ -26,13 +26,14 @@ história dele se condensa antes do merge (passo 5).
    check` passa (ver *Testes*).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (os caminhos de
    `.config/revisao`: o próprio `.config/revisao`, hooks, Emacs Lisp,
-   fish, scripts de shell, o `Makefile`, o `bin/.local/bin/`, o
-   `scripts/`, as suítes de `tests/`, o `ssh/.ssh/rc`, o
-   `git/.gitconfig`, que liga os hooks do ciclo, e o `claude/`, que
-   registra o guarda), rode a skill `revisao-rigorosa` sobre
-   `$(git merge-base main HEAD)...HEAD`. Ramo só de texto ou de
-   configuração simples (readme, `settings.json` dos editores,
-   `tmux.conf`, `latexmkrc`) dispensa a revisão, mas não o ramo.
+   fish, scripts de shell, o `Makefile`, o `pacotes/bin/.local/bin/`, o
+   `scripts/`, as suítes de `tests/`, o `pacotes/ssh/.ssh/rc`, o
+   `pacotes/git/.gitconfig`, que liga os hooks do ciclo, e o
+   `pacotes/claude/`, que registra o guarda), rode a skill
+   `revisao-rigorosa` sobre `$(git merge-base main HEAD)...HEAD`. Ramo
+   só de texto ou de configuração simples (readme, `settings.json` dos
+   editores, `tmux.conf`, `latexmkrc`) dispensa a revisão, mas não o
+   ramo.
 4. **Cada achado bloqueante vira um conserto** no ramo: `git commit
    --fixup=<commit que ele corrige>`, ou commit novo quando ele não
    corrige um commit só. Revise de novo até o veredito **Pronto para o
@@ -82,13 +83,14 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   commit que mexe em caminho de `.config/revisao` e chega ao `main` sem a
   marca de `git revisao pronto` (ou `excecao`) que o cubra. A marca é uma
   nota local em `refs/notes/revisao` e não vai para o GitHub. O
-  `git/.gitconfig` que liga este hook e o `claude/` que registra o guarda
-  são caminhos revisados, mas o stow os liga à árvore de trabalho do
-  `~/.dotfiles`: a mudança vale assim que chega a esse checkout, pela
-  edição ou pelo merge. O ramo que apaga o `[hook "revisao-push"]` faz
-  então o push sem o pre-push, e só a revisão do passo 3 o segura; o que
-  tira o guarda do `settings.json` (na máquina sem a camada privada) o
-  desliga antes do push, que o pre-push ainda confere.
+  `pacotes/git/.gitconfig` que liga este hook e o `pacotes/claude/` que
+  registra o guarda são caminhos revisados, mas o stow os liga à árvore
+  de trabalho do `~/.dotfiles`: a mudança vale assim que chega a esse
+  checkout, pela edição ou pelo merge. O ramo que apaga o
+  `[hook "revisao-push"]` faz então o push sem o pre-push, e só a
+  revisão do passo 3 o segura; o que tira o guarda do `settings.json`
+  (na máquina sem a camada privada) o desliga antes do push, que o
+  pre-push ainda confere.
 - **pre-commit** (`git-revisao`): recusa commit de agente no `main` que
   mexa no código. O git não o chama em `cherry-pick`, `revert` nem `am`:
   o que eles levarem ao `main` só o pre-push pega. O `.githooks/pre-commit`
@@ -109,8 +111,8 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   revisão à mão ou apontar a elas o `core.notesRef` ou o
   `notes.rewriteRef`, o merge pelo GitHub, o `gh` com a palavra `auth`,
   menos as formas do `gh auth status` sem o token e da ajuda que o
-  `bin/readme.md` lista, o `oauth_token` do `gh config` e criar alias
-  do `gh`, também pelo `gh-escrita` da camada privada; pergunta ao autor
+  `pacotes/bin/readme.md` lista, o `oauth_token` do `gh config` e criar
+  alias do `gh`, também pelo `gh-escrita` da camada privada; pergunta ao autor
   antes de `git revisao excecao`. O portão que segura é o pre-push do
   push do autor; no `gh`, que não passa por ele, o que segura é o escopo
   do token que o autor deu ao `gh` e o autor, que aprova no navegador o
@@ -124,11 +126,11 @@ Os pacotes stow apontam para a árvore de trabalho: o que o ramo muda já
 vale na máquina. Arquivo novo que precisa de um link próprio (fora de
 uma pasta que o stow já ligou inteira) só chega ao `$HOME` depois do
 `stow` do pacote, e o checkout não volta ao `main` antes do merge, ou o
-link fica pendurado. Script novo em `bin/.local/bin/` chega ao `PATH` pelo
-`stow -R bin`, que o `post-merge` roda, aqui e na camada privada, depois
-de todo merge sem conflito no `~/.dotfiles` ou no `~/.dotfiles-private`
-que muda o `bin/`, e não numa worktree; sem `~/.local/bin`, ele só avisa
-e pula o stow.
+link fica pendurado. Script novo em `pacotes/bin/.local/bin/` chega ao
+`PATH` pelo `stow -R bin`, que o `post-merge` roda, aqui e na camada
+privada, depois de todo merge sem conflito no `~/.dotfiles` ou no
+`~/.dotfiles-private` que muda o pacote `bin`, e não numa worktree; sem
+`~/.local/bin`, ele só avisa e pula o stow.
 
 ## Testes
 
@@ -138,10 +140,10 @@ distrobox-host-exec sh -c 'cd ~/.dotfiles && make check'
 
 Roda no host: ShellCheck e `shfmt -i 4` nos `SCRIPTS` do `Makefile`
 (script de shell novo entra nessa lista) e o bats em `tests/` e em
-`bin/.local/bin/`, onde as suítes moram ao lado dos scripts. Caso de borda
-novo vira teste antes da correção, e todo teste novo é conferido contra
-uma cópia sabotada do script, que ele tem de reprovar: cada suíte diz a
-variável que troca o script testado (`SKILLS_SYNC_SCRIPT`,
+`pacotes/bin/.local/bin/`, onde as suítes moram ao lado dos scripts.
+Caso de borda novo vira teste antes da correção, e todo teste novo é
+conferido contra uma cópia sabotada do script, que ele tem de reprovar:
+cada suíte diz a variável que troca o script testado (`SKILLS_SYNC_SCRIPT`,
 `GIT_REVISAO_SCRIPT`...). Durante o trabalho, `GIT_REVISAO_BASE=$(git
 merge-base main HEAD) scripts/testes-da-revisao` escolhe os testes pelo
 que o ramo mudou (o lint, as suítes desse código, e o `make check`

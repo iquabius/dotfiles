@@ -6,12 +6,12 @@ teste: scripts/testes-da-revisao
 .config/revisao
 .githooks/
 Makefile
-bin/.local/bin/
+pacotes/bin/.local/bin/
 scripts/
 tests/
 *.el
 *.fish
 *.sh
-ssh/.ssh/rc
-git/.gitconfig
-claude/
+pacotes/ssh/.ssh/rc
+pacotes/git/.gitconfig
+pacotes/claude/

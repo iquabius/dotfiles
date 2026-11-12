@@ -39,9 +39,9 @@ comando, e leem cada chamada do git palavra por palavra; um script
 gravado em arquivo e depois executado, o git chamado por uma variável,
 os argumentos ou o comando que chegam por um pipe ao xargs, a um shell
 ou ao source, o comando que um programa recebe como um texto só e passa
-a um shell (watch '...', su -c) e as outras formas que o bin/readme.md
-lista passam por elas, e o portão que segura de fato é o pre-push do
-push, que é do autor.
+a um shell (watch '...', su -c) e as outras formas que o
+pacotes/bin/readme.md lista passam por elas, e o portão que segura de
+fato é o pre-push do push, que é do autor.
 
 Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
 a decisão na saída padrão; sem nada a dizer, sai calado com 0.
