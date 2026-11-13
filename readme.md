@@ -186,7 +186,9 @@ privadas moram na camada privada. O `skills-sync` liga em `~/.agents/skills`,
 `~/.claude/skills` e `~/.cursor/skills` as skills dos perfis que o
 `.profile.local` daqui lista, e
 desliga as que saíram do perfil, sumiram dos repositórios ou mudaram de um ao
-outro.
+outro. A skill apagada de um repositório sai antes do perfil ou do
+`.pkgs.local` que a lista: com ela ainda listada, o `skills-sync` para na
+validação, sem ligar nem desligar nada.
 
 - Um perfil é a união dos `.pkgs` de mesmo nome nos dois repositórios: o
   `comum.pkgs` daqui lista o que vale em toda máquina, e o da camada privada
