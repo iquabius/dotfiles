@@ -120,15 +120,17 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 
 ## Onde a mudança vale
 
-Os pacotes stow apontam para a árvore de trabalho: o que o ramo muda já
-vale na máquina. Arquivo novo que precisa de um link próprio (fora de
-uma pasta que o stow já ligou inteira) só chega ao `$HOME` depois do
-`stow` do pacote, e o checkout não volta ao `main` antes do merge, ou o
-link fica pendurado. Script novo em `pacotes/bin/.local/bin/` chega ao
-`PATH` pelo `stow -R bin`, que o `post-merge` roda, aqui e na camada
-privada, depois de todo merge sem conflito no `~/.dotfiles` ou no
-`~/.dotfiles-private` que muda o pacote `bin`, e não numa worktree; sem
-`~/.local/bin`, ele só avisa e pula o stow.
+Os pacotes stow apontam para a árvore de trabalho do `~/.dotfiles`: o
+que o ramo muda nesse checkout já vale na máquina, e o que muda numa
+worktree só chega aos links do `$HOME` depois do merge. Arquivo novo
+que precisa de um link próprio (fora de uma pasta que o stow já ligou
+inteira) só chega ao `$HOME` depois do `stow` do pacote, e o checkout
+não volta ao `main` antes do merge, ou o link fica pendurado. Script
+novo em `pacotes/bin/.local/bin/` chega ao `PATH` pelo `stow -R bin`,
+que o `post-merge` roda, aqui e na camada privada, depois de todo merge
+sem conflito no `~/.dotfiles` ou no `~/.dotfiles-private` que muda o
+pacote `bin`, e não numa worktree; sem `~/.local/bin`, ele só avisa e
+pula o stow.
 
 ## Testes
 
