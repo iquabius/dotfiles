@@ -17,13 +17,23 @@ Todo trabalho, de pessoa ou de agente, chega ao `main` assim (decisão de
 registro e não se reescreve; o ramo ainda não mesclado é rascunho, e a
 história dele se condensa antes do merge (passo 5).
 
-1. **Ramo no lugar.** Antes do primeiro commit, `git switch -c <tarefa>`
-   no checkout em que se trabalha; as mudanças ainda não commitadas vão
-   junto, e o que não é da tarefa fica fora do índice. Uma tarefa por
-   ramo, com um nome que a diga, de horas a dois dias.
-2. **Primeira versão commitada** assim que funciona: o Emacs abre sem
-   erro, o fish carrega num terminal novo, o script roda e o `make
-   check` passa (ver *Testes*).
+1. **Worktree em ramo próprio.** O checkout principal (`~/.dotfiles`)
+   fica no `main`: outras sessões e o editor commitam ali, e um ramo nele
+   desvia os commits delas (decisão do autor de 2026-11-12). Antes do
+   primeiro commit, confira `pwd` e `git worktree list` e, do checkout
+   principal, `git worktree add -b <tarefa> .claude/worktrees/<tarefa>
+   main`; o trabalho segue na worktree. A mudança ainda não commitada no
+   checkout principal não vai junto: a da tarefa passa por `git diff
+   HEAD -- <arquivos> | git -C .claude/worktrees/<tarefa> apply`, o
+   arquivo novo ainda fora do índice, que o `git diff` não mostra, se
+   copia, e sai do checkout principal só o arquivo cuja mudança é toda
+   do agente (`git restore --source=HEAD --staged --worktree --
+   <arquivos>`, e `rm` no arquivo novo); o que tem também mudança de
+   outra sessão ou do autor fica, e o agente pergunta ao autor. Uma
+   tarefa por ramo, com um nome que a diga, de horas a dois dias.
+2. **Primeira versão commitada** assim que funciona, rodada pelo caminho
+   da worktree (*Onde a mudança vale*): o Emacs abre sem erro, o fish
+   carrega, o script roda e o `make check` passa (ver *Testes*).
 3. **Revisão do ramo inteiro.** Quando o ramo muda código (um caminho
    que casa com uma linha do [`.config/revisao`](.config/revisao), como
    os hooks, os scripts e as suítes, o `Makefile`, o Emacs Lisp, o fish,
@@ -52,19 +62,22 @@ história dele se condensa antes do merge (passo 5).
    pelo mesmo `git diff` vazio. Com a árvore igual à revisada, só os eixos
    História e Fatos da `revisao-rigorosa` rodam de novo, sobre a série nova;
    com outra árvore, a revisão do ramo inteiro.
-6. **Marque a ponta**: `git revisao pronto`, da ponta, sem código mudado
-   fora do commit. Ele roda antes o teste da linha `teste:` do
+6. **Marque a ponta**: `git revisao pronto`, da ponta, na worktree e sem
+   código mudado fora do commit. Ele roda antes o teste da linha `teste:` do
    `.config/revisao` (`scripts/testes-da-revisao`, que escolhe as suítes
    pelo diff do ramo) e não marca se o teste falha. Achado bloqueante
    que o autor decide deixar de pé: `git revisao excecao -m "<motivo do
    autor>"`. O agente não decide isso sozinho.
-7. **Merge no main**, sem rebase nem squash na hora do merge:
+7. **Merge no main**, no checkout principal, sem rebase nem squash na
+   hora do merge; o `post-merge` roda ali o `stow -R bin` (*Onde a
+   mudança vale*):
 
    ```sh
-   git switch main
+   # no checkout principal, no main
    git merge --ff-only <tarefa> ||
        git merge --no-ff -m "Mescla o ramo <tarefa>: <o que o ramo traz>" <tarefa>
    git revisao pendente   # tem de dizer "nada pendente"
+   git worktree remove .claude/worktrees/<tarefa>
    git branch -d <tarefa>
    ```
 
@@ -121,12 +134,13 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
 
 ## Onde a mudança vale
 
-Os pacotes stow apontam para a árvore de trabalho do `~/.dotfiles`: o
-que o ramo muda nesse checkout já vale na máquina, e o que muda numa
-worktree só chega aos links do `$HOME` depois do merge. Arquivo novo
-que precisa de um link próprio (fora de uma pasta que o stow já ligou
-inteira) só chega ao `$HOME` depois do `stow` do pacote, e o checkout
-não volta ao `main` antes do merge, ou o link fica pendurado. Script
+Os pacotes stow apontam para a árvore de trabalho do `~/.dotfiles`, que
+fica no `main`: o que um ramo muda na worktree só chega aos links do
+`$HOME` depois do merge. Para ver a mudança funcionar antes dele (o
+Emacs que abre, o fish que carrega), rode-a pelo caminho da worktree.
+Arquivo novo que precisa de um link próprio (fora de uma pasta que o
+stow já ligou inteira) só chega ao `$HOME` depois do `stow` do pacote,
+rodado no checkout principal depois do merge. Script
 novo em `pacotes/bin/.local/bin/` chega ao `PATH` pelo `stow -R bin`,
 que o `post-merge` roda, aqui e na camada privada, depois de todo merge
 sem conflito no `~/.dotfiles` ou no `~/.dotfiles-private` que muda o
@@ -139,12 +153,13 @@ pula o stow.
 distrobox-host-exec sh -c 'cd ~/.dotfiles && make check'
 ```
 
-Roda no host: ShellCheck e `shfmt -i 4` nos `SCRIPTS` do `Makefile`
-(script de shell novo entra nessa lista) e o bats em `tests/` e em
-`pacotes/bin/.local/bin/`, onde as suítes moram ao lado dos scripts.
-Caso de borda novo vira teste antes da correção, e todo teste novo é
-conferido contra uma cópia sabotada do arquivo testado, que ele tem de
-reprovar: cada suíte diz a variável que o troca (`SKILLS_SYNC_SCRIPT`,
+Numa worktree, o `cd` vai a ela. Roda no host: ShellCheck e `shfmt -i
+4` nos `SCRIPTS` do `Makefile` (script de shell novo entra nessa lista)
+e o bats em `tests/` e em `pacotes/bin/.local/bin/`, onde as suítes
+moram ao lado dos scripts. Caso de borda novo vira teste antes da
+correção, e todo teste novo é conferido contra uma cópia sabotada do
+arquivo testado, que ele tem de reprovar: cada suíte diz a variável
+que o troca (`SKILLS_SYNC_SCRIPT`,
 `GIT_REVISAO_SCRIPT`...). Durante o trabalho, `GIT_REVISAO_BASE=$(git
 merge-base main HEAD) scripts/testes-da-revisao` escolhe os testes pelo
 que o ramo mudou (o lint, as suítes desse código, e o `make check`
