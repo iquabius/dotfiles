@@ -286,12 +286,15 @@ cd ~/.dotfiles && stow fish emacs git tmux latexmk ytdlp asdf
 cd ~/.dotfiles && stow --no-folding vscode vscode-oss vscodium cursor
 mkdir -p -m 700 ~/.ssh && cd ~/.dotfiles && stow ssh
 mkdir -p ~/.local/bin && cd ~/.dotfiles && stow bin
+mkdir -p ~/.local/share && cd ~/.dotfiles && stow darkman   # (Linux)
 mkdir -p ~/.claude && cd ~/.dotfiles && stow claude   # só sem a camada privada
 ```
 
-O `mkdir` vem antes do `stow ssh`, do `stow bin` e do `stow claude`. Sem o
-`~/.ssh`, o Stow faz dele um symlink para dentro deste repo, e as chaves e o
-`known_hosts` que se gravassem ali cairiam aqui dentro. O `claude` só se liga
+O `mkdir` vem antes do `stow ssh`, do `stow bin`, do `stow darkman` e do
+`stow claude`. Sem o `~/.ssh`, o Stow faz dele um symlink para dentro deste
+repo, e as chaves e o `known_hosts` que se gravassem ali cairiam aqui dentro;
+sem o `~/.local/share`, cairia aqui o que os programas gravam nele. O darkman
+ainda pede a localização (ver *Avisos por pacote*). O `claude` só se liga
 na máquina sem a camada privada (ver *Avisos por pacote*).
 
 Os editores exigem `--no-folding`. Sem ele, numa máquina onde
