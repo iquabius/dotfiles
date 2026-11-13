@@ -9,7 +9,8 @@
 # Só as linhas ADICIONADAS são verificadas, então ocorrência antiga não trava
 # um commit que nem mexeu nela.
 #
-# Para um caso legítimo: git commit --no-verify
+# Uma conta de sistema, que não é nome de pessoa, entra no ALLOW abaixo,
+# num commit que passa pela revisão como todo hook.
 
 set -eu
 
@@ -41,6 +42,6 @@ done
 
 if [ "$fail" -ne 0 ]; then
     echo >&2
-    echo "  Troque por \$HOME ou ~. Se for mesmo necessário: git commit --no-verify" >&2
+    echo "  Troque por \$HOME ou ~. Conta de sistema: acrescente-a ao ALLOW do .githooks/pre-commit." >&2
     exit 1
 fi
