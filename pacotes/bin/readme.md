@@ -39,10 +39,12 @@ o que ela deixou de fora.
   *Pronto para o merge*, depois de o teste do repositório passar. O teste é a
   linha `teste: <comando>` do `.config/revisao` da ponta, ou do `main` se o
   ramo a tirou; roda sempre que há um declarado, da raiz, pelo `sh`, com
-  `GIT_REVISAO_BASE` e `GIT_REVISAO_PONTA` no ambiente. O comando escolhe
-  pelo diff o que conferir, inclusive o que a lista não conta como código, e
-  sai com 0 quando nada pede conferência; o `scripts/testes-da-revisao`
-  daqui faz isso pela forma do repositório e serve também à camada privada.
+  `GIT_REVISAO_BASE` e `GIT_REVISAO_PONTA` no ambiente. Como roda também
+  quando o diff não toca a lista, o comando pode conferir o que ela não
+  conta como código; ele escolhe pelo diff e sai com 0 quando nada pede
+  conferência. O `scripts/testes-da-revisao` daqui só olha os caminhos que
+  a lista da base ou da ponta conta (sem base, roda o `make check`) e serve
+  também à camada privada.
   Como roda no checkout, o `pronto` com teste pede que a ponta seja o `HEAD`
   e que nenhum caminho de código tenha mudança fora do commit, nem arquivo
   novo; o rascunho de texto pode ficar. Falhou, não marca. A marca é uma
