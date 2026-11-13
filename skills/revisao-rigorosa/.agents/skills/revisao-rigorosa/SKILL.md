@@ -128,6 +128,15 @@ limitam:
 
 ### 4. Rode os eixos em paralelo
 
+Cada vez que os eixos rodam sobre uma ponta do ramo (todos, ou só os que
+o passo 7 manda rodar de novo), com o veredito que sai dela, é uma
+**rodada**, e as rodadas se contam ("a terceira rodada"). O **ciclo de
+revisão** é o processo inteiro que as repete: a primeira rodada, os
+consertos dos achados bloqueantes, a rodada seguinte sobre a ponta nova,
+até o "Pronto para o merge" ou a exceção que o autor decide (passo 6).
+Diz-se "o ciclo de revisão está na terceira rodada", e não "no terceiro
+ciclo".
+
 Abra os subagentes de todos os eixos de uma vez, um por eixo (no Fatos,
 os das mensagens e os da documentação), para que os contextos fiquem
 separados. Cada pedido tem de se bastar: o subagente não vê mais nada.
@@ -153,7 +162,7 @@ modelo herda o carro-chefe quando a sessão roda nele, o que custa mais e
 roda mais devagar do que uma revisão precisa. O menor nível não dá conta.
 Na medição de 2026-10-24, sobre quatro ramos já mesclados de um
 repositório (código de aplicação, ferramentas em Python, instruções para
-agentes, ferramentas de LaTeX), foram 48 rodadas dos quatro eixos contra
+agentes, ferramentas de LaTeX), foram 48 execuções dos quatro eixos contra
 os defeitos que a revisão original tinha consertado. O Claude Haiku 4.5
 achou 3 de 39, com evidência inventada e checagens que impunham o próprio
 nome no trailer de atribuição. Somados os achados dos quatro eixos, o
@@ -336,13 +345,13 @@ Codex, segue as regras de força e de "nada novo" e a conferência pelo
 `forca-no-patch` da seção "O Codex que escreve o conserto" de
 `references/codex.md`.
 
-A revisão de novo depois dos consertos tem fim à vista. Passadas umas
-três rodadas sem "Pronto para o merge", e antes de abrir a próxima, diga
-ao autor em que rodada está, o padrão dos achados e as opções: fechar o
-resto com `git revisao excecao`, que é decisão dele, ou seguir. O autor
-pode pôr um teto de rodadas. O sinal é cada rodada achar um caso mais
+O ciclo de revisão tem fim à vista. Depois de umas três rodadas sem
+"Pronto para o merge", e antes de abrir a próxima, diga ao autor em que
+rodada está, o padrão dos achados e as opções: fechar o resto com `git
+revisao excecao`, que é decisão dele, ou seguir. O autor pode pôr um
+teto de rodadas. O sinal é cada rodada achar um caso mais
 raro do mesmo filtro heurístico, que não converge (num parse de TeX,
-em 2026-10-29, a revisão passou de cinco rodadas e de umas cinco horas,
+em 2026-10-29, o ciclo passou de cinco rodadas e de umas cinco horas,
 e o autor limitou a nove): ali, prefira uma garantia estrutural, como
 validar a saída inteira, a uma regra por achado.
 

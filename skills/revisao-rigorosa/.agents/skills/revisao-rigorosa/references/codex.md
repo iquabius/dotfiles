@@ -69,7 +69,7 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
   escreveu); atualizar o CLI é decisão do autor.
   `model_reasoning_effort=high`: o padrão do modelo é `low`, raso demais
   para uma revisão. Confira a linha `reasoning effort: high` do
-  cabeçalho; com outro esforço, a rodada não conta, e `## Codex` diz por
+  cabeçalho; com outro esforço, a chamada não conta, e `## Codex` diz por
   quê.
 - O Codex acha sozinho as skills instaladas em `~/.agents/skills`: em
   2026-10-26, com um pedido sem a linha que proíbe abrir skills, ele
@@ -151,7 +151,7 @@ cuja citação o diff não contém ou cuja linha não diz o que o Codex
 afirma. Ao Codex não se diz nada dos outros eixos, e os achados dele não
 se comparam com os dos outros eixos: um achado que só o Codex levantou e
 que sobrevive à conferência conta como qualquer outro. Uma chamada é uma
-amostra: duas rodadas sobre o mesmo commit, em 2026-10-26 (a segunda com
+amostra: duas chamadas sobre o mesmo commit, em 2026-10-26 (a segunda com
 a linha que proíbe abrir skills, que a primeira não tinha), devolveram
 dois achados bloqueantes e depois um deles. Um relatório limpo do Codex
 não prova que a mudança está limpa.
@@ -166,7 +166,7 @@ primeira linha `ERROR:` do log, ou um arquivo `-o` ausente ou vazio: a
 chamada com um modelo inexistente sai com 1 e `model_not_found` e não
 escreve o arquivo `-o`, e a de um CLI desatualizado a um modelo novo
 falha com "not supported when using Codex with a ChatGPT account", como
-no item Modelo de "A chamada"). Uma rodada ainda em curso quando os
+no item Modelo de "A chamada"). Uma chamada ainda em curso quando os
 outros eixos já terminaram e foram conferidos ganha mais cinco minutos,
 depois é parada e conta como falha. Nunca escreva pelo Codex achados ou
 veredito que a saída dele não contenha.
