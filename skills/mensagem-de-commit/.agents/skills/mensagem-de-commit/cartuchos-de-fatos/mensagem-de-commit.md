@@ -184,8 +184,9 @@ pendências do relatório, com a fonte que faltou.
 - **Rascunho**: reescreva antes do commit. O agente autor corrige o
   próprio rascunho sem perguntar; a regra do autor sobre quando um commit
   espera aprovação não muda.
-- **Ramo ainda não mesclado**: `--amend` na ponta, `--fixup=<sha>` para um
-  commit anterior, depois o rebase que condensa; a árvore não muda
+- **Ramo ainda não mesclado**: `--amend` na ponta, `--fixup=reword:<sha>`
+  para um commit anterior (o `--fixup=<sha>` simples guarda a mensagem
+  velha), depois o rebase que condensa; a árvore não muda
   (`git diff <reviewed-tip> HEAD` vazio), então só os eixos História e
   Fatos rodam de novo.
 - **Enviado para outros**: não se reescreve para consertar a mensagem.
