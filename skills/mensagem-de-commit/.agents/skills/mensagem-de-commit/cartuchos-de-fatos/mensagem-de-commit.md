@@ -156,10 +156,10 @@ conserto → alternativa recusada → escopo → teste**. Audite:
 - o teste nomeado cobre o sintoma descrito (falha no pai, passa aqui);
 - uma frase da mensagem que nenhum trecho do diff sustenta, e um trecho
   que nenhuma frase explica, quando um leitor esperaria uma;
-- um commit posterior da série que corrige um anterior: o fato da
-  mensagem anterior agora é falso, e a série é um rascunho a condensar (o
-  achado é do eixo História da revisao-rigorosa; a checagem de Fatos
-  relata o fato vencido).
+- um commit posterior da série que corrige um anterior: a mensagem
+  anterior descreve uma árvore que a série desfaz, e a série é um
+  rascunho a condensar (o achado é do eixo História da
+  revisao-rigorosa; a checagem de Fatos relata o fato vencido).
 
 Uma descrição do problema que volta com o veredito **falso** não é
 defeito da mensagem:
