@@ -24,9 +24,14 @@ ALLOW='linuxbrew|runner|root'
 # deixa o diff menor. O nome vem do cabeçalho (+++ b/<nome>, ou
 # +++ "b/<nome>" com as aspas e os escapes do git quando ele tem aspas,
 # barra invertida ou caractere de controle; o tab que o git põe depois do
-# nome com espaço sai), e os prefixos vão explícitos para o diff.noprefix e
-# o mnemonicPrefix não os trocarem, como o --submodule=short para o
-# diff.submodule não pôr no diff o conteúdo de um submódulo. Linha
+# nome com espaço sai). Na mensagem, o nome entre aspas que só tem o
+# escape da aspa e o da barra invertida sai com os dois desfeitos, como o
+# nome real; o que tem o de um caractere de controle sai entre aspas, com
+# os escapes do git (sem o b/ do cabeçalho), para não quebrar a linha nem
+# se confundir com um nome de barra e letra. Os prefixos vão explícitos
+# para o diff.noprefix e o mnemonicPrefix não os trocarem, como o
+# --submodule=short para o diff.submodule não pôr no diff o conteúdo de um
+# submódulo. Linha
 # do cabeçalho só conta até o primeiro @@: depois dele, "+++" é conteúdo
 # que começa com "++". O --text lê como texto o binário e o arquivo que o
 # atributo -diff marca (no .gitattributes ou no .git/info/attributes, que
@@ -53,11 +58,24 @@ git -c core.quotePath=false diff --cached -M -U0 --no-color --text \
     --dst-prefix=b/ >"$diff"
 
 awk -v allow="$ALLOW" '
+    function nome(s,    r, i, c) {
+        r = ""
+        for (i = 1; i <= length(s); i++) {
+            c = substr(s, i, 1)
+            if (c == "\\") {
+                c = substr(s, ++i, 1)
+                if (c != "\"" && c != "\\") return "\"" s "\""
+            }
+            r = r c
+        }
+        return r
+    }
     BEGIN { ultimo = "\n" }
     /^diff --git / { cab = 1; f = ""; next }
     cab && /^\+\+\+ b\// { f = substr($0, 7); sub(/\t$/, "", f); next }
     cab && /^\+\+\+ "b\// {
-        f = substr($0, 8); sub(/\t$/, "", f); sub(/"$/, "", f); next
+        f = substr($0, 8); sub(/\t$/, "", f); sub(/"$/, "", f); f = nome(f)
+        next
     }
     /^@@/ { cab = 0; next }
     cab { next }

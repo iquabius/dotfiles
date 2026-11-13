@@ -134,12 +134,20 @@ setup() {
 	[[ $output == *$'  com espaço.txt\n'* ]]
 }
 
-@test "nome que o git põe entre aspas sai com o nome" {
+@test "nome que o git põe entre aspas sai com o nome real" {
 	echo "caminho $H/q" >'z"q.txt'
 	git add 'z"q.txt'
 	run "$SCRIPT"
 	[ "$status" -eq 1 ]
-	[[ $output == *'  z\"q.txt'* ]]
+	[[ $output == *$'  z"q.txt\n'* ]]
+}
+
+@test "nome com barra invertida e letra sai com o nome real, sem aspas" {
+	echo "caminho $H/q" >'z\tq.txt'
+	git add 'z\tq.txt'
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output == *$'\n  z\\tq.txt\n'* ]]
 }
 
 @test "nome com aspas e espaço sai sem a aspa e o tab do fim" {
@@ -147,7 +155,15 @@ setup() {
 	git add 'a "b c.txt'
 	run "$SCRIPT"
 	[ "$status" -eq 1 ]
-	[[ $output == *$'  a \\"b c.txt\n'* ]]
+	[[ $output == *$'  a "b c.txt\n'* ]]
+}
+
+@test "nome com caractere de controle sai como o git o escreve, com aspas" {
+	echo "caminho $H/r" >$'t\tb "c.txt'
+	git add $'t\tb "c.txt'
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output == *$'  "t\\tb \\"c.txt"\n'* ]]
 }
 
 @test "conteúdo de submódulo não entra, com diff.submodule=diff" {
