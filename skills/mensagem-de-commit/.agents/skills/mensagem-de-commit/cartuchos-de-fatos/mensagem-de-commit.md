@@ -37,9 +37,11 @@ em ordem, porque uma mensagem posterior pode citar uma anterior.
 **Primária, sempre preferida — o repositório na árvore do próprio
 commit:**
 
-- o que o commit fez: `git show <sha>` (`--stat`, depois o diff); para um
-  rascunho, `git diff --staged` (ou `git diff` para `-a`, ou os caminhos
-  nomeados na linha de comando);
+- o que o commit fez: `git show <sha>` (`--stat`, depois o diff; num
+  merge, `git show --diff-merges=first-parent <sha>`, porque o diff
+  combinado padrão pode omitir o que o merge trouxe); para um rascunho,
+  `git diff --staged` (ou `git diff HEAD` para `-a`, que não leva os
+  arquivos não rastreados, ou os caminhos nomeados na linha de comando);
 - o que um arquivo dizia antes e diz depois: `git show <sha>^:<path>` e
   `git show <sha>:<path>`; para um rascunho, `git show HEAD:<path>` e
   `git show :<path>` (o índice);
@@ -72,7 +74,8 @@ commit:**
   lido atrás de trechos que não sejam comentário, a saída do comando de
   conformidade;
 - uma data ou um "desde": a data do próprio commit
-  (`git log -1 --format=%ad`), a linha datada no arquivo;
+  (`git show -s --format=%ad <sha>`, a data do autor), a linha datada no
+  arquivo;
 - o que aconteceu numa sessão de agente, quando a mensagem o afirma
   (as opções postas ao autor, o que uma revisão ou um verificador
   achou, o que um script fez durante a sessão): o evento na transcrição
