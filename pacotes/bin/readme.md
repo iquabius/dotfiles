@@ -76,10 +76,12 @@ o que ela deixou de fora.
 Reescrever um commit marcado, como faz o rebase que só refaz as datas ou as
 mensagens, muda o sha, mas não tira a marca: o commit com a mesma árvore e
 as mesmas árvores dos pais de um commit coberto conta como coberto, porque
-o código e o diff são os que a revisão viu. O que muda algum arquivo, no
-commit ou no pai (o `cherry-pick` depois de o `main` andar), pede revisão
-de novo. A herança dura enquanto o commit marcado existir no clone; o gc o
-leva depois que o reflog expira.
+o código e o diff são os que a revisão viu. O merge de dois pais pede também
+a mesma resolução (o `--remerge-diff`), que depende da história que refaz a
+mesclagem, e não só das árvores. O que muda algum arquivo, no commit ou no
+pai (o `cherry-pick` depois de o `main` andar), pede revisão de novo. A
+herança dura enquanto o commit marcado existir no clone; o gc o leva depois
+que o reflog expira.
 
 ### claude-revisao-guarda
 
