@@ -270,13 +270,15 @@ adicionadas, fora das contas de sistema `linuxbrew`, `runner` e `root`:
 caminho absoluto de home entrega o nome da conta da máquina que escreveu a
 linha, e três já tinham entrado aqui desse jeito. Só as linhas novas são
 olhadas: a que só mudou de arquivo no mesmo commit, por renomeação ou
-movida para outro, não conta. O `post-merge`
-roda o `stow -R bin`, daqui e da camada privada, depois de todo pull que
-muda o pacote `bin` de um dos dois, e o `skills-sync` depois de todo pull que
-muda as skills, os perfis ou o próprio `skills-sync` (ver *Skills de
-agente*); sem `~/.local/bin` ou sem o `.profile.local`, ele só avisa e pula
-o passo, e fora dos checkouts `~/.dotfiles` e `~/.dotfiles-private` (numa
-worktree, noutro clone), nada faz.
+movida para outro, não conta.
+
+O `post-merge` roda o `stow -R bin`, daqui e da camada privada, depois do
+pull que muda o pacote `bin` de um dos dois, e o `skills-sync` depois do
+pull que muda as skills, os perfis ou o próprio `skills-sync` (ver *Skills
+de agente*). O git não o chama no merge com conflito nem no pull `--rebase`
+que reaplica commits locais. Sem `~/.local/bin` ou sem o `.profile.local`,
+ele só avisa e pula o passo, e fora dos checkouts `~/.dotfiles` e
+`~/.dotfiles-private` (numa worktree, noutro clone), nada faz.
 
 ### 3. Aplicar os symlinks
 
