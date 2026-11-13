@@ -90,10 +90,11 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   (na máquina sem a camada privada) o desliga antes do push, que o
   pre-push ainda confere.
 - **pre-commit** (`git-revisao`): recusa commit de agente no `main` que
-  mexa no código. O git não o chama em `cherry-pick`, `revert` nem `am`:
-  o que eles levarem ao `main` só o pre-push pega. O `.githooks/pre-commit`
-  deste repositório continua recusando caminho absoluto de home nas linhas
-  novas.
+  mexa no código. O git não o chama em `cherry-pick`, `revert` nem `am`,
+  salvo no `cherry-pick --continue` e no `revert --continue` depois de um
+  conflito: o resto do que eles levarem ao `main` só o pre-push pega. O
+  `.githooks/pre-commit` deste repositório continua recusando caminho
+  absoluto de home nas linhas novas.
 - **commit-msg** (`git-assunto-merge`, hook global do pacote `git`):
   recusa no commit de merge o assunto "Merge branch '<ramo>'", que o git
   escreve quando o merge vem sem `-m`, e o "Mescla o ramo <ramo>:" (ou o

@@ -70,8 +70,9 @@ o que ela deixou de fora.
   (`CLAUDECODE` no ambiente, como no Bash do Claude Code) no `main` que
   mexa no código; o que entra no commit vem do índice, então `git commit
   -a` e `git commit -- <arquivos>` contam. Concluir um merge passa. O git
-  não chama o pre-commit em `cherry-pick`, `revert` nem `am`; o que eles
-  levarem ao `main` fica para o pre-push.
+  não chama o pre-commit em `cherry-pick`, `revert` nem `am`, salvo no
+  `cherry-pick --continue` e no `revert --continue` depois de um conflito;
+  o resto do que eles levarem ao `main` fica para o pre-push.
 
 Reescrever um commit marcado, como faz o rebase que só refaz as datas ou as
 mensagens, muda o sha, mas não tira a marca: o commit com a mesma árvore e
