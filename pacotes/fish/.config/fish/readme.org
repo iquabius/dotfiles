@@ -2,5 +2,6 @@
 
 This is my setup for the [[https://fishshell.com/][Fish Shell]].
 
-These files are managed from my [[https://github.com/iquabius/dotfiles/blob/c3774c/.config/mr/available.d/dotfish.git][main dotfiles repo.]]
+These files live in the =fish= Stow package (=pacotes/fish/=) of my
+[[https://github.com/iquabius/dotfiles][dotfiles repo]].
 
