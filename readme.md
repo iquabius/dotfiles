@@ -44,7 +44,7 @@ resto da raiz o Stow não liga.
 | `skills/` | a outra stow dir: um pacote por skill de agente, que o `skills-sync` liga (ver *Skills de agente* e o [`skills/readme.md`](skills/readme.md)) |
 | `profiles/` | os perfis de skills (`<perfil>.pkgs`), que o `skills-sync` lê |
 | `scripts/` | scripts do repositório que não vão para o `$HOME`, como o `testes-da-revisao`, que o `git revisao pronto` roda |
-| `tests/` | as suítes bats do hook `post-merge`, da configuração, dos `scripts/` e do `skills-sync`; o `make check` as roda junto das `*.test.bats` de `pacotes/bin/.local/bin/` |
+| `tests/` | as suítes bats dos hooks `pre-commit` e `post-merge`, da configuração, dos `scripts/` e do `skills-sync`; o `make check` as roda junto das `*.test.bats` de `pacotes/bin/.local/bin/` |
 | `Makefile` | o `make check`: ShellCheck e shfmt nos scripts de shell da lista `SCRIPTS`, e as suítes bats |
 | `.githooks/` | os hooks deste repositório, ligados com `git config core.hooksPath .githooks` (ver *2. Clonar*) |
 | `.config/revisao` | os caminhos que pedem a revisão do ramo antes do `main`, e o teste que o `git revisao pronto` roda |
@@ -269,7 +269,8 @@ O `pre-commit` recusa `/home/<user>/` e `/Users/<user>/` nas linhas
 adicionadas, fora das contas de sistema `linuxbrew`, `runner` e `root`:
 caminho absoluto de home entrega o nome da conta da máquina que escreveu a
 linha, e três já tinham entrado aqui desse jeito. Só as linhas novas são
-olhadas, e não as de um arquivo renomeado no mesmo commit. O `post-merge`
+olhadas: a que só mudou de arquivo no mesmo commit, por renomeação ou
+movida para outro, não conta. O `post-merge`
 roda o `stow -R bin`, daqui e da camada privada, depois de todo pull que
 muda o pacote `bin` de um dos dois, e o `skills-sync` depois de todo pull que
 muda as skills, os perfis ou o próprio `skills-sync` (ver *Skills de

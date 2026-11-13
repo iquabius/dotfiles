@@ -17,30 +17,55 @@ set -eu
 # Contas de sistema, que não são nome de pessoa.
 ALLOW='linuxbrew|runner|root'
 
-fail=0
-for f in $(git diff --cached --name-only --diff-filter=ACM); do
-    # Pula binário: --numstat marca os dois contadores com "-".
-    case "$(git diff --cached --numstat -- "$f" | cut -f1)" in
-    -) continue ;;
-    esac
+# Um diff só, do índice inteiro. Linha nova é a "+" que não saiu, como "-",
+# de lugar nenhum do mesmo commit, em qualquer arquivo, uma vez por saída:
+# assim a linha de um arquivo renomeado (com ou sem o -M parear os dois
+# lados) ou movida para outro arquivo não conta, e a copiada conta. O -M só
+# deixa o diff menor. O nome vem do cabeçalho (+++ b/<nome>, ou
+# +++ "b/<nome>" com as aspas e os escapes do git quando ele tem aspas,
+# barra invertida ou caractere de controle; o tab que o git põe depois do
+# nome com espaço sai), e os prefixos vão explícitos para o diff.noprefix e
+# o mnemonicPrefix não os trocarem, como o --submodule=short para o
+# diff.submodule não pôr no diff o conteúdo de um submódulo. Linha
+# do cabeçalho só conta até o primeiro @@: depois dele, "+++" é conteúdo
+# que começa com "++". O binário não tem linha "+" (o --no-textconv impede
+# o driver do .gitattributes de convertê-lo em texto); o symlink novo tem o
+# alvo como linha "+", e conta. A conta do ALLOW vira "/" na linha antes
+# da busca, até não sobrar nenhuma: a outra conta da mesma linha ainda
+# recusa, e as pontas que sobram não se colam num caminho que não estava lá.
+diff=$(git -c core.quotePath=false diff --cached -M -U0 --no-color \
+    --no-ext-diff --no-textconv --submodule=short --src-prefix=a/ \
+    --dst-prefix=b/)
 
-    hits=$(git diff --cached -U0 --no-color -- "$f" |
-        grep '^+' | grep -v '^+++' |
-        grep -E '/(home|Users)/[A-Za-z0-9._-]+/' |
-        grep -vE "/(home|Users)/($ALLOW)/" || true)
+hits=$(printf '%s\n' "$diff" | awk -v allow="$ALLOW" '
+    BEGIN { ultimo = "\n" }
+    /^diff --git / { cab = 1; f = ""; next }
+    cab && /^\+\+\+ b\// { f = substr($0, 7); sub(/\t$/, "", f); next }
+    cab && /^\+\+\+ "b\// {
+        f = substr($0, 8); sub(/\t$/, "", f); sub(/"$/, "", f); next
+    }
+    /^@@/ { cab = 0; next }
+    cab { next }
+    /^-/ { saiu[substr($0, 2)]++; next }
+    /^\+/ {
+        t = $0
+        while (gsub("/(home|Users)/(" allow ")/", "/", t)) {}
+        if (t ~ /\/(home|Users)\/[A-Za-z0-9._-]+\//) {
+            n++; arq[n] = f; lin[n] = substr($0, 2)
+        }
+    }
+    END {
+        for (i = 1; i <= n; i++) {
+            if (saiu[lin[i]] > 0) { saiu[lin[i]]--; continue }
+            if (arq[i] != ultimo) { print "  " arq[i]; ultimo = arq[i] }
+            print "      " lin[i]
+        }
+    }')
 
-    if [ -n "$hits" ]; then
-        if [ "$fail" -eq 0 ]; then
-            echo "pre-commit: caminho absoluto de home nas linhas adicionadas:" >&2
-            echo >&2
-        fi
-        fail=1
-        echo "  $f" >&2
-        printf '%s\n' "$hits" | sed 's/^+/      /' >&2
-    fi
-done
-
-if [ "$fail" -ne 0 ]; then
+if [ -n "$hits" ]; then
+    echo "pre-commit: caminho absoluto de home nas linhas adicionadas:" >&2
+    echo >&2
+    printf '%s\n' "$hits" >&2
     echo >&2
     echo "  Troque por \$HOME ou ~. Conta de sistema: acrescente-a ao ALLOW do .githooks/pre-commit." >&2
     exit 1
