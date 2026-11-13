@@ -142,13 +142,14 @@ Roda no host: ShellCheck e `shfmt -i 4` nos `SCRIPTS` do `Makefile`
 (script de shell novo entra nessa lista) e o bats em `tests/` e em
 `pacotes/bin/.local/bin/`, onde as suítes moram ao lado dos scripts.
 Caso de borda novo vira teste antes da correção, e todo teste novo é
-conferido contra uma cópia sabotada do script, que ele tem de reprovar:
-cada suíte diz a variável que troca o script testado (`SKILLS_SYNC_SCRIPT`,
+conferido contra uma cópia sabotada do arquivo testado, que ele tem de
+reprovar: cada suíte diz a variável que o troca (`SKILLS_SYNC_SCRIPT`,
 `GIT_REVISAO_SCRIPT`...). Durante o trabalho, `GIT_REVISAO_BASE=$(git
 merge-base main HEAD) scripts/testes-da-revisao` escolhe os testes pelo
 que o ramo mudou (o lint, as suítes desse código, e o `make check`
-inteiro quando muda o que todas usam ou um código sem suíte), os mesmos
-que o `git revisao pronto` vai rodar.
+inteiro quando muda o que todas usam, um arquivo de código da raiz, como
+o `.stowrc`, ou um código sem suíte), os mesmos que o `git revisao
+pronto` vai rodar.
 
 ## Commits
 

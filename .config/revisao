@@ -4,6 +4,7 @@
 # teste que o git revisao pronto roda antes de marcar, escolhido pelo diff:
 teste: scripts/testes-da-revisao
 .config/revisao
+.stowrc
 .githooks/
 Makefile
 pacotes/bin/.local/bin/
