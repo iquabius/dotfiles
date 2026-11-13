@@ -28,17 +28,31 @@ ALLOW='linuxbrew|runner|root'
 # o mnemonicPrefix não os trocarem, como o --submodule=short para o
 # diff.submodule não pôr no diff o conteúdo de um submódulo. Linha
 # do cabeçalho só conta até o primeiro @@: depois dele, "+++" é conteúdo
-# que começa com "++". O binário não tem linha "+" (o --no-textconv impede
-# o driver do .gitattributes de convertê-lo em texto); o symlink novo,
-# também o que entra no lugar de um arquivo, tem o alvo como linha "+", e
-# conta. A conta do ALLOW vira "/" na linha antes da busca, até não sobrar
-# nenhuma: a outra conta da mesma linha ainda recusa, e as pontas que
-# sobram não se colam num caminho que não estava lá.
-diff=$(git -c core.quotePath=false diff --cached -M -U0 --no-color \
+# que começa com "++". O --text lê como texto o binário e o arquivo que o
+# atributo -diff marca (no .gitattributes ou no .git/info/attributes, que
+# não vai ao repositório), para nenhum dos dois esconder a linha; o
+# --no-textconv lê o conteúdo cru, e não o que o driver do .gitattributes
+# faria dele. O diff vai para um arquivo, que o trap apaga também no Ctrl-C,
+# e não para uma variável: o $(...) descarta os bytes NUL do binário,
+# colando o que estava separado (o bash, quando é o sh, ainda avisa disso no
+# stderr). Pelo mesmo motivo, e para a recusa não mandar ao terminal os
+# bytes de controle de um binário, o tr troca na saída os caracteres de
+# controle do ASCII, fora o tab e a quebra de linha, por "?". O awk escreve
+# num segundo arquivo, que o tr lê depois: no fim de um pipe, o tr daria o
+# status do pipe, e a falha do awk passaria o commit. O symlink novo, também
+# o que entra no lugar de um arquivo, tem o alvo como linha "+", e conta. A
+# conta do ALLOW vira "/" na linha antes da busca, até não sobrar nenhuma: a
+# outra conta da mesma linha ainda recusa, e as pontas que sobram não se
+# colam num caminho que não estava lá.
+diff=$(mktemp)
+saida=$(mktemp)
+trap 'rm -f "$diff" "$saida"' EXIT
+trap 'exit 1' HUP INT TERM
+git -c core.quotePath=false diff --cached -M -U0 --no-color --text \
     --no-ext-diff --no-textconv --submodule=short --src-prefix=a/ \
-    --dst-prefix=b/)
+    --dst-prefix=b/ >"$diff"
 
-hits=$(printf '%s\n' "$diff" | awk -v allow="$ALLOW" '
+awk -v allow="$ALLOW" '
     BEGIN { ultimo = "\n" }
     /^diff --git / { cab = 1; f = ""; next }
     cab && /^\+\+\+ b\// { f = substr($0, 7); sub(/\t$/, "", f); next }
@@ -61,7 +75,8 @@ hits=$(printf '%s\n' "$diff" | awk -v allow="$ALLOW" '
             if (arq[i] != ultimo) { print "  " arq[i]; ultimo = arq[i] }
             print "      " lin[i]
         }
-    }')
+    }' "$diff" >"$saida"
+hits=$(tr '\000-\010\013-\037\177' '[?*]' <"$saida")
 
 if [ -n "$hits" ]; then
     echo "pre-commit: caminho absoluto de home nas linhas adicionadas:" >&2

@@ -169,20 +169,77 @@ setup() {
 	[[ $output == *"$H/w"* ]]
 }
 
-@test "binário passa" {
+@test "binário com home recusa, com o NUL trocado por ?" {
 	printf '\0%s/b\n' "$H" >bin.dat
 	git add bin.dat
 	run "$SCRIPT"
-	[ "$status" -eq 0 ]
+	[ "$status" -eq 1 ]
+	[[ $output == *bin.dat* ]]
+	[[ $output == *"?$H/b"* ]]
 }
 
-@test "binário com textconv no .gitattributes passa" {
+# O bash avisa do NUL que o $(...) descarta; o dash, não. Por isso estes
+# rodam o hook pelo bash, seja qual for o sh da máquina.
+@test "binário com home recusa no bash, sem aviso de NUL" {
+	printf '\0%s/b\n' "$H" >bin.dat
+	git add bin.dat
+	run bash "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output != *"null byte"* ]]
+}
+
+@test "binário sem home passa no bash, sem aviso de NUL" {
+	printf '\0\1\2/home/\0fulano/x\n' >bin.dat
+	git add bin.dat
+	run bash "$SCRIPT"
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+}
+
+@test "binário sem home passa, sem colar as pontas do NUL" {
+	printf '\0\1\2/home/\0fulano/x\n' >bin.dat
+	git add bin.dat
+	run "$SCRIPT"
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+}
+
+@test "recusa não manda ao terminal os bytes de controle da linha" {
+	printf '\033[31m %s/e\r\n' "$H" >cor.txt
+	git add cor.txt
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output == *"?[31m $H/e?"* ]]
+	[[ $output != *$'\033'* ]]
+}
+
+@test "awk que falha recusa o commit" {
+	echo "caminho $H/f" >novo.txt
+	git add novo.txt
+	mkdir "$BATS_TEST_TMPDIR/bin"
+	printf '#!/bin/sh\nexit 2\n' >"$BATS_TEST_TMPDIR/bin/awk"
+	chmod +x "$BATS_TEST_TMPDIR/bin/awk"
+	PATH="$BATS_TEST_TMPDIR/bin:$PATH" run "$SCRIPT"
+	[ "$status" -ne 0 ]
+}
+
+@test "textconv do .gitattributes não esconde o conteúdo cru" {
 	echo 'bin.dat diff=conv' >.gitattributes
-	git config diff.conv.textconv cat
+	git config diff.conv.textconv 'sed s,/,,g'
 	printf '\0%s/b\n' "$H" >bin.dat
 	git add .gitattributes bin.dat
 	run "$SCRIPT"
-	[ "$status" -eq 0 ]
+	[ "$status" -eq 1 ]
+	[[ $output == *"$H/b"* ]]
+}
+
+@test "atributo -diff do .git/info/attributes não esconde a linha" {
+	echo 'novo.txt -diff' >.git/info/attributes
+	echo "caminho $H/d" >novo.txt
+	git add novo.txt
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output == *"$H/d"* ]]
 }
 
 @test "symlink novo com alvo de home recusa" {
