@@ -30,7 +30,10 @@ história dele se condensa antes do merge (passo 5).
    do agente (`git restore --source=HEAD --staged --worktree --
    <arquivos>`, e `rm` no arquivo novo); o que tem também mudança de
    outra sessão ou do autor fica, e o agente pergunta ao autor. Uma
-   tarefa por ramo, com um nome que a diga, de horas a dois dias.
+   tarefa por ramo, com um nome que a diga, de horas a dois dias. O
+   `claude-revisao-guarda` recusa ao Claude Code, e não ao Codex, as
+   formas diretas de tirar do `main` o HEAD de um checkout principal
+   (seção *Portões*).
 2. **Primeira versão commitada** assim que funciona, rodada pelo caminho
    da worktree (*Onde a mudança vale*): o Emacs abre sem erro, o fish
    carrega, o script roda e o `make check` passa (ver *Testes*).
@@ -124,11 +127,16 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   `notes.rewriteRef`, o merge pelo GitHub, o `gh` com a palavra `auth`,
   menos as formas do `gh auth status` sem o token e da ajuda que o
   `pacotes/bin/readme.md` lista, o `oauth_token` do `gh config` e criar
-  alias do `gh`, também pelo `gh-escrita` da camada privada; pergunta ao autor
-  antes de `git revisao excecao`. O portão que segura é o pre-push do
-  push do autor; no `gh`, que não passa por ele, o que segura é o escopo
-  do token que o autor deu ao `gh` e o autor, que aprova no navegador o
-  login e o refresh, e no `gh-escrita` o diálogo da chave do App.
+  alias do `gh`, também pelo `gh-escrita` da camada privada, e tirar do
+  ramo principal o HEAD de um checkout principal (`git switch` e `git
+  checkout` para um ramo novo, outro ramo ou um commit, `git rebase
+  <base> <ramo>`, `git stash branch`, `gh pr checkout`, também pelo
+  `-C`, pelo `cd` ou pelo `env -C` de outro repositório); pergunta ao
+  autor antes de `git revisao excecao`. O portão que segura é o
+  pre-push do push do autor; no `gh`, que não passa por ele, o que
+  segura é o escopo do token que o autor deu ao `gh` e o autor, que
+  aprova no navegador o login e o refresh, e no `gh-escrita` o diálogo
+  da chave do App.
 - **Outros hooks da camada privada**: têm regras próprias, além da
   revisão. Siga o que a mensagem de cada um disser; nunca os pule.
 

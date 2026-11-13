@@ -1,16 +1,36 @@
 #!/usr/bin/env bats
 # Testes do claude-revisao-guarda, o hook PreToolUse do Claude Code que
-# guarda o ciclo de ramo, revisão e merge. O hook só lê o comando: não roda
-# git nem gh.
+# guarda o ciclo de ramo, revisão e merge. O hook lê o comando e não roda o
+# gh; o git, ele só roda para saber se o diretório é o checkout principal e
+# qual é o ramo principal, quando o comando pode trocar o HEAD.
 
 bats_require_minimum_version 1.5.0
 
 SCRIPT="${CLAUDE_REVISAO_GUARDA_SCRIPT:-$BATS_TEST_DIRNAME/claude-revisao-guarda}"
 
-# guarda <comando> — roda o hook com o JSON que o Claude Code manda.
+# guarda <comando> [diretório] — roda o hook com o JSON que o Claude Code
+# manda, com o cwd do Bash no diretório ou, sem ele, fora de repositório.
 guarda() {
-	python3 -c 'import json,sys; print(json.dumps({"tool_name": "Bash", "tool_input": {"command": sys.argv[1]}}))' "$1" |
-		"$SCRIPT"
+	python3 -c 'import json,sys; print(json.dumps({"tool_name": "Bash", "cwd": sys.argv[2], "tool_input": {"command": sys.argv[1]}}))' \
+		"$1" "${2:-$BATS_TEST_TMPDIR}" | "$SCRIPT"
+}
+
+# repositorio — monta em $BATS_TEST_TMPDIR o checkout principal $P (no main,
+# com o ramo outro e o arquivo leia.org), uma worktree $W dele e um segundo
+# repositório $O, como o ~/.dotfiles ao lado do ~/.dotfiles-private.
+repositorio() {
+	export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+	export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
+	P="$BATS_TEST_TMPDIR/principal" W="$BATS_TEST_TMPDIR/principal/.claude/worktrees/t"
+	O="$BATS_TEST_TMPDIR/outro"
+	git init -q -b main "$P"
+	echo texto >"$P/leia.org"
+	git -C "$P" add leia.org
+	git -C "$P" commit -qm raiz
+	git -C "$P" branch outro
+	git -C "$P" worktree add -q -b t "$W" main
+	git init -q -b main "$O"
+	git -C "$O" commit -q --allow-empty -m raiz
 }
 
 recusa() { [[ $output == *'"permissionDecision": "deny"'* ]]; }
@@ -716,4 +736,139 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		run guarda "$c"
 		[ -z "$output" ]
 	done
+}
+
+@test "criar ramo no checkout principal de outro repositório pelo -C é recusado" {
+	# O caso de 2026-11-12: um ramo criado no checkout principal do
+	# ~/.dotfiles-private levou dois commits.
+	repositorio
+	run guarda "git -C $P switch -c imprecisoes" "$O"
+	recusa
+	[[ $output == *"checkout principal ($P)"* ]]
+	run guarda "git -C ../principal switch -c x" "$O"
+	recusa
+	run guarda "git -C $BATS_TEST_TMPDIR -C principal checkout -b x" "$O"
+	recusa
+	[ "$(git -C "$P" branch --show-current)" = main ]
+}
+
+@test "o cd, o env -C e o shell levam a regra ao checkout principal" {
+	repositorio
+	for c in "cd $P && git switch -c x" "cd $P; git checkout -b x" "pushd $P && git switch -c x" \
+		"cd $BATS_TEST_TMPDIR && cd principal && git switch -c x" "env -C $P git switch -c x" \
+		"env --chdir=$P git switch -c x" "bash -c 'cd $P && git switch -c x'" \
+		"cd $W && cd $P && git switch -c x" "git -C $W -C $P switch -c x" \
+		"sudo -D $P git switch -c x" "sudo --chdir=$P git switch -c x" \
+		"git --git-dir=$P/.git --work-tree=$P switch -c x" "git --git-dir $P/.git switch -c x" \
+		"GIT_DIR=$P/.git git switch -c x"; do
+		run guarda "$c" "$O"
+		recusa
+	done
+	# O GIT_DIR da worktree diz o repositório dela, que não é o principal.
+	run guarda "GIT_DIR=$P/.git/worktrees/t git switch -c x" "$O"
+	[ -z "$output" ]
+	# O pushd -n só mexe na pilha: o comando seguinte fica onde estava.
+	run guarda "pushd -n $W && git switch -c x" "$P"
+	recusa
+	run guarda "pushd -n $P && git switch -c x" "$W"
+	[ -z "$output" ]
+	# Depois do --, o -nome é o diretório, e não a opção.
+	ln -s "$P" "$W/-nome"
+	run guarda "pushd -- -nome && git switch -c x" "$W"
+	recusa
+}
+
+@test "no checkout principal, trocar de ramo, destacar o HEAD e o gh pr checkout são recusados" {
+	repositorio
+	sha=$(git -C "$P" rev-parse HEAD)
+	for c in 'git switch -c x' 'git switch -qc x' 'git switch --cre x' 'git switch --create=x' \
+		'git switch -C x' 'git switch --orphan x' 'git switch outro' 'git switch --detach' \
+		'git switch -d main' 'git switch --det' 'git switch -' 'git checkout -b x' \
+		'git checkout -qbx' 'git checkout -B x main' 'git checkout --orphan x' 'git checkout outro' \
+		'git checkout outro --' "git checkout $sha" 'git checkout --detach' 'git checkout -' \
+		'git rebase main outro' 'git rebase --onto main main outro' 'git rebase --root outro' \
+		'git switch -- outro' 'git switch -q -- outro' 'git stash branch x' 'git checkout -d' \
+		'git checkout -d main' 'git rebase main -- outro' \
+		'gh pr checkout 3' 'gh -R o/r pr checkout 3'; do
+		run guarda "$c" "$P"
+		recusa
+	done
+}
+
+@test "o caminho que também é ramo leva o checkout ao ramo" {
+	repositorio
+	mkdir "$P/docs"
+	git -C "$P" branch docs
+	run guarda 'git checkout docs' "$P"
+	recusa
+}
+
+@test "restaurar do índice o arquivo apagado passa" {
+	repositorio
+	rm "$P/leia.org"
+	for c in 'git checkout leia.org' 'git checkout --ours leia.org'; do
+		run guarda "$c" "$P"
+		[ -z "$output" ]
+	done
+}
+
+@test "no checkout principal, a volta ao main, a restauração de arquivos e o ramo sem troca passam" {
+	repositorio
+	for c in 'git switch main' 'git checkout main' 'git switch -C main' 'git checkout -- leia.org' \
+		'git checkout HEAD -- leia.org' 'git checkout leia.org' 'git checkout .' "git checkout '*.org'" \
+		'git checkout outro -- leia.org' 'git checkout outro leia.org' 'git checkout -p outro' \
+		'git checkout HEAD' 'git checkout' 'git branch novo' 'git switch -h' \
+		'git worktree add -b t2 .claude/worktrees/t2 main' 'git rebase -i main' 'git rebase --continue' \
+		'git rebase --abort' 'git log --oneline main..outro' 'gh pr view 3' 'git stash' \
+		'git stash list' 'git stash branch -h' 'gh pr checkout --help' "env -C $W git switch -c y" \
+		"sudo -D $W git switch -c y" \
+		'git -C .claude/worktrees/t switch -c y' 'cd .claude/worktrees/t && git switch -c y'; do
+		run guarda "$c" "$P"
+		[ "$status" -eq 0 ]
+		[ -z "$output" ]
+	done
+}
+
+@test "numa worktree, o trabalho no ramo passa" {
+	repositorio
+	for c in 'git switch -c y' 'git checkout -b y' 'git switch --detach main' 'git switch outro' \
+		'git rebase main t' 'gh pr checkout 3' "git -C $W switch -c y" "cd $W && git switch -c y"; do
+		run guarda "$c" "$W"
+		[ -z "$output" ]
+	done
+	run guarda "git -C $W switch -c y" "$P"
+	[ -z "$output" ]
+}
+
+@test "fora de repositório, no diretório que o guarda não sabe e sem ramo principal, passa" {
+	repositorio
+	git init -q -b trunk "$BATS_TEST_TMPDIR/tronco"
+	git -C "$BATS_TEST_TMPDIR/tronco" commit -q --allow-empty -m raiz
+	for c in 'git switch -c x' "cd $BATS_TEST_TMPDIR/tronco && git switch -c x" \
+		"git -C $BATS_TEST_TMPDIR/sumido switch -c x"; do
+		run guarda "$c"
+		[ -z "$output" ]
+	done
+	# O cd para um diretório que só o shell sabe: o guarda deixa passar, e
+	# o que segura é a instrução.
+	for c in "cd \"\$WT\" && git switch -c x" "cd - && git switch -c x" "popd && git switch -c x"; do
+		run guarda "$c" "$P"
+		[ -z "$output" ]
+	done
+}
+
+@test "o ramo principal é o do origin/HEAD, se o clone o tem" {
+	repositorio
+	git -C "$P" branch trunk
+	git -C "$P" update-ref refs/remotes/origin/trunk HEAD
+	git -C "$P" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk
+	run guarda 'git switch main' "$P"
+	recusa
+	[[ $output == *"tiraria do trunk"* ]]
+	run guarda 'git switch trunk' "$P"
+	[ -z "$output" ]
+	# Sem o ramo local, o origin/HEAD não conta, e vale o main.
+	git -C "$P" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/sumido
+	run guarda 'git switch main' "$P"
+	[ -z "$output" ]
 }
