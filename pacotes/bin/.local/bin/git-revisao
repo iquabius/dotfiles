@@ -407,8 +407,10 @@ def cmd_pre_commit(_args):
     print(f"pre-commit: recusado, commit de agente no {ramo} com código:", file=sys.stderr)
     for a in arquivos[:10]:
         print(f"  {a}", file=sys.stderr)
-    print("Abra um ramo antes (git switch -c <tarefa>; as mudanças vão junto) e siga\n"
-          "o ciclo do AGENTS.md: commit, revisao-rigorosa, correções, merge.", file=sys.stderr)
+    print("Leve a mudança a uma worktree em ramo próprio (git worktree add -b <tarefa>\n"
+          f".claude/worktrees/<tarefa> {ramo}, e o passo 1 do AGENTS.md diz como levar os\n"
+          "arquivos) e siga o ciclo dele: commit, revisao-rigorosa, correções, merge.",
+          file=sys.stderr)
     return 1
 
 

@@ -1,4 +1,7 @@
 /.backup/
+
+# As worktrees das tarefas, que o ciclo do AGENTS.md abre do checkout principal.
+/.claude/worktrees/
 *.silverbullet.db*
 .DS_Store
 

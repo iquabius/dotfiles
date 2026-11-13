@@ -8,7 +8,9 @@ apontam para cá em vez de repeti-la.
   readme da raiz, em *Skills de agente*.
 - `git-revisao` e `claude-revisao-guarda` guardam o ciclo de ramo,
   revisão e merge: o primeiro pelos hooks do git, o segundo como hook do
-  Claude Code que recusa pular os hooks do git.
+  Claude Code que recusa pular os hooks do git e tirar do ramo principal
+  o HEAD do checkout principal, entre outras coisas (a lista inteira está
+  na seção dele).
 - `git-assunto-merge` recusa, no commit de merge, o assunto que o git
   escreve sozinho e o "Mescla o ramo" (ou o "Junta o ramo" antigo) que
   não diz o que o ramo traz.
@@ -86,11 +88,13 @@ que o reflog expira.
 
 ### claude-revisao-guarda
 
-Hook PreToolUse do Bash, registrado no `~/.claude/settings.json` pelo
-pacote `claude` ou pelo da camada privada. Recusa o que o git não vê: `git
-commit --no-verify` ou `-n` (também abreviado ou agrupado) e `git push`,
-`merge` ou `pull` com `--no-verify`, também abreviado; o alias gravado
-pelo `git config` que faria uma dessas coisas, conferido quando se grava;
+Hook PreToolUse do Bash e do terminal do app
+(`mcp__terminal__run_in_terminal`), registrado no `~/.claude/settings.json`
+pelo pacote `claude` ou pelo da camada privada. Recusa o que o git não
+vê: `git commit --no-verify` ou `-n` (também abreviado ou agrupado) e
+`git push`, `merge` ou `pull` com `--no-verify`, também abreviado; o
+alias gravado pelo `git config` que faria uma dessas coisas,
+conferido quando se grava;
 mexer em `hook.*` da configuração, que liga os hooks do `git-revisao` e do
 `git-assunto-merge`, em `core.hooksPath` (ou na seção `core`), que desliga
 os hooks do repositório, ou em `include.*`, que traz outra configuração;
@@ -236,11 +240,53 @@ heredoc ou here-string dado ao `source` ou ao `.` de um arquivo (`.
 se lê como script, embora seja só a entrada dele. O portão que segura é
 o pre-push do push, que é do autor.
 
+#### O checkout principal fica no ramo principal
+
+O checkout principal de um repositório, o de `git rev-parse --git-dir`
+igual ao `--git-common-dir`, fica no ramo principal: as outras sessões e
+o editor commitam ali, e um ramo nele desvia os commits delas (em
+2026-10-17, um ADR do TCC; em 2026-11-12, dois commits num ramo criado
+no checkout principal do `~/.dotfiles-private`). O
+trabalho vai numa worktree, e o guarda recusa, no checkout principal, o
+que tira dele o HEAD: o `git switch` e o `git checkout` que criam um
+ramo (`-c`, `-C`, `-b`, `-B`, `--orphan`, também agrupados ou
+abreviados, como `-qc` e `--cre`), que vão a outro ramo, a um commit ou
+ao `-` (no `git switch`, também depois do `--`), ou que destacam o HEAD
+(`--detach`, `-d`); o `git rebase <base> <ramo>` e o `git rebase --root
+<ramo>`, que vão ao ramo antes de reaplicar; o `git stash branch
+<ramo>`; e o `gh pr checkout`, menos a ajuda dele. O ramo principal é o do
+`origin/HEAD`, se o clone tem esse ramo; senão, o `main` ou o `master`; o
+repositório sem nenhum deles fica de fora. Passam a volta ao ramo
+principal (`git switch main`, também `-C main`), o checkout que restaura
+arquivos (com `--`, com o commit e o caminho, com `-p`, ou com um caminho
+que existe ou que o índice tem, e não é um commit nem um ramo de um
+remoto), o `git branch
+<nome>`, que não troca, o `git worktree add -b`, o rebase do ramo em que
+se está e o que continua um rebase, e tudo numa worktree.
+
+O diretório de cada comando é o cwd do hook (no terminal do app, o da
+aba), mudado pelo `cd` e pelo `pushd` da linha, também dentro de um shell
+(`bash -c 'cd x && ...'`), pelo `env -C` e pelo `sudo -D`, e o git o
+muda com cada `-C`, como ele faz; o `--git-dir`, o `--work-tree`, o
+`GIT_DIR` e o `GIT_WORK_TREE` vão à pergunta ao git. Só o comando que pode
+trocar o HEAD faz o guarda rodar o git (o `rev-parse`, o `for-each-ref`
+e, no `git checkout <palavra>` que pode ser um caminho, a pergunta se ela
+é um commit). Passam: o diretório que só o shell sabe (`cd "$WT"`, `cd
+-`, o `popd`, `git -C "$X"`, `env -C "$X"`), o git que falha ou passa de
+três segundos nessa pergunta, o alias gravado, o `git bisect`, o `git
+branch -m` e o `git symbolic-ref`; o que segura esses é a instrução de
+cada repositório. Dois casos o guarda lê num diretório que pode não ser
+o certo, e ali pode recusar a mais ou deixar passar: o `cd` dentro de um
+subshell, que ele lê como se valesse para os comandos de fora (`(cd x);
+git switch -c y`), e o alias de um `-c alias.<nome>=`, que ele confere no
+diretório do comando, sem os `-C` do git que o chama.
+
 ### Testes
 
 `git-revisao.test.bats` e `claude-revisao-guarda.test.bats`, ao lado dos
 scripts. A primeira cria repositórios e remotos descartáveis, com os hooks
-no `.git/hooks` de cada um; a segunda só manda comandos ao hook.
+no `.git/hooks` de cada um; a segunda manda comandos ao hook e, para a
+regra do checkout principal, cria um repositório com uma worktree.
 `GIT_REVISAO_SCRIPT` e `CLAUDE_REVISAO_GUARDA_SCRIPT` apontam a suíte para
 uma cópia sabotada.
 

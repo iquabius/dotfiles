@@ -28,7 +28,17 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
 - lê o gh-escrita, da camada privada, que roda o gh api com um token de
   escrita, como o gh;
 - pergunta ao autor antes de git revisao excecao: deixar um achado da
-  revisão de pé é decisão dele.
+  revisão de pé é decisão dele;
+- recusa tirar do ramo principal o HEAD do checkout principal de um
+  repositório (git switch, git checkout, git rebase <base> <ramo>, git
+  stash branch, gh pr checkout), onde as outras sessões e o editor
+  commitam: um ramo ali desvia os commits delas, e o trabalho vai numa
+  worktree. Para isso, e só quando o comando pode trocar o HEAD, segue o
+  diretório de cada comando (o cwd do hook, o cd, o env -C, o git -C) e
+  pergunta ao git se ele é o checkout principal e qual é o ramo
+  principal.
+
+Vale para o Bash e para o terminal do app (mcp__terminal__run_in_terminal).
 
 O push sem revisão fica com o pre-push, que estas regras protegem do
 --no-verify e de hook.*. Elas pegam as formas diretas: separam o
@@ -48,8 +58,10 @@ a decisão na saída padrão; sem nada a dizer, sai calado com 0.
 """
 
 import json
+import os
 import re
 import shlex
+import subprocess
 import sys
 from collections import namedtuple
 from dataclasses import dataclass, field
@@ -535,10 +547,13 @@ def comandos_possiveis(ps, citadas):
     possiveis = [(roda, proprio, False)]
     if not roda:
         return possiveis
+    # O diretório que um prefixo do começo dá (env -C x git) vale também
+    # para o programa achado depois dele.
+    lugar = [v for v in proprio if v.startswith(f"{DIRETORIO}=")]
     for j in range(1, len(ps)):
         if j not in citadas and programa(ps[j]) in RODADOS:
             antes = [a for a in ps[:j] if ATRIBUI.fullmatch(a)]
-            proprio = []
+            proprio = list(lugar)
             possiveis.append((sem_prefixos(antes + ps[j:], proprio), proprio, True))
     return possiveis
 
@@ -596,6 +611,11 @@ def sem_prefixos(ps, ambiente=None):
                     ambiente.append(atribuicao(ps[i]))
                 elif nome == "env" and (m := re.fullmatch(r"(?:-u|--unset=?)(\w*)", ps[i])):
                     ambiente.append((m[1] or (ps[i + 1] if i + 1 < len(ps) else "")) + "=")
+                elif nome in MUDA_DIRETORIO_DO and (m := MUDA_DIRETORIO_DO[nome].fullmatch(ps[i])):
+                    # O env -C e o sudo -D rodam o comando em outro diretório.
+                    separado = ps[i] in com_argumento
+                    destino = (ps[i + 1] if i + 1 < len(ps) else "") if separado else m[1]
+                    ambiente.append(f"{DIRETORIO}={destino}")
                 elif nome == "env" and re.fullmatch(r"-|-\w*i\w*|--ignore-environment", ps[i]):
                     ambiente += ["CLAUDECODE=", "HOME="]  # o env -i tira o ambiente todo
                 i += 2 if ps[i] in com_argumento else 1
@@ -1109,6 +1129,293 @@ def trocas_de_ambiente(nome, args):
     return []
 
 
+# O checkout principal de um repositório, o de git rev-parse --git-dir igual
+# ao --git-common-dir, fica no ramo principal: as outras sessões e o editor
+# commitam ali, e um ramo nele desvia os commits delas (em 2026-10-17, um ADR
+# do TCC caiu num ramo assim; em 2026-11-12, dois commits).
+
+# Na lista do ambiente, o diretório que um cd, o env -C ou o sudo -D dá aos
+# comandos seguintes, como <cd>=caminho: o nome não é de variável, e
+# nenhuma atribuição do shell o escreve. O valor vazio é o diretório que o
+# guarda não sabe (cd -, popd).
+DIRETORIO = "<cd>"
+MUDAM_DIRETORIO = {"cd", "pushd", "popd"}
+MUDA_DIRETORIO_DO = {"env": re.compile(r"(?:-C|--chdir=?)(.*)", re.S),
+                     "sudo": re.compile(r"(?:-D|--chdir=?)(.*)", re.S)}
+# Onde um git roda: o diretório (None se o guarda não sabe), as opções da
+# linha que dizem o repositório (--git-dir, --work-tree) e as variáveis do
+# ambiente que o dizem.
+Lugar = namedtuple("Lugar", "diretorio opcoes ambiente")
+LUGAR_NA_LINHA = ("--git-dir", "--work-tree")
+LUGAR_NO_AMBIENTE = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
+
+RAMO = ("Recusado: {comando} tiraria do {principal} o HEAD do checkout principal "
+        "({diretorio}), onde as outras sessões e o editor commitam, e um ramo ali "
+        "desvia os commits delas. Trabalhe numa worktree: git worktree add -b "
+        "<tarefa> .claude/worktrees/<tarefa> {principal}. A volta ao ramo principal "
+        "(git switch {principal}) passa.")
+
+
+def destino_do_cd(nome, args):
+    """O diretório para onde o cd ou o pushd vai, como veio (cd sozinho vai
+    ao ~), "." quando fica onde está (o pushd -n só mexe na pilha), ou ""
+    quando o guarda não sabe (cd -, pushd +1, popd)."""
+    if nome == "popd":
+        return ""
+    if nome == "pushd":
+        # O bash lê o -n só entre as opções: antes do -- e da primeira
+        # palavra solta (pushd -- -nome vai ao diretório -nome).
+        for a in args:
+            if a == "-n":
+                return "."
+            if a == "--" or not re.fullmatch(r"-[LPe@n]+", a):
+                break
+    soltos = [a for a in args if not re.fullmatch(r"-[LPe@n]+", a)]
+    if soltos[:1] == ["--"]:
+        soltos = soltos[1:]
+    if not soltos:
+        return "" if nome == "pushd" else "~"
+    return "" if re.fullmatch(r"-|[+-]\d+", soltos[0]) else soltos[0]
+
+
+def expandir(caminho):
+    """O caminho com o ~ e o $HOME do começo expandidos, ou None quando ele
+    é vazio ou ainda tem uma variável ou uma substituição."""
+    if not caminho:
+        return None
+    caminho = re.sub(r"^\$(?:\{HOME\}|HOME(?!\w))", lambda _: os.path.expanduser("~"), caminho)
+    caminho = os.path.expanduser(caminho)
+    return None if re.search(r"[$`]", caminho) else caminho
+
+
+def juntar(atual, destino):
+    """O diretório `destino` (já expandido, ou None) a partir de `atual`."""
+    if destino is None or (atual is None and not os.path.isabs(destino)):
+        return None
+    return os.path.join(atual or "", destino)
+
+
+def diretorio(ambiente):
+    """O diretório em que um comando roda, pelas entradas <cd>= do
+    `ambiente`, na ordem: o último caminho absoluto, com os relativos de
+    depois juntados a ele; None se o guarda não sabe."""
+    atual = None
+    for v in ambiente:
+        chave, _, valor = v.partition("=")
+        if chave == DIRETORIO:
+            atual = juntar(atual, expandir(valor))
+    return atual
+
+
+def lugar_do_git(ps, ambiente):
+    """O Lugar de um git, com as palavras `ps` que vêm depois dele: o
+    diretório do comando com cada -C juntado a ele, como o git faz (o -C
+    vazio não muda nada), o --git-dir e o --work-tree da linha, e o GIT_DIR,
+    o GIT_WORK_TREE e o GIT_COMMON_DIR trocados no ambiente."""
+    atual, opcoes, i = diretorio(ambiente), [], 0
+    while i < len(ps) and ps[i].startswith("-"):
+        p = ps[i]
+        separado = p in GIT_OPCAO_COM_ARGUMENTO and i + 1 < len(ps)
+        if p == "-C" and separado:
+            atual = juntar(atual, expandir(ps[i + 1]) if ps[i + 1] else ".")
+        elif p in LUGAR_NA_LINHA and separado:
+            opcoes += [p, ps[i + 1]]
+        elif p.split("=", 1)[0] in LUGAR_NA_LINHA:
+            opcoes.append(p)
+        i += 2 if separado else 1
+    trocas = {n: v for n in LUGAR_NO_AMBIENTE if (v := valor_no_ambiente(ambiente, n)) is not None}
+    return Lugar(atual, opcoes, trocas)
+
+
+# Quantos segundos o guarda espera cada git que ele roda: o hook tem dez
+# para tudo, e o rev-parse e o for-each-ref levam milissegundos.
+PRAZO_DO_GIT = 3
+
+
+def git_no_lugar(lugar, *args):
+    """As linhas da saída do git no `lugar`, ou None se ele falha ou demora;
+    o guarda então não sabe se o lugar é o checkout principal e deixa
+    passar."""
+    try:
+        feito = subprocess.run(["git", *lugar.opcoes, *args], cwd=lugar.diretorio,
+                               env=dict(os.environ, **lugar.ambiente), capture_output=True,
+                               text=True, timeout=PRAZO_DO_GIT)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return feito.stdout.splitlines() if feito.returncode == 0 else None
+
+
+def ramo_principal(lugar):
+    """O nome do ramo principal, se o `lugar` é o checkout principal de um
+    repositório: o do origin/HEAD, se o clone tem esse ramo; senão, o main
+    ou o master. None numa worktree, num repositório nu, fora de um
+    repositório, no repositório sem ramo principal e no diretório que o
+    guarda não sabe."""
+    if lugar.diretorio is None:
+        return None
+    saida = git_no_lugar(lugar, "rev-parse", "--path-format=absolute", "--git-dir",
+                         "--git-common-dir", "--is-bare-repository")
+    if (not saida or len(saida) < 3 or saida[2] == "true"
+            or os.path.realpath(saida[0]) != os.path.realpath(saida[1])):
+        return None
+    ramos, origem = set(), ""
+    for linha in git_no_lugar(lugar, "for-each-ref", "--format=%(refname) %(symref)",
+                              "refs/heads/", "refs/remotes/origin/HEAD") or []:
+        ref, _, alvo = linha.partition(" ")
+        if ref == "refs/remotes/origin/HEAD":
+            origem = alvo.removeprefix("refs/remotes/origin/")
+        else:
+            ramos.add(ref.removeprefix("refs/heads/"))
+    return next((r for r in (origem, "main", "master") if r and r in ramos), None)
+
+
+def longas(com_valor, sem_valor):
+    """As opções longas de um subcomando, cada uma com se leva valor, mais a
+    negação (--no-...) de cada uma, que não leva."""
+    todas = dict.fromkeys(sem_valor, False) | dict.fromkeys(com_valor, True)
+    return todas | {f"no-{o}": False for o in todas if not o.startswith("no-")}
+
+
+# As opções do git switch, checkout e rebase (2.56): as curtas que levam
+# valor e as longas, para ler o valor e a abreviação como o parse-options lê.
+SWITCH = ("cC", longas(
+    ("create", "force-create", "orphan", "conflict"),
+    ("guess", "discard-changes", "quiet", "recurse-submodules", "progress", "merge", "detach",
+     "track", "ignore-other-worktrees", "force", "overwrite-ignore")))
+CHECKOUT = ("bBU", longas(
+    ("orphan", "conflict", "pathspec-from-file", "unified", "inter-hunk-context"),
+    ("guess", "overlay", "auto-advance", "quiet", "recurse-submodules", "progress", "merge",
+     "detach", "track", "ignore-other-worktrees", "ours", "theirs", "patch",
+     "ignore-skip-worktree-bits", "pathspec-file-nul", "force", "overwrite-ignore")))
+REBASE = ("sXxC", longas(
+    ("onto", "trailer", "whitespace", "empty", "exec", "strategy", "strategy-option"),
+    ("keep-base", "no-verify", "quiet", "verbose", "no-stat", "signoff",
+     "committer-date-is-author-date", "reset-author-date", "ignore-whitespace",
+     "force-rebase", "no-ff", "continue", "skip", "abort", "quit", "edit-todo",
+     "show-current-patch", "apply", "merge", "interactive", "rerere-autoupdate", "autosquash",
+     "update-refs", "gpg-sign", "autostash", "rebase-merges", "fork-point", "root",
+     "reschedule-failed-exec", "reapply-cherry-picks", "verify", "stat", "ff")))
+# As ações que continuam ou param o rebase em curso, sem levar a outro ramo.
+ACOES_DO_REBASE = {"continue", "skip", "abort", "quit", "edit-todo", "show-current-patch"}
+
+
+def ler_opcoes(args, curtas_com_valor, longas_do_sub):
+    """([(opção, valor)], soltas, palavras depois do --, ou None sem ele) das
+    palavras de um subcomando do git, como o parse-options as lê: o grupo
+    curto (-qc x), o valor colado (-cx, --create=x) ou na palavra seguinte,
+    e a longa abreviada que só uma das longas começa (--det é --detach)."""
+    opcoes, soltas, i = [], [], 0
+    while i < len(args):
+        a = args[i]
+        if a == "--":
+            return opcoes, soltas, args[i + 1:]
+        if a.startswith("--"):
+            nome, igual, valor = a[2:].partition("=")
+            casam = [o for o in longas_do_sub if o.startswith(nome)]
+            if nome not in longas_do_sub and len(casam) == 1:
+                nome = casam[0]
+            if longas_do_sub.get(nome) and not igual and i + 1 < len(args):
+                i += 1
+                valor = args[i]
+            opcoes.append((nome, valor))
+        elif a.startswith("-") and a != "-":
+            for k, letra in enumerate(a[1:], 2):
+                if letra in curtas_com_valor:
+                    valor = a[k:]
+                    if not valor and i + 1 < len(args):
+                        i += 1
+                        valor = args[i]
+                    opcoes.append((letra, valor))
+                    break
+                opcoes.append((letra, ""))
+        else:
+            soltas.append(a)
+        i += 1
+    return opcoes, soltas, None
+
+
+def parece_caminho(alvo, lugar):
+    """Se o git checkout <alvo> pode restaurar arquivos: o pathspec com
+    curinga ou com mágica (:), o caminho que existe no diretório, ou o que
+    o índice tem e a árvore perdeu (o arquivo apagado que se restaura)."""
+    if re.search(r"[*?[]", alvo) or alvo.startswith(":"):
+        return True
+    if lugar.diretorio is None:
+        return False
+    return (os.path.lexists(os.path.join(lugar.diretorio, alvo))
+            or bool(git_no_lugar(lugar, "ls-files", "--", alvo)))
+
+
+def e_revisao(alvo, lugar):
+    """Se o git lê o `alvo` como um commit, ou como o ramo de um remoto que o
+    checkout cria e para o qual vai (o --guess)."""
+    return bool(git_no_lugar(lugar, "rev-parse", "--verify", "--quiet", "--end-of-options",
+                             f"{alvo}^{{commit}}")
+                or git_no_lugar(lugar, "for-each-ref", "--count=1", "--format=x",
+                                f"refs/remotes/*/{alvo}"))
+
+
+def alvo_do_head(sub, args, lugar):
+    """Para onde o git `sub` leva o HEAD: o nome do ramo; "" quando o leva
+    para fora de um ramo cujo nome se saiba (o ramo órfão, o HEAD destacado,
+    o -); None quando o HEAD fica, como na ajuda, no checkout que restaura
+    arquivos e no rebase que continua."""
+    if sub == "switch":
+        # O switch não restaura arquivos: a palavra depois do -- ainda é o
+        # ramo (git switch -- outro vai ao outro).
+        opcoes, soltas, depois = ler_opcoes(args, *SWITCH)
+        soltas += depois or []
+        nomes = dict(opcoes)
+        if "h" in nomes:
+            return None
+        if novo := next((o for o in ("c", "C", "create", "force-create") if o in nomes), None):
+            return nomes[novo]
+        if {"orphan", "d", "detach"} & nomes.keys():
+            return ""
+        return (soltas[0] if soltas[0] != "-" else "") if soltas else None
+    if sub == "checkout":
+        opcoes, soltas, depois = ler_opcoes(args, *CHECKOUT)
+        nomes = dict(opcoes)
+        if "h" in nomes or {"p", "patch", "pathspec-from-file"} & nomes.keys():
+            return None
+        if novo := next((o for o in ("b", "B") if o in nomes), None):
+            return nomes[novo]
+        if {"orphan", "d", "detach"} & nomes.keys():
+            return ""
+        if depois or len(soltas) != 1 or soltas[0] in ("HEAD", "@"):
+            return None  # restaura arquivos, ou fica onde está
+        alvo = soltas[0]
+        if alvo == "-":
+            return ""
+        if depois is None and parece_caminho(alvo, lugar) and not e_revisao(alvo, lugar):
+            return None
+        return alvo
+    if sub == "rebase":
+        opcoes, soltas, depois = ler_opcoes(args, *REBASE)
+        soltas += depois or []
+        nomes = dict(opcoes)
+        if "h" in nomes or ACOES_DO_REBASE & nomes.keys():
+            return None
+        posicao = 0 if "root" in nomes else 1
+        return soltas[posicao] if len(soltas) > posicao else None
+    if sub == "stash" and args[:1] == ["branch"]:
+        # O git stash branch <ramo> cria o ramo e vai a ele.
+        soltas = [a for a in args[1:] if not a.startswith("-")]
+        return None if "-h" in args or not soltas else soltas[0]
+    return None
+
+
+def decisoes_do_ramo(comando, alvo, lugar):
+    """A recusa do `comando` que leva o HEAD ao `alvo` (alvo_do_head) fora
+    do ramo principal, no checkout principal."""
+    if alvo is None:
+        return
+    principal = ramo_principal(lugar)
+    if principal is not None and alvo != principal:
+        yield "deny", RAMO.format(comando=comando, principal=principal,
+                                  diretorio=lugar.diretorio)
+
+
 def decisoes_simples(comando, nivel, herdado):
     """As decisões para um Comando: as do comando do começo e as de cada
     comando que ele pode rodar (setsid git, find -exec git).
@@ -1134,6 +1441,9 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
     novos = list(proprio) + trocas_de_ambiente(nome, ps[1:])
     if any(v.startswith("CLAUDECODE=") and v != "CLAUDECODE=1" for v in novos):
         yield "deny", CLAUDECODE
+    if nome in MUDAM_DIRETORIO:
+        herdado.append(f"{DIRETORIO}={destino_do_cd(nome, ps[1:])}")
+        return
     if not ps or nome in MUDAM_AMBIENTE:
         herdado += novos
         return
@@ -1168,10 +1478,15 @@ def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
         # Conferir a expansão não basta: criar alias é do autor.
         if gh_pode(ps[1:], "alias", "set") or gh_pode(ps[1:], "alias", "import"):
             yield "deny", GH_ALIAS
+        if gh_pode(ps[1:], "pr", "checkout") and not {"-h", "--help"} & set(ps):
+            yield from decisoes_do_ramo("gh pr checkout", "",
+                                        Lugar(diretorio(ambiente), [], {}))
         return
     if nome == "git":
+        lugar = lugar_do_git(ps[1:], ambiente)
         for pares, sub, args in chamadas_do_git(ps[1:], ambiente, estrita=no_meio):
             yield from decisoes_do_git(pares, sub, args, nivel, ambiente)
+            yield from decisoes_do_ramo(f"git {sub}", alvo_do_head(sub, args, lugar), lugar)
 
 
 def decisoes_do_git(pares, sub, args, nivel, ambiente):
@@ -1261,11 +1576,31 @@ def decisoes(cmd, nivel=0, ambiente=None):
                                          item.mesmo_shell)
 
 
+TERMINAL = "mcp__terminal__run_in_terminal"
+
+
+def diretorio_do_comando(dados):
+    """Onde o comando começa: o cwd do Bash, que segue os cd de antes, ou a
+    aba que o terminal do app abre, no cwd que receber (absoluto, com ~ ou
+    relativo ao diretório da sessão) ou no diretório da sessão."""
+    cwd = dados.get("cwd") if isinstance(dados.get("cwd"), str) else os.getcwd()
+    if dados.get("tool_name") != TERMINAL:
+        return cwd
+    base = os.environ.get("CLAUDE_PROJECT_DIR") or cwd
+    aba = (dados.get("tool_input") or {}).get("cwd")
+    if isinstance(aba, str) and aba:
+        return os.path.join(base, os.path.expanduser(aba))
+    return base
+
+
 def main():
     dados = json.load(sys.stdin)
-    if dados.get("tool_name") != "Bash":
+    if dados.get("tool_name") not in ("Bash", TERMINAL):
         return 0
-    todas = list(decisoes(dados.get("tool_input", {}).get("command", "")))
+    comando = (dados.get("tool_input") or {}).get("command", "")
+    if not isinstance(comando, str):
+        return 0
+    todas = list(decisoes(comando, 0, [f"{DIRETORIO}={diretorio_do_comando(dados)}"]))
     if not todas:
         return 0
     # Recusa vence pergunta, venha de que nível vier.

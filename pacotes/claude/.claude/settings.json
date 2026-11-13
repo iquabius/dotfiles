@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|mcp__terminal__run_in_terminal",
         "hooks": [
           {
             "type": "command",
