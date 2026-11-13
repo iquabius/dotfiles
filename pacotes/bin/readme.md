@@ -37,8 +37,8 @@ o que ela deixou de fora.
 
 - `git revisao pronto [<ponta>]`: marca a ponta revisada com o veredito
   *Pronto para o merge*, depois de o teste do repositório passar. O teste é a
-  linha `teste: <comando>` do `.config/revisao` da ponta, ou do `main` se o
-  ramo a tirou; roda sempre que há um declarado, da raiz, pelo `sh`, com
+  linha `teste: <comando>` do `.config/revisao` da ponta, ou, se o ramo a
+  tirou, do `main` e depois do `main@{upstream}`; roda sempre que há um declarado, da raiz, pelo `sh`, com
   `GIT_REVISAO_BASE` e `GIT_REVISAO_PONTA` no ambiente. Como roda também
   quando o diff não toca a lista, o comando pode conferir o que ela não
   conta como código; ele escolhe pelo diff e sai com 0 quando nada pede
