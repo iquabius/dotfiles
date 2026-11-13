@@ -9,9 +9,9 @@ ou a série de um ramo ainda não mesclado (`git log <base>..HEAD`, diff de
 três pontos contra o merge-base). A mensagem inteira presta contas à
 verdade: um assunto, uma descrição do problema, um motivo, uma
 alternativa recusada, uma frase de escopo e um teste são, cada um, uma
-afirmação sobre a árvore, e quem ler o `git log` anos depois não tem
-outra fonte. A mensagem diz por quê; o diff diz o quê. Onde os dois
-discordam, a mensagem está errada, nunca o diff.
+afirmação sobre a árvore, e quem ler o `git log` anos depois muitas
+vezes não tem outra fonte do porquê. A mensagem diz por quê; o diff diz
+o quê. Onde os dois discordam, a mensagem está errada, nunca o diff.
 
 Por que este cartucho existe: em 2026-10-17, dois ramos chegaram a um
 ramo principal com mensagens que diziam que uma regra pede o que ela não
