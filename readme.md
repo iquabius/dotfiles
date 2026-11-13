@@ -268,11 +268,12 @@ O `pre-commit` recusa `/home/<user>/` e `/Users/<user>/` nas linhas
 adicionadas, fora das contas de sistema `linuxbrew`, `runner` e `root`:
 caminho absoluto de home entrega o nome da conta da máquina que escreveu a
 linha, e três já tinham entrado aqui desse jeito. Só as linhas novas são
-olhadas. O `post-merge` roda o `stow -R bin`, daqui e da camada
-privada, depois de todo pull que muda o pacote `bin` de um dos dois, e o
-`skills-sync` depois de todo pull que muda as skills, os perfis ou o próprio
-`skills-sync` (ver *Skills de agente*); fora dos checkouts `~/.dotfiles` e
-`~/.dotfiles-private` (numa worktree, noutro clone), nada.
+olhadas, e não as de um arquivo renomeado no mesmo commit. O `post-merge`
+roda o `stow -R bin`, daqui e da camada privada, depois de todo pull que
+muda o pacote `bin` de um dos dois, e o `skills-sync` depois de todo pull que
+muda as skills, os perfis ou o próprio `skills-sync` (ver *Skills de
+agente*); fora dos checkouts `~/.dotfiles` e `~/.dotfiles-private` (numa
+worktree, noutro clone), nada.
 
 ### 3. Aplicar os symlinks
 
