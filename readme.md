@@ -340,9 +340,11 @@ fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/fun
 fish -c 'fisher update'
 ```
 
-O Stow dobra `~/.config/fish` num symlink só, então tudo que o fish escreve
-(plugins, completions, `fish_variables`) cai **dentro deste repo** — o
-`.gitignore` de `pacotes/fish/.config/fish` cobre esses arquivos.
+Onde `~/.config/fish` ainda não existia, o Stow o dobra num symlink só, e o que
+o fish e o fisher escrevem ali (plugins, completions, `fish_variables`) cai
+**dentro deste repo** — o `.gitignore` de `pacotes/fish/.config/fish` cobre
+esses arquivos. Onde ele já existia como diretório, o Stow liga só os arquivos
+do pacote, e o resto fica fora do repo.
 
 **(Linux)** Para usar o fish como shell de login:
 
