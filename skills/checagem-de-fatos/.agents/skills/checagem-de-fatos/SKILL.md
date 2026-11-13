@@ -12,9 +12,9 @@ description: >-
   dele. Use antes de um marco (versão, entrega, merge), quando pedirem para
   "checar os fatos" ou uma "checagem adversarial", para conferir o que
   uma mensagem de commit ou um ramo afirma, ou quando um eixo da revisão
-  precisar dos fatos de uma mensagem. Não é revisão de estilo
-  (revisao-rigorosa, escrita acadêmica) nem crítica de qualidade (oficina
-  de texto): só fato, enquadramento e lógica.
+  precisar dos fatos de uma mensagem. Não é revisão de código ou de plano
+  (revisao-rigorosa), de estilo (escrita acadêmica) nem crítica de
+  qualidade (oficina de texto): só fato, enquadramento e lógica.
   Também em inglês: "fact-check", "check the facts", "verify commit
   messages".
 ---
