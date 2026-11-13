@@ -181,8 +181,8 @@ pode nem rodar: ele não troca o ambiente dos seguintes, e o git se lê
 como o git o leria, que, com uma opção global que não conhece, recusa
 sem rodar nada (`grep -e git -e commit -n` passa). O corpo de heredoc
 mandado a outro programa é texto: com o delimitador entre aspas
-(`<<'EOF'`), o shell não o expande; sem aspas, só o `$(...)` dele roda,
-e só ele se confere. A substituição de processo (`<(...)`, `>(...)`)
+(`<<'EOF'`), o shell não o expande; sem aspas, rodam as substituições de
+comando dele, o `$(...)` e as crases, e só elas se conferem. A substituição de processo (`<(...)`, `>(...)`)
 vira uma palavra, o caminho que o comando recebe, e o texto dela se
 confere como o do `$(...)`. Antes de `git revisao excecao`, pergunta ao
 autor.
