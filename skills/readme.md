@@ -7,7 +7,7 @@ formato, e cada skill mora numa só.
 
 Cada pacote `skills/<nome>/` guarda o conteúdo em `.agents/skills/<nome>/` e
 dois symlinks versionados, `.claude/skills/<nome>` e `.cursor/skills/<nome>`,
-os dois para `../../.agents/skills/<nome>`: o Claude Code lê só
-`~/.claude/skills`, e só `~/.cursor/skills` entra no sync de Cloud Agents do
-Cursor. Esse alvo é o único que resolve dentro do pacote e no `$HOME` depois
-do stow.
+os dois para `../../.agents/skills/<nome>`: o Claude Code lê as skills
+pessoais só de `~/.claude/skills`, e só `~/.cursor/skills` entra no sync de
+Cloud Agents do Cursor. Esse alvo é o único que resolve dentro do pacote e
+no `$HOME` depois do stow.
