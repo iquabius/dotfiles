@@ -197,7 +197,8 @@ outro.
 - O `.pkgs.local` daqui liga skills só nesta máquina. Ele e o
   `.profile.local` ficam fora do git.
 - Na máquina de onde a camada privada saiu, os links que apontavam para ela
-  saem no sync seguinte.
+  saem no sync seguinte, depois de sair do `.profile.local` o perfil que só
+  ela tinha (o `pessoal`): perfil sem `.pkgs` em nenhum dos dois é erro.
 
 ```bash
 printf 'comum\ntrabalho\n' > ~/.dotfiles/.profile.local   # ou 'comum\npessoal\n', com a camada privada
