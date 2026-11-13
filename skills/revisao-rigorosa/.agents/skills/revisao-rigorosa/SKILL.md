@@ -366,8 +366,8 @@ pedir:
   `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`; ou refaça a
   série à mão. O autosquash só junta os commits `fixup!`, `squash!` e
   `amend!`: um conserto commitado sem um desses prefixos pede a série
-  refeita à mão, e o `git log --oneline <base>..HEAD` da série nova tem de mostrar
-  menos commits.
+  refeita à mão, e no `git log <base>..HEAD` da série nova nenhum commit
+  é só o conserto de uma rodada.
 - Deixe uma mudança lógica por commit e reescreva cada mensagem a partir
   da árvore que ela agora descreve (a skill `mensagem-de-commit`): as
   rodadas da revisão, os achados que elas responderam e os shas da série
