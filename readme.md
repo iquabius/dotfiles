@@ -161,6 +161,20 @@ até alguém pedir para renomeá-las.
 O fisher não vem versionado aqui; enquanto não for instalado à mão, o arquivo
 fica inerte (ver *5. Plugins do fish*).
 
+### O pacote `bin` pede o `~/.local/bin` antes do `stow`
+
+Sem `~/.local/bin`, o Stow faz dele um symlink para dentro deste repo, e todo
+script que outro pacote ligasse ali cairia aqui dentro. Por isso o `mkdir -p
+~/.local/bin` vem antes do `stow bin` (ver *3. Aplicar os symlinks*).
+
+### O pacote `claude` é só da máquina sem a camada privada
+
+Sem `~/.claude`, o Stow faz dele um symlink para dentro deste repo, e o
+Claude Code passa a gravar histórico e projetos aqui dentro; por isso o `mkdir
+-p ~/.claude` vem antes do `stow claude`. Na máquina com a camada privada, o
+`~/.claude/settings.json` vem do pacote dela, que registra também os guardas
+de lá, e o `claude` daqui fica sem ligar.
+
 ## Skills de agente
 
 As skills de agente (Claude Code, Codex, Cursor) vêm de dois repositórios:
@@ -270,12 +284,8 @@ mkdir -p ~/.local/bin && cd ~/.dotfiles && stow bin
 mkdir -p ~/.claude && cd ~/.dotfiles && stow claude   # só sem a camada privada
 ```
 
-O `mkdir` vem antes do `stow bin`: sem `~/.local/bin`, o Stow faz dele um
-symlink para dentro deste repo, e todo script que outro pacote ligasse ali
-cairia aqui dentro. O mesmo vale para o `~/.claude`, onde o Claude Code
-grava histórico e projetos. Na máquina com a camada privada, o
-`~/.claude/settings.json` vem do pacote dela, que registra também os
-guardas de lá, e o `claude` daqui fica sem ligar.
+O `mkdir` vem antes do `stow bin` e do `stow claude`, e o `claude` só se liga
+na máquina sem a camada privada (ver *Avisos por pacote*).
 
 Os editores exigem `--no-folding`. Sem ele, numa máquina onde
 `~/.config/Code` (ou `Cursor`) ainda não existe, o Stow cria o diretório
