@@ -71,8 +71,8 @@ commit:**
   verificações", "cinco interfaces"): a saída do comando em mãos agora,
   ou o arquivo que define a contagem (`grep -c`); "capturas sem mudança",
   "só comentário", "nenhuma mudança funcional": `git show --stat`, o diff
-  lido atrás de trechos que não sejam comentário, a saída do comando de
-  conformidade;
+  lido atrás de trechos que não sejam comentário (com `-w` ou
+  `--color-moved`) e a saída dos testes;
 - uma data ou um "desde": a data do próprio commit
   (`git show -s --format=%ad <sha>`, a data do autor), a linha datada no
   arquivo;
