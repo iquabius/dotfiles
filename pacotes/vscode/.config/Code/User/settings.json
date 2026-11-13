@@ -62,7 +62,7 @@
 	"aws.profile": "profile:vscode-aws-toolkit",
 	"cSpell.language": "en,pt,pt_PT",
 	"editor.renderWhitespace": "selection",
-	"editor.fontFamily": "'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
+	"editor.fontFamily": "'DejaVu Sans Mono', 'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
 	// "editor.fontSize": 14,
 	"editor.padding.top": 24,
 	"editor.rulers": [
@@ -256,7 +256,7 @@
 	// Merged from Cursor's own settings.json when Cursor joined this file.
 	"window.autoDetectColorScheme": true,
 	"workbench.preferredDarkColorTheme": "Default Dark Modern",
-	"workbench.preferredLightColorTheme": "Default Light Modern",
+	"workbench.preferredLightColorTheme": "GitHub Light High Contrast",
 	"audioCues.enabled": false,
 	"diffEditor.renderSideBySide": false,
 	"git.blame.editorDecoration.enabled": true,
@@ -264,5 +264,9 @@
 	"git.openRepositoryInParentFolders": "never",
 	"gitlens.currentLine.enabled": false,
 	"markdown-preview-enhanced.previewTheme": "one-light.css",
-	"markdown-preview-enhanced.codeBlockTheme": "one-light.css"
+	"markdown-preview-enhanced.codeBlockTheme": "one-light.css",
+	"[tsv]": {
+		"editor.inlayHints.maximumLength": 0
+	},
+	"editor.foldingImportsByDefault": true
 }
