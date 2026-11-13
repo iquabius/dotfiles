@@ -46,9 +46,12 @@ ALLOW='linuxbrew|runner|root'
 # num segundo arquivo, que o tr lê depois: no fim de um pipe, o tr daria o
 # status do pipe, e a falha do awk passaria o commit. O symlink novo, também
 # o que entra no lugar de um arquivo, tem o alvo como linha "+", e conta. A
-# conta do ALLOW vira "/" na linha antes da busca, até não sobrar nenhuma: a
-# outra conta da mesma linha ainda recusa, e as pontas que sobram não se
-# colam num caminho que não estava lá.
+# busca anda pela linha um caminho de home por vez, da esquerda: a conta do
+# ALLOW pula para a barra que a fecha, e a primeira conta fora dele marca a
+# linha, que recusa se não saiu de outro lugar do commit. Assim a outra
+# conta da mesma linha ainda conta, a do ALLOW não come o fim
+# de uma conta que vem antes (a conta home seguida de root), e as pontas em
+# volta dela não se colam num caminho que não estava lá.
 diff=$(mktemp)
 saida=$(mktemp)
 trap 'rm -f "$diff" "$saida"' EXIT
@@ -82,9 +85,12 @@ awk -v allow="$ALLOW" '
     /^-/ { saiu[substr($0, 2)]++; next }
     /^\+/ {
         t = $0
-        while (gsub("/(home|Users)/(" allow ")/", "/", t)) {}
-        if (t ~ /\/(home|Users)\/[A-Za-z0-9._-]+\//) {
-            n++; arq[n] = f; lin[n] = substr($0, 2)
+        while (match(t, /\/(home|Users)\/[A-Za-z0-9._-]+\//)) {
+            conta = substr(t, RSTART + 1, RLENGTH - 2); sub(/^[^\/]*\//, "", conta)
+            if (conta !~ ("^(" allow ")$")) {
+                n++; arq[n] = f; lin[n] = substr($0, 2); break
+            }
+            t = substr(t, RSTART + RLENGTH - 1)
         }
     }
     END {

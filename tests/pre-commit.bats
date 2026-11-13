@@ -54,6 +54,18 @@ setup() {
 	[ "$status" -eq 0 ]
 }
 
+@test "conta de sistema não come o fim da conta que vem antes dela" {
+	printf '%s/root/x\n' /home/home >a.txt
+	printf '%s/root/x\n' /Users/home >b.txt
+	git add a.txt
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	git reset -q
+	git add b.txt
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+}
+
 @test "conta de sistema não esconde a conta que vem depois dela" {
 	echo "/home/runner$H/y" >novo.txt
 	git add novo.txt
