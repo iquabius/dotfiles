@@ -273,8 +273,9 @@ olhadas, e não as de um arquivo renomeado no mesmo commit. O `post-merge`
 roda o `stow -R bin`, daqui e da camada privada, depois de todo pull que
 muda o pacote `bin` de um dos dois, e o `skills-sync` depois de todo pull que
 muda as skills, os perfis ou o próprio `skills-sync` (ver *Skills de
-agente*); fora dos checkouts `~/.dotfiles` e `~/.dotfiles-private` (numa
-worktree, noutro clone), nada.
+agente*); sem `~/.local/bin` ou sem o `.profile.local`, ele só avisa e pula
+o passo, e fora dos checkouts `~/.dotfiles` e `~/.dotfiles-private` (numa
+worktree, noutro clone), nada faz.
 
 ### 3. Aplicar os symlinks
 
