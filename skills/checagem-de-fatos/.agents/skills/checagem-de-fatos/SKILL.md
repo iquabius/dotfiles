@@ -134,8 +134,7 @@ descartados a tempo.
 artefato inteiro uma vez e escreve cada afirmação conferível como uma linha num arquivo:
 
 ```json
-{"id": "A01", "anchor": "intro.org:42", "quote": "texto literal da afirmação",
- "category": "atribuição", "where": "silva2015 p. 42; fontes/silva2015.pdf"}
+{"id": "A01", "anchor": "intro.org:42", "quote": "texto literal da afirmação", "category": "atribuição", "where": "silva2015 p. 42; fontes/silva2015.pdf"}
 ```
 
 `where` é o ponteiro para onde a verdade deveria estar, tirado da escada
