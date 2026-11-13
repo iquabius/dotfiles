@@ -16,15 +16,17 @@ PACOTE="${CLAUDE_SETTINGS:-$BATS_TEST_DIRNAME/../pacotes/claude/.claude/settings
 	python3 -m json.tool "$PACOTE" >/dev/null
 }
 
-@test "o hook PreToolUse do Bash aponta para o claude-revisao-guarda do pacote bin" {
-	run python3 -c '
+@test "o hook PreToolUse do Bash e do terminal do app aponta para o claude-revisao-guarda do pacote bin" {
+	for ferramenta in Bash mcp__terminal__run_in_terminal; do
+		run python3 -c '
 import json, sys
 d = json.load(open(sys.argv[1]))
-cmds = [h["command"] for m in d["hooks"]["PreToolUse"] if m.get("matcher") == "Bash"
-        for h in m["hooks"]]
-print("\n".join(cmds))' "$PACOTE"
-	[ "$status" -eq 0 ]
-	[[ $output == *'$HOME/.local/bin/claude-revisao-guarda'* ]]
+cmds = [h["command"] for m in d["hooks"]["PreToolUse"]
+        if sys.argv[2] in m.get("matcher", "").split("|") for h in m["hooks"]]
+print("\n".join(cmds))' "$PACOTE" "$ferramenta"
+		[ "$status" -eq 0 ]
+		[[ $output == *'$HOME/.local/bin/claude-revisao-guarda'* ]]
+	done
 	[ -x "$BATS_TEST_DIRNAME/../pacotes/bin/.local/bin/claude-revisao-guarda" ]
 }
 

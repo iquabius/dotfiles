@@ -132,7 +132,8 @@ reescrever é o passo 5, e nenhum commit `fixup!` chega ao `main`.
   checkout` para um ramo novo, outro ramo ou um commit, `git rebase
   <base> <ramo>`, `git stash branch`, `gh pr checkout`, também pelo
   `-C`, pelo `cd` ou pelo `env -C` de outro repositório); pergunta ao
-  autor antes de `git revisao excecao`. O portão que segura é o
+  autor antes de `git revisao excecao`. Confere o Bash e o terminal do
+  app (`mcp__terminal__run_in_terminal`). O portão que segura é o
   pre-push do push do autor; no `gh`, que não passa por ele, o que
   segura é o escopo do token que o autor deu ao `gh` e o autor, que
   aprova no navegador o login e o refresh, e no `gh-escrita` o diálogo

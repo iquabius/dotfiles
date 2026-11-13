@@ -15,6 +15,12 @@ guarda() {
 		"$1" "${2:-$BATS_TEST_TMPDIR}" | "$SCRIPT"
 }
 
+# terminal <comando> <cwd da aba> — o mesmo, pelo terminal do app.
+terminal() {
+	python3 -c 'import json,sys; print(json.dumps({"tool_name": "mcp__terminal__run_in_terminal", "cwd": "/", "tool_input": {"command": sys.argv[1], "cwd": sys.argv[2]}}))' \
+		"$1" "$2" | "$SCRIPT"
+}
+
 # repositorio — monta em $BATS_TEST_TMPDIR o checkout principal $P (no main,
 # com o ramo outro e o arquivo leia.org), uma worktree $W dele e um segundo
 # repositório $O, como o ~/.dotfiles ao lado do ~/.dotfiles-private.
@@ -496,9 +502,18 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 	[ -z "$output" ]
 }
 
-@test "outra ferramenta que não o Bash passa" {
+@test "outra ferramenta que não o Bash nem o terminal do app passa" {
 	run sh -c 'echo "{\"tool_name\":\"Edit\",\"tool_input\":{}}" | "$0"' "$SCRIPT"
 	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+}
+
+@test "o terminal do app tem as mesmas regras do Bash" {
+	for c in 'git commit -n -m x' 'git push --no-verify' 'gh pr merge 3'; do
+		run terminal "$c" "$BATS_TEST_TMPDIR"
+		recusa
+	done
+	run terminal 'git commit -m x' "$BATS_TEST_TMPDIR"
 	[ -z "$output" ]
 }
 
@@ -793,6 +808,8 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		run guarda "$c" "$P"
 		recusa
 	done
+	run terminal 'git switch -c x' "$P"
+	recusa
 }
 
 @test "o caminho que também é ramo leva o checkout ao ramo" {
@@ -837,6 +854,8 @@ pergunta() { [[ $output == *'"permissionDecision": "ask"'* ]]; }
 		[ -z "$output" ]
 	done
 	run guarda "git -C $W switch -c y" "$P"
+	[ -z "$output" ]
+	run terminal 'git switch -c y' "$W"
 	[ -z "$output" ]
 }
 

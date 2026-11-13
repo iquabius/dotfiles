@@ -38,6 +38,8 @@ Fecha, do lado do agente, as saídas que o git-revisao não vê:
   pergunta ao git se ele é o checkout principal e qual é o ramo
   principal.
 
+Vale para o Bash e para o terminal do app (mcp__terminal__run_in_terminal).
+
 O push sem revisão fica com o pre-push, que estas regras protegem do
 --no-verify e de hook.*. Elas pegam as formas diretas: separam o
 comando em palavras pelas aspas, separadores, comentários e heredocs do
@@ -1574,14 +1576,26 @@ def decisoes(cmd, nivel=0, ambiente=None):
                                          item.mesmo_shell)
 
 
+TERMINAL = "mcp__terminal__run_in_terminal"
+
+
 def diretorio_do_comando(dados):
-    """Onde o comando começa: o cwd do Bash, que segue os cd de antes."""
-    return dados.get("cwd") if isinstance(dados.get("cwd"), str) else os.getcwd()
+    """Onde o comando começa: o cwd do Bash, que segue os cd de antes, ou a
+    aba que o terminal do app abre, no cwd que receber (absoluto, com ~ ou
+    relativo ao diretório da sessão) ou no diretório da sessão."""
+    cwd = dados.get("cwd") if isinstance(dados.get("cwd"), str) else os.getcwd()
+    if dados.get("tool_name") != TERMINAL:
+        return cwd
+    base = os.environ.get("CLAUDE_PROJECT_DIR") or cwd
+    aba = (dados.get("tool_input") or {}).get("cwd")
+    if isinstance(aba, str) and aba:
+        return os.path.join(base, os.path.expanduser(aba))
+    return base
 
 
 def main():
     dados = json.load(sys.stdin)
-    if dados.get("tool_name") != "Bash":
+    if dados.get("tool_name") not in ("Bash", TERMINAL):
         return 0
     comando = (dados.get("tool_input") or {}).get("command", "")
     if not isinstance(comando, str):

@@ -88,11 +88,13 @@ que o reflog expira.
 
 ### claude-revisao-guarda
 
-Hook PreToolUse do Bash, registrado no `~/.claude/settings.json` pelo
-pacote `claude` ou pelo da camada privada. Recusa o que o git não vê: `git
-commit --no-verify` ou `-n` (também abreviado ou agrupado) e `git push`,
-`merge` ou `pull` com `--no-verify`, também abreviado; o alias gravado
-pelo `git config` que faria uma dessas coisas, conferido quando se grava;
+Hook PreToolUse do Bash e do terminal do app
+(`mcp__terminal__run_in_terminal`), registrado no `~/.claude/settings.json`
+pelo pacote `claude` ou pelo da camada privada. Recusa o que o git não
+vê: `git commit --no-verify` ou `-n` (também abreviado ou agrupado) e
+`git push`, `merge` ou `pull` com `--no-verify`, também abreviado; o
+alias gravado pelo `git config` que faria uma dessas coisas,
+conferido quando se grava;
 mexer em `hook.*` da configuração, que liga os hooks do `git-revisao` e do
 `git-assunto-merge`, em `core.hooksPath` (ou na seção `core`), que desliga
 os hooks do repositório, ou em `include.*`, que traz outra configuração;
@@ -262,8 +264,8 @@ remoto), o `git branch
 <nome>`, que não troca, o `git worktree add -b`, o rebase do ramo em que
 se está e o que continua um rebase, e tudo numa worktree.
 
-O diretório de cada comando é o cwd do hook, mudado pelo `cd` e pelo
-`pushd` da linha, também dentro de um shell
+O diretório de cada comando é o cwd do hook (no terminal do app, o da
+aba), mudado pelo `cd` e pelo `pushd` da linha, também dentro de um shell
 (`bash -c 'cd x && ...'`), pelo `env -C` e pelo `sudo -D`, e o git o
 muda com cada `-C`, como ele faz; o `--git-dir`, o `--work-tree`, o
 `GIT_DIR` e o `GIT_WORK_TREE` vão à pergunta ao git. Só o comando que pode
