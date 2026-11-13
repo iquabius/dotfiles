@@ -300,8 +300,9 @@ done
 
 ### 4. Se o Stow reclamar de conflito
 
-O Stow é atômico: um único arquivo preexistente aborta o pacote inteiro. Tire o
-arquivo da frente e repita o `stow`:
+O Stow confere tudo antes de mexer: um único conflito, como um arquivo
+preexistente que não é link dele, aborta a chamada inteira, com todos os
+pacotes dela. Tire o arquivo da frente e repita o `stow`:
 
 ```bash
 mkdir -p ~/.dotfiles-backup
