@@ -29,10 +29,11 @@ ALLOW='linuxbrew|runner|root'
 # diff.submodule não pôr no diff o conteúdo de um submódulo. Linha
 # do cabeçalho só conta até o primeiro @@: depois dele, "+++" é conteúdo
 # que começa com "++". O binário não tem linha "+" (o --no-textconv impede
-# o driver do .gitattributes de convertê-lo em texto); o symlink novo tem o
-# alvo como linha "+", e conta. A conta do ALLOW vira "/" na linha antes
-# da busca, até não sobrar nenhuma: a outra conta da mesma linha ainda
-# recusa, e as pontas que sobram não se colam num caminho que não estava lá.
+# o driver do .gitattributes de convertê-lo em texto); o symlink novo,
+# também o que entra no lugar de um arquivo, tem o alvo como linha "+", e
+# conta. A conta do ALLOW vira "/" na linha antes da busca, até não sobrar
+# nenhuma: a outra conta da mesma linha ainda recusa, e as pontas que
+# sobram não se colam num caminho que não estava lá.
 diff=$(git -c core.quotePath=false diff --cached -M -U0 --no-color \
     --no-ext-diff --no-textconv --submodule=short --src-prefix=a/ \
     --dst-prefix=b/)

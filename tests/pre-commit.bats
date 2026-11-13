@@ -185,6 +185,23 @@ setup() {
 	[ "$status" -eq 0 ]
 }
 
+@test "symlink novo com alvo de home recusa" {
+	ln -s "$H/alvo" lk
+	git add lk
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output == *'  lk'* ]]
+}
+
+@test "arquivo que vira symlink com alvo de home recusa" {
+	git rm -q velho.txt
+	ln -s "$H/alvo" velho.txt
+	git add velho.txt
+	run "$SCRIPT"
+	[ "$status" -eq 1 ]
+	[[ $output == *'  velho.txt'* ]]
+}
+
 @test "configuração de prefixo do diff não esconde o arquivo" {
 	git config diff.noprefix true
 	git config diff.mnemonicPrefix true
