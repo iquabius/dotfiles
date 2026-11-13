@@ -163,9 +163,10 @@ fica inerte (ver *5. Plugins do fish*).
 
 ### O pacote `bin` pede o `~/.local/bin` antes do `stow`
 
-Sem `~/.local/bin`, o Stow faz dele um symlink para dentro deste repo, e todo
-script que outro pacote ligasse ali cairia aqui dentro. Por isso o `mkdir -p
-~/.local/bin` vem antes do `stow bin` (ver *3. Aplicar os symlinks*).
+Sem `~/.local/bin`, o Stow faz dele (ou do `~/.local`, quando este também
+falta) um symlink para dentro deste repo, e todo programa que gravasse ali
+gravaria aqui dentro. Por isso o `mkdir -p ~/.local/bin` vem antes do `stow
+bin` (ver *3. Aplicar os symlinks*).
 
 ### O pacote `claude` é só da máquina sem a camada privada
 
