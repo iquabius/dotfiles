@@ -197,11 +197,11 @@ Quando o texto é longo, de várias vozes ou já contestado, esta lente para
 nos cartões e entrega o artefato à oficina da `banca`. As sete declarações
 de cartucho que a `banca` exige, para textos de produto:
 
-1. **License polarity** — preso à verdade: o texto não pode mentir; a
+1. **Polaridade da licença** — preso à verdade: o texto não pode mentir; a
    metáfora mantém a licença palavra por palavra ("preparando seus
    resultados" tem licença, "20 minutos" está preso). Toda afirmação
    quantitativa passa pela escada acima.
-2. **Lens roster** — lentes de função: semântica e compromisso
+2. **Elenco de lentes** — lentes de função: semântica e compromisso
    (acarretamento, pressuposição, coerência entre título e corpo; para no
    sentido), prosa (as regras de estilo da casa; para no conjunto de
    regras), registro (as regras declaradas da casa; recebe a intenção;
@@ -209,23 +209,23 @@ de cartucho que a `banca` exige, para textos de produto:
    acima, sempre cego. Lentes de evidência: a verificação byte a byte do
    texto contra a fonte, o contador de pontos de código, os dados de tempo
    para os graus da escada.
-3. **Altitude ladder** — arquitetura das afirmações → coerência da tela →
-   frase → palavra → formatação.
-4. **Effects literature** — a psicologia da espera (Maister; Taylor 1994
+3. **Escada de altitude** — arquitetura das afirmações → coerência da
+   tela → frase → palavra → formatação.
+4. **Literatura de efeitos** — a psicologia da espera (Maister; Taylor 1994
    sobre atribuir a causa de uma demora), citada como `[Julgamento]` até ser
    verificada de novo; o resto entra como heurística da casa, rotulada.
-5. **Severity scale and surgery verbs** — os cartões usam
-   **Showstopper** (bloqueia a rodada da oficina ou entrega uma afirmação falsa) · **Gap**
-   (falta uma instrução ou um recurso necessário) · **Inconsistency** (duas
-   orações em conflito) · **Underspecified** (presente, mas ambíguo) ·
-   **Suggestion**. Verbos: tighten / expand / reframe / restructure, mais
-   split-rung · relabel · requote · mark-unverified · defer-to-canon ·
-   add-worked-example.
-6. **Decoy design** — um texto genérico de UX writing com três chavões
+5. **Escala de severidade e verbos de cirurgia** — os cartões usam
+   **Impeditivo** (bloqueia a rodada da oficina ou entrega uma afirmação
+   falsa) · **Lacuna** (falta uma instrução ou um recurso necessário) ·
+   **Inconsistência** (duas orações em conflito) · **Vago** (presente, mas
+   ambíguo) · **Sugestão**. Verbos: enxugar / expandir / reenquadrar /
+   reestruturar, mais dividir-degrau · rerrotular · refazer-citação ·
+   marcar-não-verificado · remeter-ao-cânone · acrescentar-exemplo.
+6. **Desenho do chamariz** — um texto genérico de UX writing com três chavões
    ("seja claro e honesto", "use linguagem simples", "defina as expectativas
    cedo") fechado por uma isca refeita a partir de uma mecânica real do
    artefato em revisão; nunca reuse um chamariz anterior ao pé da letra.
-7. **Report conventions** — os cartões no chat, na língua do usuário; o
+7. **Convenções do relatório** — os cartões no chat, na língua do usuário; o
    livro-razão e o relato no log do projeto.
 
 A oficina prova um texto; os cartões desta lente a semeiam; uma bifurcação
