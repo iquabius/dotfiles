@@ -54,9 +54,8 @@ Fontes: <pesquisa, commit, ADR anterior>.
   número e sem o `.md`, tem até 70 caracteres e começa pela palavra que
   distingue o ADR dos vizinhos; listas e o que muda a cada redesenho vão
   para o corpo. Por exemplo,
-  `0023-rascunho-e-a-arvore-de-trabalho-e-o-commit-espera-a-revisao.md`
-  tem o título "O rascunho é a árvore de trabalho e o commit espera a
-  revisão".
+  `0007-sessoes-ficam-no-redis-ate-o-logout.md` tem o título "As sessões
+  ficam no Redis até o logout".
 - Título é a decisão, não a pergunta: "Android entra com Views e Compose",
   não "Qual toolkit no Android?".
 - Cada parte abre pelo que o leitor já reconhece; o nome técnico vem da
@@ -95,8 +94,12 @@ Fontes: <pesquisa, commit, ADR anterior>.
   também. O texto dele se lê no pai do commit que o tirou: `git show
   <commit>^:docs/adr/<arquivo>`.
 - O título que muda troca o nome do arquivo, com o caminho em todas as
-  referências, num commit só de movimento, antes do que muda o texto. A
-  troca não ganha linha no histórico: o `git log --follow` a acha.
+  referências, num commit que leva, além do movimento, só a costura
+  curta: a linha do título e a frase que abre a decisão, alinhadas ao
+  nome novo. O resto do que muda o texto vai depois, num commit próprio,
+  para o movimento não esconder a mudança. A troca não ganha linha no
+  histórico: o `git log --follow` a acha, desde que o `git diff -M
+  --stat` do commit a mostre como troca de nome (`antigo => novo`).
 - Número: o maior em `docs/adr/` mais um, com quatro dígitos; a numeração
   tem lacunas, e o número de um ADR que saiu não volta. Slug em
   minúsculas, sem acento, com hífens. Sem índice: `ls docs/adr/` é o índice.

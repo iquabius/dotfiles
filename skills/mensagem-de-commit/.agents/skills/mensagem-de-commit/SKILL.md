@@ -15,9 +15,9 @@ description: >-
 
 # Mensagem de commit
 
-A mensagem é a única parte de uma mudança que sobrevive no `git log`, no
-`git blame` e no resultado do bisect que alguém lê anos depois, sem acesso
-ao pull request, ao ticket ou à conversa que a produziram. O diff diz o que
+A mensagem fica junto da mudança no `git log`, no `git blame` e no
+resultado do bisect que alguém lê anos depois, quando o pull request, o
+ticket e a conversa que a produziram já não estão à mão. O diff diz o que
 mudou. A mensagem diz por quê, e por que desse jeito. Escreva para esse
 leitor.
 
@@ -64,7 +64,8 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
 1. **Leia a própria mudança.** Prefira o retrato do que está no stage
    (`git diff --staged`); na falta dele, `git diff`. Ao reescrever a
    mensagem de um commit que já existe, leia-o contra o pai com
-   `git show <commit>`.
+   `git show <commit>` (num merge, contra o primeiro pai, com
+   `git show --diff-merges=first-parent <commit>`).
 2. **Diga a mudança em duas frases:** o que estava errado, e por que esta
    correção. Se não conseguir, o commit talvez tenha mais de uma mudança
    lógica. Divida-o quando as partes se separam limpamente, de modo que
@@ -74,7 +75,14 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
    arquivos é um. Se as partes são de uma mesma reestruturação e um commit
    intermediário precisaria de código que não está nem no pai nem na
    mudança terminada, elas ficam num commit só, e o corpo diz por que vão
-   juntas.
+   juntas. Em texto, a unidade é a decisão do autor: a citação nova, o
+   corte de um parágrafo e a troca de um termo são três commits, e a
+   reescrita de uma subseção é um. A carona (um termo, uma página, um
+   ano, aspas) vai num commit próprio. Se a mensagem precisa de uma lista
+   com itens de partes diferentes, de "na mesma passada" ou de um assunto
+   com dois objetos, divida. Onde o commit espera o aprovo de alguém,
+   commite cada grupo logo depois do aprovo dele: dividir no fim custa
+   mais.
 3. **Não deixe o movimento esconder a modificação.** Uma renomeação, um
    deslocamento ou uma reformatação vai num commit próprio, antes da
    mudança de lógica, quando esconderia a mudança: quando, mesmo com as
@@ -91,7 +99,7 @@ A forma se decide nesta ordem, e vale a primeira que se aplicar:
 4. **Depois de um squash ou rebase, escreva a partir da árvore, não das
    mensagens antigas.** Uma fileira de commits pequenos é um diário.
    Guarde uma frase antiga só quando ela ainda bate com o diff.
-5. **A correção de um commit anterior do mesmo ramo ainda não juntado não
+5. **A correção de um commit anterior do mesmo ramo ainda não mesclado não
    é uma mudança nova.** Quando o ramo não chegou ao ramo principal e
    ninguém mais constrói em cima dele, faça o commit da correção com
    `git commit --fixup=<sha>` (ou faça amend do último commit), para que o
@@ -151,7 +159,7 @@ segurança, uma migração de dados e um revert sempre levam corpo.
   mudar comportamento termina o corpo com "No functional change." A frase
   é uma promessa que o revisor vai conferir.
 - **Nunca descreva o diff.** "Added function X, modified Y, updated tests"
-  é para isso que existe o `git show --stat`. Se o corpo só lista
+  é para isso que existe o `git show`. Se o corpo só lista
   mudanças, apague-o e recomece do problema.
 - **Nada de verbo vazio.** Nunca escreva "improve", "enhance", "clean up"
   ou "refactor for maintainability" sem dizer o que era difícil antes.
@@ -183,11 +191,14 @@ prova (`git show <sha>`, `git show :<path>`, `git show HEAD:<path>`, a
 execução dos testes) e tenha a saída em mãos. O cartucho de checagem de
 fatos desta skill (`cartuchos-de-fatos/mensagem-de-commit.md`, que a
 skill `checagem-de-fatos` carrega) lista as categorias de afirmação, os
-comandos e o brief do subagente; esta passada é o primeiro momento dele,
-feito só pelo agente que escreve, enquanto o amend ainda sai de graça.
-Uma mensagem no ramo principal nunca se reescreve, e por isso um fato
-errado achado depois sobrevive como errata numa mensagem posterior. O
-sha do mesmo ramo ainda não juntado é um alvo móvel, que o rebase de
+comandos e o pedido ao subagente; esta passada é o primeiro momento
+dele, feito só pelo agente que escreve, enquanto o amend ainda sai de
+graça.
+Por padrão, uma mensagem no ramo principal não se reescreve, e por isso
+um fato errado achado depois sobrevive como errata numa mensagem
+posterior; o repositório pode abrir uma exceção só para a mensagem ainda
+não enviada, com o aprovo do autor (seção 6 do cartucho desta skill). O
+sha do mesmo ramo ainda não mesclado é um alvo móvel, que o rebase de
 condensação reescreve: cite o assunto dele entre aspas ao lado, como faz
 o trailer `Fixes:`, e confira de novo depois do rebase. Toda mensagem
 que o rebase de condensação reescreve passa de novo pela autoconferência, contra a árvore do próprio commit
@@ -196,9 +207,10 @@ entra a frase sobre um commit posterior.
 
 Aplique pela etapa 6 da skill `checagem-de-fatos` um achado da checagem
 de Fatos sobre a sua própria mensagem: confira a correção antes de ela
-entrar, releia as palavras vizinhas e procure o mesmo deslize nas outras
-mensagens, e, na frase que volta de uma segunda passada, corte ou
-enfraqueça em vez de estreitar de novo.
+entrar, releia as palavras vizinhas e procure a mesma afirmação nas
+outras mensagens e nos arquivos que o commit escreve. A frase que uma segunda passada acha errada de novo segue a
+seção 6 do cartucho desta skill: sai, ou vira a frase mais fraca que um
+comando prova, sem se estreitar uma terceira vez.
 
 ## Trailers
 
@@ -235,8 +247,8 @@ passou por um agente, e por qual.
 3. **Uma regra explícita vence.** Quando o usuário ou o repositório (um
    arquivo de instruções ou um guia de contribuição) proíbe a atribuição
    de IA, ou dá outra forma, como `Assisted-by:`, siga essa regra.
-   Precedente sozinho não é essa regra: uma história sem trailers de IA
-   em geral quer dizer que os commits anteriores foram escritos à mão.
+   Precedente sozinho não é essa regra: a história sem trailers de IA
+   não proíbe a atribuição, só não a mostra.
 
 A atribuição nunca vai no assunto, e nunca toma o lugar do corpo: a
 mensagem ainda tem de explicar a mudança sozinha.
@@ -265,7 +277,7 @@ mensagem ainda tem de explicar a mudança sozinha.
    hooks (`--no-verify`) nem mude a configuração do git. Nunca faça amend,
    rebase nem force push de história que já está no ramo principal ou foi
    enviada para outros, a menos que o usuário peça; condensar os fixups
-   num ramo ainda não juntado (Antes de escrever, passo 5) não é isso.
+   num ramo ainda não mesclado (Antes de escrever, passo 5) não é isso.
 
 ## Autoconferência antes de mostrar o rascunho
 
@@ -295,9 +307,10 @@ mensagem ainda tem de explicar a mudança sozinha.
      da execução.
   4. **Afirmações de sabotagem.** A frase que diz que um teste falha numa
      cópia quebrada, numa variante ou num caso: rode o teste nessa cópia.
-  5. **Escopo.** "Only", "no functional change", "does not touch":
-     `git diff --staged --stat` (ou `git show --stat <sha>`) contra a
-     frase.
+  5. **Escopo.** "Only" e "does not touch": `git diff --staged --stat`
+     (ou `git show --stat <sha>`) contra a frase. "No functional
+     change": também o diff lido, com `-w` ou `--color-moved`, atrás de
+     uma linha que mude comportamento, e os testes.
   6. **Outros commits.** Procure "next", "previous", "later", "not yet" (e
      as palavras da língua do repositório): a frase que só é verdadeira
      com outro commit da série sai, ou cita o assunto desse commit.

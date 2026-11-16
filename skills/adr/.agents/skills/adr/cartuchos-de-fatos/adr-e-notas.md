@@ -3,8 +3,9 @@
 Cartucho de checagem de fatos do registro da skill `adr`. O motor, que
 não tem registro, é a skill `checagem-de-fatos`.
 
-O artefato é um registro de decisão (um ADR: um parágrafo com data
-absoluta, a decisão, o que ela substitui, "em vez de" e "custo") ou uma
+O artefato é um registro de decisão (um ADR, com data absoluta, o
+problema, os critérios, a decisão, as alternativas em "em vez de", o
+custo e, quando houver, as fontes) ou uma
 nota do projeto (uma nota de referência, uma nota de achados, uma nota de
 processo). Os dois prestam contas à verdade; a decisão em si e os motivos
 dela são do autor e não se conferem pelo mérito, só pelos fatos em que se
@@ -70,6 +71,10 @@ A convenção do projeto: um fato datado sem fonte ganha a marca
 fora do glossário vira uma pergunta de glossário (`domain-modeling`), não
 uma troca de nome feita em silêncio.
 
+Uma afirmação **sem acesso** não ganha a marca por isso: não pede
+correção (`checagem-de-fatos`, etapa 3) e fica nas Pendências do
+relatório, com a fonte que faltou.
+
 ## 6. Correções e quem aprova
 
 Um ADR que muda se reescreve no lugar, com a data nova e a decisão
@@ -85,6 +90,14 @@ pelo agente autor, com o subagente só quando o artefato cita mais de ~30
 fatos (uma nota de referência longa). Um portão mecânico, onde o
 repositório tiver um, confere que a data é absoluta e que os números de
 ADR, os shas e os ids de tarefa citados existem.
+
+Na revisão de um ramo, o ADR e a nota que o ramo toca passam também
+pelo cartucho de documentação da skill `arquitetura-de-docs`, no eixo
+Fatos da `revisao-rigorosa`: o ADR e a seção datada de uma nota se
+conferem na data que levam, pelas categorias daqui, e o resto da nota,
+contra a ponta. No commit feito direto no ramo principal que muda uma
+nota, o subagente do momento 1b do cartucho `mensagem-de-commit` recebe
+também o pedido do cartucho de documentação.
 
 ## 8. Lotes e modelo
 

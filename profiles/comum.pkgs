@@ -13,6 +13,12 @@ caveman-distillate
 # dele, em cartuchos-de-fatos/.
 checagem-de-fatos
 
+# A revisão de tela, fluxo e texto de produto, ao lado da revisao-rigorosa
+# (código), e a decisão entre opções com nome, que lê a persona do
+# personas.md da revisao-de-usabilidade.
+revisao-de-usabilidade
+matriz-de-decisao
+
 # Mapa de tickets de decisão para trabalho maior que uma sessão
 # (mattpocock/skills, MIT), com as skills que a wayfinder chama. A
 # setup-matt-pocock-skills escreve o doc do rastreador de cada repositório,

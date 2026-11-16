@@ -3,7 +3,7 @@
 O conjunto fixo de objeções que o eixo Normas aplica quando o repositório
 não documenta nada em contrário. Cada item é uma questão de julgamento,
 rotulada como tal no achado, e uma norma documentada do repositório
-prevalece sobre ele. Cole este arquivo no prompt do subagente de Normas,
+prevalece sobre ele. Cole este arquivo no pedido ao subagente de Normas,
 sem os itens que uma norma do repositório endossa (o passo 3 do
 `SKILL.md`).
 

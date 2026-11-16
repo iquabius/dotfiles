@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Testes do bin/.local/bin/skills-sync.
+# Testes do pacotes/bin/.local/bin/skills-sync.
 #
 # Cada teste monta um repo de brinquedo e um $HOME de brinquedo em
 # $BATS_TEST_TMPDIR; o script é apontado para eles por SKILLS_SYNC_REPO e
@@ -10,7 +10,7 @@
 
 # SKILLS_SYNC_SCRIPT troca o script testado (útil para conferir, com uma
 # cópia sabotada, que o teste de fato pega a falha).
-SCRIPT="${SKILLS_SYNC_SCRIPT:-$BATS_TEST_DIRNAME/../bin/.local/bin/skills-sync}"
+SCRIPT="${SKILLS_SYNC_SCRIPT:-$BATS_TEST_DIRNAME/../pacotes/bin/.local/bin/skills-sync}"
 
 setup() {
 	REPO=$BATS_TEST_TMPDIR/repo
@@ -120,6 +120,19 @@ snapshot() {
 	[ -f "$T/.agents/skills/.keep" ]
 	[ -f "$T/.cursor/skills/.keep" ]
 	[[ "$output" == *"liga:     a"* ]]
+}
+
+@test "sem SKILLS_SYNC_REPO, acha o repo a partir de pacotes/bin/.local/bin" {
+	mkskill a
+	profile comum a
+	use comum
+	mkdir -p "$REPO/pacotes/bin/.local/bin"
+	cp "$SCRIPT" "$REPO/pacotes/bin/.local/bin/skills-sync"
+	ln -s "$REPO/pacotes/bin/.local/bin/skills-sync" "$BATS_TEST_TMPDIR/link"
+	unset SKILLS_SYNC_REPO
+	run "$BATS_TEST_TMPDIR/link"
+	[ "$status" -eq 0 ]
+	linked a
 }
 
 @test "rodar de novo não muda nada e diz que não há o que fazer" {

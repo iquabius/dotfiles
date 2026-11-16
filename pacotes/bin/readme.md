@@ -1,0 +1,352 @@
+# bin
+
+Comandos que o stow liga em `~/.local/bin`. Este arquivo é a lista deles;
+o [readme da raiz](../../readme.md) e o [AGENTS.md](../../AGENTS.md)
+apontam para cá em vez de repeti-la.
+
+- `skills-sync` liga as skills de agente do perfil da máquina; está no
+  readme da raiz, em *Skills de agente*.
+- `git-revisao` e `claude-revisao-guarda` guardam o ciclo de ramo,
+  revisão e merge: o primeiro pelos hooks do git, o segundo como hook do
+  Claude Code que recusa pular os hooks do git e tirar do ramo principal
+  o HEAD do checkout principal, entre outras coisas (a lista inteira está
+  na seção dele).
+- `git-assunto-merge` recusa, no commit de merge, o assunto que o git
+  escreve sozinho e o "Mescla o ramo" (ou o "Junta o ramo" antigo) que
+  não diz o que o ramo traz.
+- `forca-no-patch` marca força, asserções, permissões e números num diff.
+- `condensar-transcricao` condensa transcrições do Claude Code.
+
+Este arquivo e os testes (`*.test.bats`) ficam fora do `~/.local/bin`
+pelo `.stow-local-ignore`.
+
+## git-revisao e claude-revisao-guarda
+
+Código só chega ao `main` (ou `master`) de um ramo revisado com a skill
+`revisao-rigorosa`. O ciclo inteiro, de ramo a merge, está no
+[AGENTS.md](../../AGENTS.md); a decisão é de 2026-10-07. Duas peças o guardam.
+
+### git-revisao
+
+Vale no repositório que lista os caminhos de código em `.config/revisao`, um
+pathspec do git por linha (`#` comenta; diretório com curinga termina em
+`/*`), e ali declara, numa linha `teste: <comando>`, o teste do `pronto`.
+Repositório sem o arquivo fica de fora. A própria lista está nela, para que
+estreitá-la também passe pela revisão; e o pre-push conta como código o que
+a lista do remoto ou a da ponta conta, cada uma sozinha, para que um push
+não a estreite, tirando uma linha ou acrescentando uma exclusão, e passe com
+o que ela deixou de fora.
+
+- `git revisao pronto [<ponta>]`: marca a ponta revisada com o veredito
+  *Pronto para o merge*, depois de o teste do repositório passar. O teste é a
+  linha `teste: <comando>` do `.config/revisao` da ponta, ou, se o ramo a
+  tirou, do `main` e depois do `main@{upstream}`; roda sempre que há um declarado, da raiz, pelo `sh`, com
+  `GIT_REVISAO_BASE` e `GIT_REVISAO_PONTA` no ambiente. Como roda também
+  quando o diff não toca a lista, o comando pode conferir o que ela não
+  conta como código; ele escolhe pelo diff e sai com 0 quando nada pede
+  conferência. O `scripts/testes-da-revisao` daqui só olha os caminhos que
+  a lista da base ou da ponta conta (sem base, roda o `make check`) e serve
+  também à camada privada.
+  Como roda no checkout, o `pronto` com teste pede que a ponta seja o `HEAD`
+  e que nenhum caminho de código tenha mudança fora do commit, nem arquivo
+  novo; o rascunho de texto pode ficar. Falhou, não marca. A marca é uma
+  nota em `refs/notes/revisao`, com o veredito, a base e a data, e cobre os
+  commits de base até a ponta. A base é o merge-base com o `main`; para uma
+  ponta que já está na linha do `main`, o merge-base com o `main` do remoto;
+  sem remoto configurado (`main@{upstream}`), a marca cobre desde a raiz, e
+  a saída diz isso. Vale a marca cuja ponta e cuja base existem no clone.
+- `git revisao excecao -m <motivo> [<ponta>]`: a mesma marca, para o que vai
+  sem o *Pronto para o merge*: um achado que o autor deixou de pé, um
+  teste que não dá para rodar, ou commits anteriores a esta regra. Não roda o teste.
+- `git revisao pendente [<ponta>]`: lista o código que um push da ponta
+  levaria ao `main` sem marca que o cubra; sai com 1 se houver.
+- **pre-push** (`[hook "revisao-push"]` do pacote `git`): recusa o push ao
+  `main` ou `master` que leve commit de código sem marca. Merge conta só
+  pelo `--remerge-diff`, a resolução contra a mesclagem automática, que
+  fica vazio no merge sem conflito nem mudança à mão e mostra também o
+  conflito que ficou inteiro com um dos lados, que o diff `--cc` omite;
+  quando não fica vazio, a resolução se revisa (`git show --remerge-diff`)
+  antes da marca. O octopus conta pelo `--cc`. Também recusa enviar
+  `refs/notes/revisao`: as notas ficam no clone.
+- **pre-commit** (`[hook "revisao-commit"]`): recusa o commit de agente
+  (`CLAUDECODE` no ambiente, como no Bash do Claude Code) no `main` que
+  mexa no código; o que entra no commit vem do índice, então `git commit
+  -a` e `git commit -- <arquivos>` contam. Concluir um merge passa. O git
+  não chama o pre-commit em `cherry-pick`, `revert` nem `am`, salvo no
+  `cherry-pick --continue` e no `revert --continue` depois de um conflito;
+  o resto do que eles levarem ao `main` fica para o pre-push.
+
+Reescrever um commit marcado, como faz o rebase que só refaz as datas ou as
+mensagens, muda o sha, mas não tira a marca: o commit com a mesma árvore e
+as mesmas árvores dos pais de um commit coberto conta como coberto, porque
+o código e o diff são os que a revisão viu. O merge de dois pais pede também
+a mesma resolução (o `--remerge-diff`), que depende da história que refaz a
+mesclagem, e não só das árvores. O que muda algum arquivo, no commit ou no
+pai (o `cherry-pick` depois de o `main` andar), pede revisão de novo. A
+herança dura enquanto o commit marcado existir no clone; o gc o leva depois
+que o reflog expira.
+
+### claude-revisao-guarda
+
+Hook PreToolUse do Bash e do terminal do app
+(`mcp__terminal__run_in_terminal`), registrado no `~/.claude/settings.json`
+pelo pacote `claude` ou pelo da camada privada. Recusa o que o git não
+vê: `git commit --no-verify` ou `-n` (também abreviado ou agrupado) e
+`git push`, `merge` ou `pull` com `--no-verify`, também abreviado; o
+alias gravado pelo `git config` que faria uma dessas coisas,
+conferido quando se grava;
+mexer em `hook.*` da configuração, que liga os hooks do `git-revisao` e do
+`git-assunto-merge`, em `core.hooksPath` (ou na seção `core`), que desliga
+os hooks do repositório, ou em `include.*`, que traz outra configuração;
+trocar a configuração global pelo ambiente (`GIT_CONFIG_GLOBAL`,
+`GIT_CONFIG_COUNT`, `HOME`), atribuída no começo de um comando (também
+com `+=`), solta ou com `export`, `declare -x`, `env`, `env -S`, `printf
+-v`, `read`, `mapfile`, `getopts`, `let`, o `set` do fish (`set HOME
+/x`, `set -x`, com índice ou não) ou o `set home=` e o `setenv` do csh,
+ou tirada com `env -u`, `set -e` ou `set -u`, antes de um git que
+commita, mescla, puxa ou envia, que desliga os da configuração; tirar
+`CLAUDECODE` do ambiente (`unset`, `env -u`, `env CLAUDECODE=`, `env
+-i`, `export -n`, `set -e`, `unsetenv`); escrever `refs/notes/revisao`
+sem o `git revisao`, com a ref que o git usaria (o último `--ref` antes
+do subcomando, que se expande; senão o `GIT_NOTES_REF`; senão o último
+`core.notesRef` do `-c` ou da configuração pelo ambiente, que o git só
+aceita inteiros), ou apontar a ela o `core.notesRef` gravado ou o
+`notes.rewriteRef` (também por glob ou pelo `GIT_NOTES_REWRITE_REF`),
+que copiaria a marca para o commit reescrito por um `--amend` ou um
+rebase; o merge pelo GitHub (`gh pr merge`, a API REST ou a GraphQL),
+que não passa pelo pre-push; e o `gh` com a palavra `auth`, menos o `gh
+auth status` sem o token: o escopo do token é o limite do que o agente
+faz pela API, o `login`, o `refresh` e o `switch` o trocam, o `token`, o
+`git-credential` e o `status -t` o tiram do `gh`, e o `logout` e o
+`setup-git` mexem nele. O pflag lê o `-t` num grupo de opções curtas
+depois do subcomando (`gh auth status -th github.com`), e conhecer as
+opções de cada subcomando do `auth` deixaria escapar a que uma versão
+nova trouxer; por isso o guarda falha fechado: passam só o `gh help
+...`, o `gh auth` sozinho ou com `--help`, e o `gh auth status` seguido
+só de `-a`, `--active` e de `-h`, `--hostname`, `--json`, `--jq` ou
+`--template` com o valor. A ajuda de um subcomando vem pelo `gh help
+auth <subcomando>`. O `oauth_token` do `gh config` (`gh config get -h
+<host> oauth_token`, e o `set`), que lê ou grava o token sem a palavra
+`auth`, também se recusa. Criar alias do `gh` (`gh alias set`, `gh alias
+import`) se recusa: o `gh` põe os argumentos da chamada no fim da
+expansão, e o alias inocente dá depois a forma recusada (`gh alias set p
+'pr '`, depois `gh p merge 3`). O merge pelo GitHub, o alias e o `gh
+config` se leem com a palavra que não começa com `-` depois de cada
+opção sem `=` como valor dela ou como posicional, em todas as leituras
+(`gh -R o/r pr merge 3`, `gh -b x pr merge 3`, `gh -R o/r -ds pr merge
+3`), numa passada só pelas palavras. O caminho do merge pela API se
+procura como veio e normalizado, sem caixa, com as barras juntas, sem
+o `/./`, com o `/../` resolvido e com o percentual decodificado
+(`pulls//3/merge`, `pulls/3/x/../merge`, `%6Derge`): o `/../` de uma
+consulta (`merge?x=/../y`) não tira o `merge` da busca. As mesmas regras
+do `gh` valem para o `gh-escrita` da camada privada, que roda o `gh api`
+com um token de escrita. Ler a configuração do git (`get`, `list`,
+`--get*`, `--list`, a chave sozinha) passa, também com
+redirecionamento.
+
+O comando se separa em palavras com as regras do shell que mudam o que
+roda: as aspas protegem o que está dentro (o `$'...'` com os escapes
+resolvidos com o número de dígitos do bash, também o `\cX`, e cortado no
+NUL; o `$"..."` como aspas duplas), o separador entre aspas não corta o
+comando, o `#` no começo de uma palavra abre um comentário, a barra no
+fim da linha, fora de comentário, a junta à seguinte, e os
+redirecionamentos saem, também colados, com descritor ou antes do
+comando (`git<<<x push`, `git 0<<< x push`, `git {fd}>x push`, `git >| x
+push` são `git push`). Todas as regras leem essas palavras. Cada chamada
+do git se lê palavra por palavra, com a configuração que o ambiente lhe
+dá (`GIT_CONFIG_COUNT`, `GIT_CONFIG_PARAMETERS`) antes dos `-c`: as
+opções globais que levam argumento (`-C`, `-c`, `--attr-source`...) saem
+com ele, a que só imprime e sai (`--exec-path`, `--version`,
+`--list-cmds=`) não deixa subcomando, e a que o guarda não conhece se lê
+das duas formas, levando ou não a palavra seguinte; a opção longa
+abreviada (`--unset-a`, `--no-verif`) conta como a inteira, e o argumento
+de uma opção (`-m`, `-o`, `-t`) não conta como opção. No `git config`,
+tudo o que vem depois da chave é o valor, como o git lê (`git config
+alias.y '-c x=y commit'`, `git config core.hooksPath --get`). O texto
+que um shell roda se confere como mais um comando, com o ambiente que
+ele recebe: o do `-c` em qualquer lugar entre as opções (`bash -c -x
+'...'`, `bash -o pipefail -c`, `sh -c - '...'`, `tcsh -cf '...'`) dos
+shells do POSIX (`sh`, `bash`, `dash`, `zsh`, `ksh`, `mksh`, `osh`,
+`ysh`...) e do `csh`, e o do `-c`, `--command` ou `-C` dos outros
+(`fish`, `rc`, `elvish`, `xonsh`, `nu`), com o mesmo ambiente para os
+vários `-c` de um shell; o do here-string (`bash <<< '...'`); o da
+substituição de comando (`` `...` `` e `$(...)`, também entre aspas
+duplas, não entre simples); o do heredoc que um shell lê (`bash
+<<'EOF'`); e o do alias de um `-c alias.<nome>=` usado como subcomando.
+O `eval` (também `eval --`) e o `source` ou `.` de um heredoc ou
+here-string (`source /dev/stdin <<'EOF'`, também `<<EOF source
+/dev/stdin`) rodam no shell de agora, na ordem da linha, e o ambiente
+que trocam vale para os comandos seguintes. O git, o gh, o `gh-escrita`,
+o `git-revisao`, os shells e os prefixos (`env`, `sudo`, `nohup`, `nice`,
+`timeout`, `xargs`, `time`) se conferem onde
+estiverem nas palavras de um comando, sem aspas nem barra, e nenhum
+programa que os roda numa palavra própria (`setsid git`, `stdbuf git`,
+`watch git`, `find -exec git`, `distrobox-host-exec git`) os esconde; nem
+`command`, `exec`, `builtin` e as palavras do shell (`if`, `then`, `do`,
+`{`, `!`, e o `and`, o `or` e o `not` do fish). O comando achado assim
+pode nem rodar: ele não troca o ambiente dos seguintes, e o git se lê
+como o git o leria, que, com uma opção global que não conhece, recusa
+sem rodar nada (`grep -e git -e commit -n` passa). O corpo de heredoc
+mandado a outro programa é texto: com o delimitador entre aspas
+(`<<'EOF'`), o shell não o expande; sem aspas, rodam as substituições de
+comando dele, o `$(...)` e as crases, e só elas se conferem. A substituição de processo (`<(...)`, `>(...)`)
+vira uma palavra, o caminho que o comando recebe, e o texto dela se
+confere como o do `$(...)`. Antes de `git revisao excecao`, pergunta ao
+autor.
+
+São as formas diretas. Passam por todas: um script gravado em arquivo e
+depois executado, o git chamado por uma variável (`$G config`), os
+argumentos ou o comando que chegam por um pipe ao `xargs`, a um shell ou
+ao `source` (`printf ... | bash`, `source <(...)`), e o comando que um
+programa recebe como um texto só e passa a um shell (`watch '...'`,
+`script -c`, `su -c`, `tmux new '...'`, `ssh`, o `pwsh`). Passam também
+o programa que o guarda lê escrito entre aspas ou com barra (`setsid
+'git' push`, `setsid \git push`); a troca de ambiente que um programa
+faz por opção (`flatpak-spawn --env=HOME=/x git`, `systemd-run
+--setenv=`), a do laço (`for HOME in /x; do git push; done`) e a que os
+shells de fora do POSIX, além do fish e do csh, fazem pelo jeito deles
+(o `$env.HOME` do `nu`); e o resto do comando depois de um `$(...)` que
+traz um heredoc com apóstrofo (`git commit -m "$(cat <<'EOF'` ... `it's`
+... `EOF` `)" --no-verify`), porque a busca do `)` que fecha o `$(` não
+pula o corpo do heredoc. Passa ainda a mutation GraphQL do merge num
+arquivo ou pela entrada padrão (`-F query=@q.graphql`, `-F query=@-`,
+`--input -`), e a escrita no `main` pela API que não é merge (`-X PATCH
+.../git/refs/heads/main`, `-X PUT .../contents/<arquivo>`, a mutation
+`createCommitOnBranch`), o que chega ao `gh auth git-credential` sem o
+`gh` no comando (`git credential fill`, um credential helper chamado
+direto), a palavra que o shell monta ao rodar (`gh {auth,token}`, `gh
+$(echo auth) token`, `a=auth; gh $a token`, um glob) e uma extensão do
+`gh` que chame o `gh auth token` por dentro: no `gh`, o que segura é o
+escopo do token, que a camada privada, com os passos do autor, deixa só
+de leitura, e no `gh-escrita` o diálogo da chave do App a cada chamada.
+O guarda lê o bash até onde este texto diz, e não o imita por inteiro:
+a forma ofuscada que ele não descreve (um escape, uma expansão ou outra
+sintaxe que só o bash resolve) fica fora do que ele promete, e quem a
+segura é o mesmo escopo do token, o diálogo da chave e o pre-push.
+Do outro lado, ele recusa a mais em sete casos: o `gh` com a
+palavra `auth` fora das formas que passam, também a que não mexe no
+token (`gh auth --hostname github.com status`, `gh auth token --help`,
+`gh search issues auth`); todo alias novo do `gh`, também
+o que não leva a uma forma recusada; o que parece merge pelo GitHub e
+não é, o `gh repo sync` sem destino, que só atualiza o clone local, e o
+`gh api` cujo texto cita um nome do merge (um título que diga
+`mergeBranch`); a troca de ambiente dentro de um subshell (`( HOME=/x;
+...)`) vale para os comandos de fora; o git, o gh, o shell ou o prefixo sem
+aspas como argumento de outro programa conta como comando (`echo git
+commit -n`, `printf '%s\n' git push --no-verify`); o `set` do bash que
+traz um nome depois das opções (`set -e HOME`) conta como o do fish; e o
+heredoc ou here-string dado ao `source` ou ao `.` de um arquivo (`.
+./env.sh <<< '...'`), ou a um shell com um script (`bash x.sh <<EOF`),
+se lê como script, embora seja só a entrada dele. O portão que segura é
+o pre-push do push, que é do autor.
+
+#### O checkout principal fica no ramo principal
+
+O checkout principal de um repositório, o de `git rev-parse --git-dir`
+igual ao `--git-common-dir`, fica no ramo principal: as outras sessões e
+o editor commitam ali, e um ramo nele desvia os commits delas (em
+2026-10-17, um ADR do TCC; em 2026-11-12, dois commits num ramo criado
+no checkout principal do `~/.dotfiles-private`). O
+trabalho vai numa worktree, e o guarda recusa, no checkout principal, o
+que tira dele o HEAD: o `git switch` e o `git checkout` que criam um
+ramo (`-c`, `-C`, `-b`, `-B`, `--orphan`, também agrupados ou
+abreviados, como `-qc` e `--cre`), que vão a outro ramo, a um commit ou
+ao `-` (no `git switch`, também depois do `--`), ou que destacam o HEAD
+(`--detach`, `-d`); o `git rebase <base> <ramo>` e o `git rebase --root
+<ramo>`, que vão ao ramo antes de reaplicar; o `git stash branch
+<ramo>`; e o `gh pr checkout`, menos a ajuda dele. O ramo principal é o do
+`origin/HEAD`, se o clone tem esse ramo; senão, o `main` ou o `master`; o
+repositório sem nenhum deles fica de fora. Passam a volta ao ramo
+principal (`git switch main`, também `-C main`), o checkout que restaura
+arquivos (com `--`, com o commit e o caminho, com `-p`, ou com um caminho
+que existe ou que o índice tem, e não é um commit nem um ramo de um
+remoto), o `git branch
+<nome>`, que não troca, o `git worktree add -b`, o rebase do ramo em que
+se está e o que continua um rebase, e tudo numa worktree.
+
+O diretório de cada comando é o cwd do hook (no terminal do app, o da
+aba), mudado pelo `cd` e pelo `pushd` da linha, também dentro de um shell
+(`bash -c 'cd x && ...'`), pelo `env -C` e pelo `sudo -D`, e o git o
+muda com cada `-C`, como ele faz; o `--git-dir`, o `--work-tree`, o
+`GIT_DIR` e o `GIT_WORK_TREE` vão à pergunta ao git. Só o comando que pode
+trocar o HEAD faz o guarda rodar o git (o `rev-parse`, o `for-each-ref`
+e, no `git checkout <palavra>` que pode ser um caminho, a pergunta se ela
+é um commit). Passam: o diretório que só o shell sabe (`cd "$WT"`, `cd
+-`, o `popd`, `git -C "$X"`, `env -C "$X"`), o git que falha ou passa de
+três segundos nessa pergunta, o alias gravado, o `git bisect`, o `git
+branch -m` e o `git symbolic-ref`; o que segura esses é a instrução de
+cada repositório. Dois casos o guarda lê num diretório que pode não ser
+o certo, e ali pode recusar a mais ou deixar passar: o `cd` dentro de um
+subshell, que ele lê como se valesse para os comandos de fora (`(cd x);
+git switch -c y`), e o alias de um `-c alias.<nome>=`, que ele confere no
+diretório do comando, sem os `-C` do git que o chama.
+
+### Testes
+
+`git-revisao.test.bats` e `claude-revisao-guarda.test.bats`, ao lado dos
+scripts. A primeira cria repositórios e remotos descartáveis, com os hooks
+no `.git/hooks` de cada um; a segunda manda comandos ao hook e, para a
+regra do checkout principal, cria um repositório com uma worktree.
+`GIT_REVISAO_SCRIPT` e `CLAUDE_REVISAO_GUARDA_SCRIPT` apontam a suíte para
+uma cópia sabotada.
+
+## git-assunto-merge
+
+O pacote `git` liga o hook global `commit-msg` (`[hook "assunto-merge"]`,
+git 2.54 ou mais novo), que o git chama no `git commit` e no `git merge`.
+Ele recusa o assunto "Merge branch '<ramo>'", com ou sem " into <ramo>", que
+o git escreve quando o merge vem sem `-m`, e o "Mescla o ramo <ramo>:" (ou o
+"Junta o ramo <ramo>:" antigo) que não diz o que o ramo traz. O merge
+recusado pelo "Merge branch" fica por concluir, e a recusa dá o `git commit
+-m "Mescla o ramo <ramo>: <o que o ramo traz>"` que o conclui; no `git
+commit --amend` de um merge já feito (sem `MERGE_HEAD`), dá o `git commit
+--amend -m`, que mantém os pais. O merge de um pull ("Merge branch '<ramo>'
+of <url>"), o de um ramo remoto ("Merge remote-tracking branch"), o de
+vários ramos ("Merge branches"), o de um commit e o de uma tag passam: a
+regra é do merge de um ramo de tarefa. Vale em todo repositório; um
+repositório sai com `git config hook.assunto-merge.enabled false`.
+
+`git-assunto-merge.test.bats`, ao lado do script, cria um repositório
+descartável com o hook no `.git/hooks`; `GIT_ASSUNTO_MERGE_SCRIPT` aponta a
+suíte para uma cópia sabotada.
+
+## forca-no-patch
+
+Marca mudanças de força, asserções retiradas, permissões e números novos
+num diff. A seção "O Codex que escreve o conserto" da
+`revisao-rigorosa/references/codex.md` o usa antes de aplicar um patch
+e antes de um commit de conserto do próprio agente.
+
+```sh
+forca-no-patch [--so TIPO ...] [arquivo | -]
+git diff ... | forca-no-patch
+```
+
+Sem arquivo ou com `-`, lê a entrada padrão. `--so` é repetível e aceita
+`força`, `asserção`, `permissão` e `número`. Cada achado sai como
+`arquivo:linha: tipo: texto`, sem o sinal do diff. Sai com 0 sem achados,
+1 com achados e 2 por erro de leitura, de formato ou de uso, com mensagem
+em stderr.
+
+`forca-no-patch.test.bats`, ao lado do script; `FORCA_NO_PATCH_SCRIPT`
+aponta a suíte para uma cópia sabotada.
+
+## condensar-transcricao
+
+Condensa uma transcrição JSONL do Claude Code para busca em texto.
+A seção "Fatos que só uma sessão registra" da `checagem-de-fatos` o
+usa para os dois provedores lerem a mesma transcrição.
+
+```sh
+condensar-transcricao [--corte-ferramenta N] [--corte-resultado N] <transcricao.jsonl>
+```
+
+Escreve na saída padrão o caminho absoluto e os blocos com a linha
+original, o timestamp e o papel. O texto do agente e do autor sai
+inteiro; a entrada e o resultado das ferramentas ficam limitados a 700
+e 900 caracteres, respectivamente. As opções mudam os limites e aceitam
+zero. O sufixo `[…+n]` conta os caracteres omitidos. Sai com 0 ao
+concluir e 2 por erro de leitura ou de uso, com mensagem em stderr.
+
+`condensar-transcricao.test.bats`, ao lado do script;
+`CONDENSAR_TRANSCRICAO_SCRIPT` aponta a suíte para uma cópia sabotada.

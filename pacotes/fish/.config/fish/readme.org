@@ -1,0 +1,7 @@
+#+TITLE: Fish Shell Setup
+
+This is my setup for the [[https://fishshell.com/][Fish Shell]].
+
+These files live in the =fish= Stow package (=pacotes/fish/=) of my
+[[https://github.com/iquabius/dotfiles][dotfiles repo]].
+

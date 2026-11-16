@@ -1,0 +1,1611 @@
+#!/usr/bin/env python3
+"""claude-revisao-guarda — hook PreToolUse (Bash) do Claude Code.
+
+Fecha, do lado do agente, as saídas que o git-revisao não vê:
+
+- recusa o que desligaria os hooks do git: git commit com --no-verify ou
+  -n e git push, merge ou pull com --no-verify, que pula o pre-push e o
+  commit-msg, também por um alias gravado na configuração; mexer em
+  hook.* da configuração, que liga os hooks do git-revisao e do
+  git-assunto-merge, em core.hooksPath, que desliga os hooks do
+  repositório, ou em include.*, que traz outra configuração; trocar
+  a configuração global pelo ambiente (GIT_CONFIG_GLOBAL, GIT_CONFIG_COUNT,
+  HOME...) antes de um git que commita, mescla, puxa ou envia, porque é a
+  global que liga os hooks do git-revisao; tirar CLAUDECODE do ambiente,
+  pelo qual o pre-commit reconhece o agente; e escrever as notas da
+  revisão sem o git revisao, ou apontar a elas o core.notesRef ou o
+  notes.rewriteRef, que forjaria uma marca;
+- recusa o merge pelo GitHub (gh pr merge, a API REST ou a GraphQL), que
+  leva código ao main sem passar pelo pre-push;
+- recusa o gh com a palavra auth fora do gh help, do gh auth sozinho ou
+  com --help e do gh auth status sem o token, e o oauth_token do gh config
+  (gh_auth): o escopo do token que o autor deu ao gh é o limite do que o
+  agente faz pela API; o login, o refresh e o switch o trocam, o token, o
+  git-credential e o status -t o tiram do gh, e o logout e o setup-git
+  mexem nele;
+- recusa criar alias do gh, que põe os argumentos da chamada no fim da
+  expansão;
+- lê o gh-escrita, da camada privada, que roda o gh api com um token de
+  escrita, como o gh;
+- pergunta ao autor antes de git revisao excecao: deixar um achado da
+  revisão de pé é decisão dele;
+- recusa tirar do ramo principal o HEAD do checkout principal de um
+  repositório (git switch, git checkout, git rebase <base> <ramo>, git
+  stash branch, gh pr checkout), onde as outras sessões e o editor
+  commitam: um ramo ali desvia os commits delas, e o trabalho vai numa
+  worktree. Para isso, e só quando o comando pode trocar o HEAD, segue o
+  diretório de cada comando (o cwd do hook, o cd, o env -C, o git -C) e
+  pergunta ao git se ele é o checkout principal e qual é o ramo
+  principal.
+
+Vale para o Bash e para o terminal do app (mcp__terminal__run_in_terminal).
+
+O push sem revisão fica com o pre-push, que estas regras protegem do
+--no-verify e de hook.*. Elas pegam as formas diretas: separam o
+comando em palavras pelas aspas, separadores, comentários e heredocs do
+shell (analisar), acham o git, o gh, o gh-escrita, o git-revisao, os
+shells e os prefixos (RODADOS) onde estiverem nas palavras de um
+comando, e leem cada chamada do git palavra por palavra; um script
+gravado em arquivo e depois executado, o git chamado por uma variável,
+os argumentos ou o comando que chegam por um pipe ao xargs, a um shell
+ou ao source, o comando que um programa recebe como um texto só e passa
+a um shell (watch '...', su -c) e as outras formas que o
+pacotes/bin/readme.md lista passam por elas, e o portão que segura de
+fato é o pre-push do push, que é do autor.
+
+Lê o JSON do hook na entrada padrão e, para recusar ou perguntar, escreve
+a decisão na saída padrão; sem nada a dizer, sai calado com 0.
+"""
+
+import json
+import os
+import re
+import shlex
+import subprocess
+import sys
+from collections import namedtuple
+from dataclasses import dataclass, field
+from fnmatch import fnmatchcase
+from urllib.parse import unquote
+
+# A variável que troca a configuração global do git: o arquivo, as chaves
+# do ambiente, ou o HOME e o XDG_CONFIG_HOME, onde o git a procura.
+CONFIG_DO_GIT = re.compile(r"(?:GIT_CONFIG_(?:GLOBAL|SYSTEM|COUNT|KEY_\d+|VALUE_\d+|PARAMETERS)"
+                           r"|HOME|XDG_CONFIG_HOME)=")
+# Os subcomandos do git que commitam, mesclam ou enviam, e por isso rodam os
+# hooks que a configuração global liga.
+GRAVA_SUBS = ("commit", "merge", "pull", "push", "cherry-pick", "revert", "am")
+# Os comandos do shell que exportam ou declaram variáveis para os seguintes.
+DECLARA = {"export", "declare", "typeset", "local", "readonly"}
+
+ENV_CONFIG = ("Recusado: trocar a configuração global do git pelo ambiente "
+              "desliga os hooks do git-revisao. Para um "
+              "repositório de teste, use uma suíte bats ou um script.")
+CLAUDECODE = "Recusado: CLAUDECODE é como o pre-commit do git-revisao reconhece o agente."
+GH_MERGE = ("Recusado: o merge pelo GitHub leva código ao main sem o pre-push; mescle no "
+            "clone (git merge --ff-only, ou --no-ff) e deixe o push para o autor.")
+GH_AUTH = ("Recusado: este gh (o gh auth, ou o oauth_token do gh config) pode ler, "
+           "criar, trocar ou apagar o token do gh, o que é do autor. Passam o gh auth "
+           "status com -a, --active, -h ou --hostname <host>, --json, --jq ou "
+           "--template, o gh auth --help, e a ajuda pelo gh help auth <subcomando>.")
+GH_ALIAS = ("Recusado: o alias do gh roda depois, com os argumentos da chamada no fim "
+            "da expansão, fora do que o guarda lê agora; criar alias é do autor.")
+NOTAS = "a marca da revisão se grava com git revisao pronto ou excecao, não à mão"
+REF_DAS_NOTAS = ("Recusado: o core.notesRef ou o notes.rewriteRef apontado às notas da "
+                 "revisão grava nelas ou copia a marca para um commit reescrito, que "
+                 "ninguém revisou.")
+EXCECAO = ("git revisao excecao deixa código ir ao main sem o veredito "
+           "Pronto para o merge; confirme que a decisão e o motivo são do autor.")
+
+# Os shells em que o -c é uma opção sem argumento e o script é a primeira
+# palavra que não é opção (bash -c -x '...', tcsh -cf '...'): os do POSIX e
+# o csh; e os em que o -c leva o script como argumento (fish -c '...',
+# também --command e -C, nu -c).
+SHELLS_C_SOLTO = {"sh", "bash", "rbash", "dash", "ash", "hush", "zsh", "ksh", "ksh93", "mksh",
+                  "lksh", "pdksh", "oksh", "yash", "posh", "osh", "ysh", "csh", "tcsh"}
+SHELLS = SHELLS_C_SOLTO | {"fish", "rc", "es", "elvish", "xonsh", "nu"}
+# Os comandos que rodam um texto no shell de agora.
+NO_MESMO_SHELL = {"source", "."}
+# A atribuição de variável do shell: NOME=valor, ou NOME+=valor, que acrescenta.
+ATRIBUI = re.compile(r"(\w+)\+?=(.*)", re.S)
+# Até quantos níveis de texto que roda (eval, sh -c, $(...)) o guarda confere:
+# oito cobrem com folga o aninhamento escrito à mão (eval dentro de sh -c
+# dentro de $(...)), e o limite dá fim à recursão.
+PROFUNDIDADE = 8
+
+
+def atribuicao(a):
+    """A troca de ambiente (NOME=valor) que a atribuição `a` faz."""
+    m = ATRIBUI.fullmatch(a)
+    return f"{m[1]}={m[2]}"
+
+
+def programa(palavra):
+    """O nome do programa, sem o diretório (/usr/bin/git é git)."""
+    return palavra.rsplit("/", 1)[-1]
+
+
+# Opções do git commit, push, merge e pull que levam argumento: as curtas
+# que o levam na palavra seguinte (ou colado), as que só o aceitam colado
+# (-uno, -Schave) e as longas. O argumento não é opção: em git push -o
+# --no-verify, o --no-verify é o texto do -o.
+OPCOES_COM_ARGUMENTO = {
+    "commit": ("mFCct", "uS", (
+        "--message", "--file", "--reuse-message", "--reedit-message", "--template",
+        "--author", "--date", "--fixup", "--squash", "--trailer", "--cleanup")),
+    "push": ("o", "", ("--push-option", "--repo", "--receive-pack", "--exec")),
+    "merge": ("mFsX", "S", ("--message", "--file", "--strategy", "--strategy-option",
+                            "--into-name", "--cleanup")),
+    "pull": ("sXo", "S", ("--strategy", "--strategy-option", "--server-option",
+                          "--depth", "--deepen", "--shallow-since", "--shallow-exclude",
+                          "--upload-pack", "--negotiation-tip")),
+}
+# O -j e o --jobs do pull ficam de fora: o argumento deles é opcional e só
+# conta colado (-j4, --jobs=4).
+
+
+def pula_hooks(sub, args):
+    """O git commit, push, merge ou pull com --no-verify (também abreviado,
+    como --no-verif) ou, no commit, -n."""
+    curtas, coladas, longas = OPCOES_COM_ARGUMENTO[sub]
+    pular = False
+    for p in args:
+        if pular:
+            pular = False
+        elif p == "--":
+            return False
+        elif len(p) > len("--no-") and "--no-verify".startswith(p):
+            return True  # do --no-v em diante; o --no- sozinho não diz qual
+        elif p.startswith("-") and not p.startswith("--"):
+            for i, letra in enumerate(p[1:]):
+                if letra == "n" and sub == "commit":
+                    return True
+                if letra in curtas:
+                    pular = i == len(p) - 2  # -m sozinho: o texto vem depois
+                    break
+                if letra in coladas:
+                    break
+        elif p.startswith("--") and "=" not in p and len(p) > 3 and any(
+                o.startswith(p) for o in longas):
+            pular = True  # também abreviada, como --mes
+    return False
+
+
+# O descritor que vem colado antes de um redirecionamento: 2>, {fd}>.
+DESCRITOR = re.compile(r"\d+|\{\w+\}")
+# Redirecionamento colado (2>/dev/null, >>x, 2>&1) ou solto (> x).
+REDIRECIONA = re.compile(r"(?:\d*|\{\w+\})(?:&>>?|>\||<>|>>?|<|>&|<&)(.*)", re.S)
+# O here-string (<<< x, também 0<<<x), com o texto colado, se vier.
+HERE_STRING = re.compile(r"(?:\d*|\{\w+\})<<<(.*)", re.S)
+
+
+def ansi_c(m):
+    """O $'...' do bash com os escapes e seus limites de dígitos resolvidos.
+    Corta só este trecho no primeiro NUL e devolve o valor entre aspas."""
+    cru = m[1].encode("utf-8", "surrogateescape")
+    simples = {
+        ord("a"): 7, ord("b"): 8, ord("e"): 27, ord("E"): 27,
+        ord("f"): 12, ord("n"): 10, ord("r"): 13, ord("t"): 9, ord("v"): 11,
+        ord("\\"): 92, ord("'"): 39, ord('"'): 34, ord("?"): 63,
+    }
+    valor, i = bytearray(), 0
+    while i < len(cru):
+        letra = cru[i]
+        i += 1
+        if letra != ord("\\") or i == len(cru):
+            valor.append(letra)
+            continue
+        letra = cru[i]
+        i += 1
+        if letra in simples:
+            valor.append(simples[letra])
+        elif letra == ord("c") and i < len(cru):
+            controle = cru[i]
+            i += 1
+            if controle == ord("\\") and cru[i:i + 1] == b"\\":
+                i += 1
+            valor.append(127 if controle == ord("?") else controle & 31)
+        elif letra in b"01234567xuU":
+            octal = letra in b"01234567"
+            inicio = i - 1 if octal else i
+            limite = 3 if octal else {ord("x"): 2, ord("u"): 4, ord("U"): 8}[letra]
+            digitos = b"01234567" if octal else b"0123456789abcdefABCDEF"
+            fim = inicio
+            while fim < min(inicio + limite, len(cru)) and cru[fim] in digitos:
+                fim += 1
+            if fim == inicio:
+                valor.extend((ord("\\"), letra))
+                continue
+            numero = int(cru[inicio:fim], 8 if octal else 16)
+            i = fim
+            if octal or letra == ord("x"):
+                valor.append(numero & 255)
+            elif numero < 128:
+                valor.append(numero)
+            elif numero < 0x80000000:
+                # O bash emite UTF-8 de até seis bytes, mesmo fora do Unicode.
+                tamanho = 2
+                while numero >= 1 << (5 * tamanho + 1):
+                    tamanho += 1
+                valor.append((255 << (8 - tamanho) & 255) | numero >> (6 * (tamanho - 1)))
+                valor.extend(128 | (numero >> deslocamento & 63)
+                             for deslocamento in range(6 * (tamanho - 2), -1, -6))
+        else:
+            valor.extend((ord("\\"), letra))
+    # Conserva também os bytes que não formam um caractere UTF-8.
+    return shlex.quote(valor.split(b"\0", 1)[0].decode("utf-8", "surrogateescape"))
+
+
+def desaspa(cru):
+    """O valor de uma palavra do shell: sem aspas e sem as barras."""
+    cru = re.sub(r"\$'((?:[^'\\]|\\.)*)'", ansi_c, cru)
+    try:
+        return " ".join(shlex.split(cru))
+    except ValueError:
+        return cru.replace("'", "").replace('"', "")
+
+
+def fecha(texto, i, abre, fim):
+    """O índice depois do `fim` que fecha o `abre` em texto[i], contando os
+    pares fora de aspas; o fim do texto se ele não fecha."""
+    nivel, j = 0, i
+    while j < len(texto):
+        if texto[j] == "\\":
+            j += 2
+            continue
+        if texto[j] in "'\"":
+            fim_aspa = texto.find(texto[j], j + 1)
+            j = len(texto) if fim_aspa < 0 else fim_aspa + 1
+            continue
+        if texto.startswith(abre, j):
+            nivel += 1
+            j += len(abre)
+            continue
+        if texto[j] == fim:
+            nivel -= 1
+            if nivel == 0:
+                return j + 1
+        j += 1
+    return len(texto)
+
+
+def substituicoes(texto):
+    """O texto de cada $(...) e `...` de um corpo de heredoc sem aspas."""
+    achadas, i = [], 0
+    while i < len(texto):
+        if texto[i] == "\\":
+            i += 2
+        elif texto.startswith("$(", i):
+            j = fecha(texto, i + 1, "(", ")")
+            achadas.append(texto[i + 2:j - 1])
+            i = j
+        elif texto[i] == "`":
+            j = texto.find("`", i + 1)
+            j = len(texto) if j < 0 else j
+            achadas.append(texto[i + 1:j])
+            i = j + 1
+        else:
+            i += 1
+    return achadas
+
+
+def valores(palavras):
+    """(valores das palavras cruas de um comando simples, sem os
+    redirecionamentos, [texto de cada here-string, que é a entrada dele],
+    {posição em valores de cada palavra com aspas ou barra}). O here-string
+    sai das palavras onde estiver: git <<< x push é git push."""
+    ps, entradas, citadas, pular, entrada = [], [], set(), False, False
+    for bruta in palavras:
+        if pular:
+            pular = False
+            continue
+        if entrada:
+            entrada = False
+            entradas.append(desaspa(bruta))
+            continue
+        if m := HERE_STRING.fullmatch(bruta):
+            if m[1]:
+                entradas.append(desaspa(m[1]))
+            else:
+                entrada = True
+            continue
+        # O operador nunca está entre aspas; o destino pode estar
+        # (2>"/dev/null"). A palavra que começa com aspas não é redirecionamento,
+        # nem a substituição de processo (<(...), >(...)), que é um caminho.
+        m = None if bruta.startswith(("<(", ">(")) else REDIRECIONA.fullmatch(bruta)
+        if m:
+            pular = not m[1]
+            continue
+        if re.search(r"['\"\\]", bruta):
+            citadas.add(len(ps))
+        ps.append(desaspa(bruta))
+    return ps, entradas, citadas
+
+
+# Um comando simples, em palavras, com o texto de cada here-string e as
+# posições das palavras com aspas à parte; e um texto que roda, com o
+# ambiente trocado que recebe e se roda no shell de agora (eval, source) ou
+# num processo filho.
+Comando = namedtuple("Comando", "palavras entradas citadas")
+Texto = namedtuple("Texto", "texto ambiente mesmo_shell")
+
+
+@dataclass
+class Heredoc:
+    """Um heredoc aberto na linha. O leitor é (ambiente trocado, mesmo shell)
+    de quem o lê como script, ou None; a vaga é o lugar, logo depois do
+    comando que o recebe, onde entra o que o corpo roda."""
+    delimitador: str
+    tira_tabs: bool
+    entre_aspas: bool
+    leitor: tuple = None
+    vaga: list = field(default_factory=list)
+
+
+def analisar(texto):
+    """O que o texto roda, na ordem em que roda: um Comando para cada comando
+    simples e um Texto para cada texto que roda.
+
+    Separa em palavras com as regras do shell que mudam o que roda: as aspas
+    protegem o que está dentro, o separador fora delas (; & | ( ) e a quebra
+    de linha) fecha o comando, o # no começo de uma palavra abre um
+    comentário até o fim da linha, e o redirecionamento sai das palavras. Os
+    textos que rodam são as substituições de comando ($(...) e `...`, também
+    entre aspas duplas, não entre simples), antes do comando em que estão, e
+    o corpo de heredoc, logo depois do comando que o recebe: inteiro, se quem
+    o lê é um shell (sudo bash <<EOF também) ou o source; senão, só as
+    substituições, e nem elas quando o delimitador vem entre aspas.
+    """
+    itens = []
+    palavras, cru = [], []
+    # Os heredocs do comando que se lê, e os abertos na linha.
+    do_comando, pendentes = [], []
+    aspa = None
+    i = 0
+
+    def fecha_palavra():
+        nonlocal cru
+        if cru:
+            palavras.append("".join(cru))
+        cru = []
+
+    def fecha_comando():
+        fecha_palavra()
+        ps, entradas, citadas = valores(palavras)
+        if ps:
+            itens.append(Comando(ps, entradas, citadas))
+        # Quem lê o heredoc só se sabe com o comando inteiro (<<EOF source x).
+        leitor = leitor_do_heredoc(ps, citadas)
+        for heredoc in do_comando:
+            heredoc.leitor = leitor
+            itens.append(heredoc.vaga)
+        do_comando.clear()
+        palavras.clear()
+
+    while i < len(texto):
+        c = texto[i]
+        if aspa != "'" and texto.startswith("\\\n", i):
+            i += 2  # a continuação de linha junta as duas, fora de comentário
+            continue
+        if aspa != "'" and c == "\\" and i + 1 < len(texto):
+            cru.append(texto[i:i + 2])
+            i += 2
+            continue
+        if aspa == "'":
+            cru.append(c)
+            aspa = None if c == "'" else aspa
+            i += 1
+            continue
+        if c == "`" or texto.startswith("$(", i):
+            if c == "`":
+                j = texto.find("`", i + 1)
+                j = len(texto) if j < 0 else j + 1
+                itens.append(Texto(texto[i + 1:j - 1], [], False))
+            else:
+                j = fecha(texto, i + 1, "(", ")")
+                itens.append(Texto(texto[i + 2:j - 1], [], False))
+            cru.append(texto[i:j])
+            i = j
+            continue
+        if aspa == '"':
+            cru.append(c)
+            aspa = None if c == '"' else aspa
+            i += 1
+            continue
+        # Fora de aspas. O $'...' guarda o $, que o desaspa resolve; o $"..."
+        # do bash (a tradução pelo locale) é uma aspa dupla, e o $ some.
+        if c in "'\"" or texto.startswith(("$'", '$"'), i):
+            if c == "$":
+                if texto[i + 1] == "'":
+                    cru.append(c)
+                i += 1
+                c = texto[i]
+            aspa = c
+            cru.append(c)
+            i += 1
+        elif c == "#" and not cru:
+            fim = texto.find("\n", i)
+            fim = len(texto) if fim < 0 else fim
+            i = fim
+        elif texto.startswith(("<(", ">("), i):
+            # A substituição de processo roda o texto dela e vira uma palavra
+            # (o caminho de um arquivo), como o $(...) vira o texto que imprime.
+            j = fecha(texto, i + 1, "(", ")")
+            itens.append(Texto(texto[i + 2:j - 1], [], False))
+            cru.append(texto[i:j])
+            i = j
+        elif texto.startswith("<<<", i):
+            # O here-string, inteiro: o <<< não é heredoc. Colado (git<<<x),
+            # começa outra palavra; o descritor (0<<<, {fd}<<<) fica com ele.
+            if cru and not DESCRITOR.fullmatch("".join(cru)):
+                fecha_palavra()
+            cru.append("<<<")
+            i += 3
+        elif texto.startswith("<<", i):
+            if DESCRITOR.fullmatch("".join(cru)):
+                cru = []  # o descritor do heredoc (0<<EOF) sai com ele
+            fecha_palavra()
+            m = re.match(r"<<(-?)[ \t]*('[^'\n]*'|\"[^\"\n]*\"|[^\s;&|<>()]+)", texto[i:])
+            if not m:
+                i += 2
+                continue
+            heredoc = Heredoc(desaspa(m[2]), bool(m[1]), bool(re.search("['\"]", m[2])))
+            do_comando.append(heredoc)
+            pendentes.append(heredoc)
+            i += m.end()
+        elif c == "\n":
+            fecha_comando()
+            i += 1
+            for heredoc in pendentes:
+                corpo = []
+                while i < len(texto):
+                    fim = texto.find("\n", i)
+                    fim = len(texto) if fim < 0 else fim
+                    linha = texto[i:fim]
+                    i = fim + 1
+                    if (linha.lstrip("\t") if heredoc.tira_tabs else linha) == heredoc.delimitador:
+                        break
+                    corpo.append(linha)
+                corpo = "\n".join(corpo)
+                if heredoc.leitor is not None:
+                    heredoc.vaga.append(Texto(corpo, *heredoc.leitor))
+                elif not heredoc.entre_aspas:
+                    heredoc.vaga.extend(Texto(t, [], False) for t in substituicoes(corpo))
+            pendentes = []
+        elif c == "&" and (texto.startswith("&>", i) or (cru and cru[-1] in "<>")):
+            # O & de &>, >& e <& (2>&1) é do redirecionamento, não separa
+            # comandos; o &> colado começa outra palavra.
+            if texto.startswith("&>", i):
+                fecha_palavra()
+            cru.append(c)
+            i += 1
+        elif c == "|" and cru and cru[-1] == ">":
+            cru.append(c)  # o >| é um redirecionamento, não um pipe
+            i += 1
+        elif c in ";&|()":
+            fecha_comando()
+            i += 1
+        elif c in "<>":
+            # O redirecionamento colado (commit>/dev/null) começa outra
+            # palavra; o descritor (2>, {fd}>) fica com ele.
+            antes = "".join(cru)
+            if cru and not DESCRITOR.fullmatch(antes) and antes[-1] not in "<>&":
+                fecha_palavra()
+            cru.append(c)
+            i += 1
+        elif c in " \t\r":
+            fecha_palavra()
+            i += 1
+        else:
+            cru.append(c)
+            i += 1
+    fecha_comando()
+    return [x for item in itens for x in (item if isinstance(item, list) else [item])]
+
+
+# O que roda o comando seguinte, e as opções de cada um que levam argumento.
+PREFIXOS = {"command": set(), "builtin": set(), "nohup": set(),
+            "time": {"-f", "-o", "--format", "--output"},
+            "exec": {"-a"},
+            "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-U", "-r", "-t", "--user",
+                     "--group", "--close-from", "--chdir", "--host", "--prompt",
+                     "--other-user", "--role", "--type"},
+            "env": {"-u", "--unset", "-C", "--chdir"},
+            "nice": {"-n", "--adjustment"},
+            "timeout": {"-s", "--signal", "-k", "--kill-after"},
+            "xargs": {"-I", "-i", "-n", "-L", "-P", "-d", "-E", "-s", "-a", "--arg-file",
+                      "--delimiter", "--max-args", "--max-procs", "--replace"}}
+# Prefixos que levam, depois das opções, uma palavra antes do comando.
+PREFIXO_COM_POSICIONAL = {"timeout"}
+# Palavras do shell que abrem um comando simples dentro de if, laço ou grupo,
+# também as do fish (and, or, not).
+PALAVRAS_DO_SHELL = {"{", "}", "!", "if", "then", "else", "elif", "do", "while", "until",
+                     "and", "or", "not"}
+# O env -S separa o argumento em palavras, que são o comando que ele roda.
+ENV_SEPARA = {"-S", "--split-string"}
+# Os programas que o guarda lê, onde estiverem nas palavras de um comando:
+# qualquer outro programa pode rodá-los (setsid git, watch git sem aspas,
+# find -exec git, stdbuf bash -c), e nenhuma lista de prefixos os esgota.
+# Os prefixos que são do próprio shell (command, exec, builtin) ficam de
+# fora: outro programa não os roda.
+# O gh-escrita, da camada privada, roda o gh api com os argumentos que
+# recebe e um token de escrita: as regras do gh valem para ele.
+GH = {"gh", "gh-escrita"}
+RODADOS = {"git", "git-revisao"} | GH | SHELLS | (
+    set(PREFIXOS) - {"command", "exec", "builtin"})
+
+
+def comandos_possiveis(ps, citadas):
+    """[(palavras sem os prefixos, ambiente trocado que recebe, achado no
+    meio)] de cada comando que `ps` pode rodar: o do começo e o que começa
+    em cada palavra seguinte, sem aspas (fora de `citadas`), que é um
+    programa de RODADOS, e que recebe também as atribuições que vêm antes
+    dele. A palavra entre aspas é texto (printf '%s' 'git' 'push'). O
+    command -v git só procura o programa, não o roda."""
+    proprio = []
+    roda = sem_prefixos(ps, proprio)
+    possiveis = [(roda, proprio, False)]
+    if not roda:
+        return possiveis
+    # O diretório que um prefixo do começo dá (env -C x git) vale também
+    # para o programa achado depois dele.
+    lugar = [v for v in proprio if v.startswith(f"{DIRETORIO}=")]
+    for j in range(1, len(ps)):
+        if j not in citadas and programa(ps[j]) in RODADOS:
+            antes = [a for a in ps[:j] if ATRIBUI.fullmatch(a)]
+            proprio = list(lugar)
+            possiveis.append((sem_prefixos(antes + ps[j:], proprio), proprio, True))
+    return possiveis
+
+
+def leitor_do_heredoc(ps, citadas):
+    """(ambiente trocado, roda no mesmo shell) de quem lê como script o
+    heredoc dado a `ps`: um shell sem o -c, num processo filho, ou o source
+    e o ., no shell de agora; None se ninguém o roda."""
+    for roda, proprio, _ in comandos_possiveis(ps, citadas):
+        nome = programa(roda[0]) if roda else ""
+        if nome in SHELLS and not scripts_do_shell(roda):
+            return proprio, False
+        if nome in NO_MESMO_SHELL:
+            return proprio, True
+    return None
+
+
+def sem_prefixos(ps, ambiente=None):
+    """As palavras do comando que de fato roda, sem o que vem na frente.
+
+    Tira as atribuições (VAR=valor), as palavras do shell que abrem um
+    comando dentro de if, laço ou grupo ({, !, then, do...) e os prefixos
+    que rodam o comando seguinte (command, builtin, exec, nohup, time, sudo,
+    env, nice, timeout, xargs), com as opções deles; o env -S põe no lugar as
+    palavras do argumento dele. Na lista `ambiente`, se vier, ficam as
+    variáveis que o comando recebe trocadas, como NOME=valor: as atribuídas
+    e, com o valor vazio, as que o env -u tira.
+    """
+    ambiente = [] if ambiente is None else ambiente
+    i = 0
+    while i < len(ps):
+        nome = programa(ps[i])
+        if ATRIBUI.fullmatch(ps[i]):
+            ambiente.append(atribuicao(ps[i]))
+            i += 1
+        elif ps[i] in PALAVRAS_DO_SHELL:
+            i += 1
+        elif nome == "command" and i + 1 < len(ps) and ps[i + 1] in ("-v", "-V"):
+            return []  # o command -v só procura o comando, não o roda
+        elif nome in PREFIXOS:
+            com_argumento = PREFIXOS[nome]
+            i += 1
+            while i < len(ps) and (ps[i].startswith("-") or ATRIBUI.fullmatch(ps[i])):
+                colado = next((ps[i][len(o):].removeprefix("=") for o in ENV_SEPARA
+                               if ps[i].startswith(o) and ps[i] != o), None)
+                if colado is not None or (ps[i] in ENV_SEPARA and i + 1 < len(ps)):
+                    texto = colado if colado is not None else ps[i + 1]
+                    try:
+                        separadas = shlex.split(texto)
+                    except ValueError:
+                        separadas = texto.split()
+                    ps = ps[:i] + separadas + ps[i + (1 if colado is not None else 2):]
+                    break
+                if ATRIBUI.fullmatch(ps[i]):
+                    ambiente.append(atribuicao(ps[i]))
+                elif nome == "env" and (m := re.fullmatch(r"(?:-u|--unset=?)(\w*)", ps[i])):
+                    ambiente.append((m[1] or (ps[i + 1] if i + 1 < len(ps) else "")) + "=")
+                elif nome in MUDA_DIRETORIO_DO and (m := MUDA_DIRETORIO_DO[nome].fullmatch(ps[i])):
+                    # O env -C e o sudo -D rodam o comando em outro diretório.
+                    separado = ps[i] in com_argumento
+                    destino = (ps[i + 1] if i + 1 < len(ps) else "") if separado else m[1]
+                    ambiente.append(f"{DIRETORIO}={destino}")
+                elif nome == "env" and re.fullmatch(r"-|-\w*i\w*|--ignore-environment", ps[i]):
+                    ambiente += ["CLAUDECODE=", "HOME="]  # o env -i tira o ambiente todo
+                i += 2 if ps[i] in com_argumento else 1
+            else:
+                if nome in PREFIXO_COM_POSICIONAL:
+                    i += 1  # a duração do timeout
+        else:
+            break
+    return ps[i:]
+
+
+# Opções globais do git (2.56) que levam o argumento na palavra seguinte, as
+# que não levam, e as que só imprimem algo e saem, sem rodar o subcomando (o
+# --exec-path=<dir> colado não sai; o --list-cmds=<grupo> sai).
+GIT_OPCAO_COM_ARGUMENTO = {"-c", "-C", "--git-dir", "--work-tree", "--namespace",
+                           "--config-env", "--attr-source", "--shallow-file"}
+GIT_OPCAO_SEM_ARGUMENTO = {
+    "-p", "--paginate", "-P", "--no-pager", "--bare", "--no-replace-objects",
+    "--no-lazy-fetch", "--no-optional-locks", "--no-advice", "--literal-pathspecs",
+    "--glob-pathspecs", "--noglob-pathspecs", "--icase-pathspecs"}
+GIT_OPCAO_SAI = {"-v", "--version", "-h", "--help", "--exec-path", "--html-path",
+                 "--man-path", "--info-path"}
+
+
+def valor_no_ambiente(ambiente, nome):
+    """O último valor que `ambiente` (NOME=valor) dá a `nome`, ou None."""
+    return next((v.split("=", 1)[1] for v in reversed(ambiente)
+                 if v.split("=", 1)[0] == nome), None)
+
+
+def pares_do_ambiente(ambiente):
+    """[(chave, valor)] da configuração que o git lê do ambiente, na ordem em
+    que ele a lê: cada GIT_CONFIG_KEY_<n> com o GIT_CONFIG_VALUE_<n>, para n
+    abaixo do GIT_CONFIG_COUNT, e depois o GIT_CONFIG_PARAMETERS
+    ('chave'='valor' ...). O valor que falta é None, que o guarda não sabe."""
+    pares = []
+    contagem = valor_no_ambiente(ambiente, "GIT_CONFIG_COUNT") or ""
+    contagem = int(contagem) if contagem.isdigit() else 0
+    chaves = {}
+    for v in ambiente:
+        if (m := re.fullmatch(r"GIT_CONFIG_KEY_(\d+)=(.*)", v, re.S)) and int(m[1]) < contagem:
+            chaves[int(m[1])] = m[2]
+    for n, chave in sorted(chaves.items()):
+        pares.append((chave, valor_no_ambiente(ambiente, f"GIT_CONFIG_VALUE_{n}")))
+    if parametros := valor_no_ambiente(ambiente, "GIT_CONFIG_PARAMETERS"):
+        try:
+            palavras = shlex.split(parametros)
+        except ValueError:
+            palavras = parametros.split()
+        pares += [tuple(p.partition("=")[::2]) for p in palavras]
+    return pares
+
+
+def chamadas_do_git(ps, ambiente, estrita):
+    """[([(chave, valor) de -c e --config-env], subcomando, [argumentos])] de
+    um git: uma leitura só, e mais uma para cada opção global que o guarda
+    não conhece, que pode levar ou não a palavra seguinte (git --nova x push).
+    Com `estrita` (o git achado no meio das palavras de outro comando), a
+    opção desconhecida é a que o git recusa sem rodar nada, e não dá leitura:
+    em grep -e git -e commit -n, o git -e commit -n não roda.
+
+    `ps` são as palavras que vêm depois do git, até o fim do comando. Os
+    pares começam pelos da configuração do ambiente (pares_do_ambiente), que
+    os -c da linha vencem. O valor do --config-env vem do `ambiente`, e é
+    None quando ele não o diz. Os pares de todas as leituras valem para cada
+    uma: um -c que seria o argumento de uma opção desconhecida conta também.
+    """
+    def par(texto, do_ambiente):
+        chave, _, valor = texto.partition("=")
+        return chave, valor_no_ambiente(ambiente, valor) if do_ambiente else valor
+
+    pares, subs, inicios, vistos = pares_do_ambiente(ambiente), [], [0], set()
+    while inicios:
+        i = inicios.pop()
+        while i is not None and i < len(ps) and i not in vistos and ps[i].startswith("-"):
+            vistos.add(i)
+            p = ps[i]
+            if p in GIT_OPCAO_SAI or p.startswith("--list-cmds="):
+                i = None  # o git imprime e sai
+            elif p in GIT_OPCAO_COM_ARGUMENTO and i + 1 < len(ps):
+                if p in ("-c", "--config-env"):
+                    pares.append(par(ps[i + 1], p == "--config-env"))
+                i += 2
+            elif p.startswith("-c") and len(p) > 2:
+                pares.append(par(p[2:], False))
+                i += 1
+            elif p.startswith("--config-env="):
+                pares.append(par(p.removeprefix("--config-env="), True))
+                i += 1
+            elif (p.split("=", 1)[0] in GIT_OPCAO_COM_ARGUMENTO | {"--exec-path"}
+                  or p in GIT_OPCAO_SEM_ARGUMENTO):
+                i += 1  # a conhecida, sem argumento ou com ele colado
+            elif estrita:
+                i = None
+            elif "=" in p:
+                i += 1  # a desconhecida com o argumento colado
+            else:
+                inicios.append(i + 2)
+                i += 1
+        if i is not None and i not in vistos:
+            vistos.add(i)
+            subs.append(i)
+    return [(pares, ps[i] if i < len(ps) else None, ps[i + 1:]) for i in subs]
+
+
+def protegida(chave, secao=False):
+    """Por que a chave (ou a seção) da configuração do git não se mexe, ou None."""
+    if re.match(r"(?i)hook(?:\.|$)", chave):
+        return "mexer em hook.* do git desliga os hooks do git-revisao e do git-assunto-merge"
+    if re.fullmatch(r"(?i)core\.hookspath", chave) or (secao and chave.lower() == "core"):
+        return "mexer em core.hooksPath desliga os hooks do repositório"
+    if re.match(r"(?i)include(?:if)?(?:\.|$)", chave):
+        return ("mexer em include.* do git traz outra configuração, que pode desligar "
+                "os hooks do git-revisao")
+    return None
+
+
+# git config: o que lê, o que grava e as opções que levam argumento.
+CONFIG_LE = {"--get", "--get-all", "--get-regexp", "--get-urlmatch", "--list", "-l",
+             "--get-color", "--get-colorbool"}
+CONFIG_GRAVA = {"--add", "--replace-all", "--unset", "--unset-all", "--rename-section",
+                "--remove-section", "--edit", "-e"}
+CONFIG_SUB_LE = {"get", "list"}
+CONFIG_SUB_GRAVA = {"set", "unset", "rename-section", "remove-section", "edit"}
+CONFIG_COM_ARGUMENTO = {"-f", "--file", "--blob", "-t", "--type", "--default", "--comment",
+                        "--value", "--url"}
+# Todas as opções longas do git config, para resolver as abreviações.
+CONFIG_LONGAS = {o for o in CONFIG_LE | CONFIG_GRAVA | CONFIG_COM_ARGUMENTO
+                 if o.startswith("--")} | {
+    "--global", "--system", "--local", "--worktree", "--fixed-value", "--bool",
+    "--int", "--bool-or-int", "--path", "--expiry-date", "--no-type", "--null",
+    "--name-only", "--includes", "--no-includes", "--show-origin", "--show-scope",
+    "--all"}
+
+
+def opcao_do_config(a):
+    """A opção do git config que `a` é, com a abreviação resolvida como o git
+    faz (--unset-a é --unset-all). A ambígua conta como a que grava, se
+    alguma das possíveis grava: o git a recusaria, e o guarda não arrisca."""
+    nome = a.split("=", 1)[0]
+    if not nome.startswith("--") or nome in CONFIG_LONGAS:
+        return nome
+    possiveis = sorted(o for o in CONFIG_LONGAS if o.startswith(nome))
+    gravam = [o for o in possiveis if o in CONFIG_GRAVA]
+    return (gravam or possiveis or [nome])[0]
+
+
+SECAO = {"--rename-section", "--remove-section", "rename-section", "remove-section"}
+
+
+def config_grava(args):
+    """[(nome, é seção)] do que o git config com estes argumentos grava.
+
+    Vazia quando só lê; [("", False)] quando grava sem dizer a chave (o
+    editor, no edit). Mexer numa seção grava em todas as chaves dela.
+    """
+    nomes = config_nomes(args)
+    if nomes is None:
+        return []
+    op, ps = nomes
+    if op == "edit":
+        return [("", False)]
+    if op in SECAO:
+        return [(p, True) for p in ps]
+    return [(ps[0], False)] if ps else []
+
+
+def config_nomes(args):
+    """(operação que grava, [nomes depois dela]) do git config, ou None se lê.
+
+    Depois da chave (na forma nova, do subcomando e da chave), tudo é valor,
+    como o git 2.56 lê: git config alias.y '-c x=y commit' grava o alias, e
+    git config core.hooksPath --get grava "--get"."""
+    opcoes, posicionais = [], []
+    pular = so_valores = False
+    for j, a in enumerate(args):
+        if pular:
+            pular = False
+        elif so_valores:
+            posicionais.append(a)
+        elif a == "--":
+            posicionais += args[j + 1:]  # o -- encerra as opções
+            break
+        elif a.startswith("-") and not a.startswith("--") and len(a) > 2:
+            # Opções curtas agrupadas, como -ze ou -zf <arquivo>; o que vem
+            # colado ao -f ou ao -t (-f/tmp/x, -tbool) é o argumento dele.
+            for k, letra in enumerate(a[1:]):
+                if letra in "ft":
+                    pular = k == len(a) - 2
+                    break
+                opcoes.append(f"-{letra}")
+        elif a.startswith("-"):
+            o = opcao_do_config(a)
+            pular = o in CONFIG_COM_ARGUMENTO and "=" not in a
+            opcoes.append(o)
+        else:
+            posicionais.append(a)
+            so_valores = len(posicionais) > 1 or a not in CONFIG_SUB_LE | CONFIG_SUB_GRAVA
+    if posicionais and posicionais[0] in CONFIG_SUB_LE | CONFIG_SUB_GRAVA:
+        sub, posicionais = posicionais[0], posicionais[1:]
+        return None if sub in CONFIG_SUB_LE else (sub, posicionais)
+    if any(o in ("--edit", "-e") for o in opcoes):
+        return "edit", []
+    gravam = [o for o in opcoes if o in CONFIG_GRAVA]
+    if gravam:
+        return gravam[0], posicionais
+    if any(o in CONFIG_LE for o in opcoes):
+        return None
+    # A forma antiga: só a chave lê, a chave e um valor gravam.
+    return ("set", posicionais) if len(posicionais) >= 2 else None
+
+
+REF_DA_REVISAO = "refs/notes/revisao"
+
+
+def notas_da_revisao(args, pares, ambiente):
+    """O git notes que grava nas notas da revisão. A ref segue a precedência
+    do git: o último --ref (também abreviado) antes do subcomando; senão o
+    GIT_NOTES_REF do ambiente; senão o último core.notesRef dos pares. Só o
+    --ref se expande (revisao e notes/revisao são refs/notes/revisao): o git
+    recusa o GIT_NOTES_REF e o core.notesRef fora de refs/notes/. O valor que
+    o guarda não sabe (None) conta como o da revisão."""
+    ref = valor_no_ambiente(ambiente, "GIT_NOTES_REF") or next(
+        (v for c, v in reversed(pares) if c.lower() == "core.notesref"), "")
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
+        a = args[i]
+        nome = a.split("=", 1)[0]
+        if len(nome) > 2 and "--ref".startswith(nome):
+            ref = a.split("=", 1)[1] if "=" in a else (args[i + 1] if i + 1 < len(args) else "")
+            if not ref.startswith("refs/notes/"):
+                ref = "refs/" + ref if ref.startswith("notes/") else "refs/notes/" + ref
+            i += 1 if "=" in a else 2
+            continue
+        i += 1
+    return (ref is None or ref == REF_DA_REVISAO) and args[i:i + 1] in (
+        ["add"], ["append"], ["edit"], ["copy"], ["merge"], ["remove"], ["prune"])
+
+
+def pega_a_revisao(valor):
+    """Se o valor do notes.rewriteRef ou do GIT_NOTES_REWRITE_REF (refs ou
+    padrões, separados por dois-pontos no segundo) pega a ref da revisão;
+    None é o valor que o guarda não sabe, e conta."""
+    return valor is None or any(fnmatchcase(REF_DA_REVISAO, r) for r in valor.split(":"))
+
+
+def par_gravado(args):
+    """(chave, valor) que o git config grava (git config alias.x 'commit -n'),
+    ou None. Só o set, o --add e o --replace-all gravam um valor; no --unset,
+    a palavra depois da chave é o filtro do que se tira."""
+    nomes = config_nomes(args)
+    if nomes is None or nomes[0] not in ("set", "--add", "--replace-all"):
+        return None
+    ps = nomes[1]
+    return (ps[0], ps[1]) if len(ps) >= 2 else None
+
+
+def gh_mescla(args):
+    """O gh que faz o merge pelo GitHub: gh pr merge, gh repo sync (o
+    merge-upstream num repositório do GitHub), ou a API REST
+    (/pulls/N/merge, /merges, /merge-upstream) ou a GraphQL
+    (mergePullRequest, o auto-merge, a fila de merge, o mergeBranch), em uma
+    das leituras de gh_pode (gh -R o/r pr merge 3, gh -b x pr merge 3, gh -R
+    o/r -ds pr merge 3)."""
+    if gh_pode(args, "pr", "merge") or gh_pode(args, "repo", "sync"):
+        return True
+    # O gh manda o caminho como vem escrito, e um servidor pode juntar as
+    # barras, tirar o /./ e o segmento antes do /../ ou decodificar o
+    # percentual (pulls//3/merge, pulls/3/./merge, pulls/3/x/../merge,
+    # %6Derge): a busca vê o caminho já normalizado. Vê também o texto como
+    # veio, porque o /../ da consulta (merge?x=/../y) não é do caminho, e a
+    # normalização o tiraria junto com o merge.
+    cru = " ".join(args)
+    texto = re.sub(r"/(?:\./)+", "/", unquote(cru))
+    texto = re.sub(r"/{2,}", "/", texto)
+    anterior = None
+    while texto != anterior:
+        anterior, texto = texto, re.sub(r"/[^/\s]+/\.\.(?=/|\s|$)", "", texto)
+    return gh_pode(args, "api") and any(
+        re.search(r"/(?:pulls/\d+/merge|merges|merge-upstream)\b|mergePullRequest"
+                  r"|enablePullRequestAutoMerge|enqueuePullRequest|mergeBranch", t,
+                  re.IGNORECASE) for t in (cru, texto))
+
+
+def gh_pode(args, primeiro, segundo=None):
+    """Se o gh pode achar o subcomando `primeiro` (e `segundo` depois dele)
+    em alguma leitura das opções. O cobra acha os subcomandos pulando a
+    palavra depois de uma opção que ele não conhece como booleana (gh -h
+    github.com auth token roda o token), o pflag lê um grupo curto como
+    booleanas ou como opção com o valor colado (gh -R o/r -ds pr merge 3,
+    gh -R o/r -Ro/r pr merge 3), e o guarda não sabe quais são quais: a
+    palavra que não começa com - depois de uma opção sem = pode ser o valor
+    dela ou um posicional. O primeiro posicional é uma palavra solta cujas
+    soltas de antes podem todas ser valor; o segundo, uma solta depois dele
+    cujas soltas do meio também podem. A palavra vazia o cobra pula ao
+    achar o subcomando (gh '' pr merge 3), e esta leitura também. É uma
+    passada só pelas palavras: o hook tem prazo, e enumerar as leituras de
+    um comando com centenas de opções o estouraria."""
+    ps = [a for a in args if a != ""]
+    # procura: as soltas até aqui podem todas ser valor, e esta pode ser o
+    # primeiro; armado: há uma leitura com o primeiro achado e as soltas
+    # depois dele todas valor, e esta pode ser o segundo.
+    procura, armado = True, False
+    for k, a in enumerate(ps):
+        if a.startswith("-"):
+            continue
+        valor = k > 0 and ps[k - 1].startswith("-") and "=" not in ps[k - 1]
+        if armado:
+            if a == segundo:
+                return True
+            armado = valor
+        if procura:
+            if a == primeiro:
+                if segundo is None:
+                    return True
+                armado = True
+            procura = valor
+        if not (procura or armado):
+            return False
+    return False
+
+
+# O gh auth status que passa: estas opções, e as que levam valor com ele
+# na palavra seguinte, que não começa com -, ou depois do =.
+STATUS_SEM_VALOR = {"-a", "--active"}
+STATUS_COM_VALOR = {"-h", "--hostname", "--json", "--jq", "--template"}
+
+
+def gh_auth(args):
+    """O gh com a palavra auth que pode mexer no token. O gh_pode acha o
+    subcomando, mas não lê as opções que vêm depois dele como o pflag as lê
+    (gh auth status -th github.com mostra o token: o -t num grupo curto), e
+    conhecer cada opção de cada subcomando do auth deixaria escapar a que
+    uma versão nova do gh trouxer: o guarda falha fechado. Passam só o gh
+    help, o gh auth sozinho ou com --help, e o gh auth status com as opções
+    de STATUS_SEM_VALOR e STATUS_COM_VALOR; o resto com a palavra auth se
+    recusa, também um texto qualquer igual a auth. O oauth_token do gh
+    config (gh config set -h x oauth_token y) guarda ou lê o token sem a
+    palavra auth, e se recusa também. Como as outras regras, esta lê as
+    palavras escritas: a que o shell monta (gh {auth,token}, gh $(echo auth)
+    token) passa, e o que segura é o escopo do token."""
+    if "oauth_token" in args and gh_pode(args, "config"):
+        return True
+    if "auth" not in args or args[:1] == ["help"]:
+        return False
+    if args in (["auth"], ["auth", "--help"]):
+        return False
+    if args[:2] != ["auth", "status"]:
+        return True
+    resto, i = args[2:], 0
+    while i < len(resto):
+        a = resto[i]
+        if a in STATUS_SEM_VALOR or ("=" in a and a.split("=", 1)[0] in STATUS_COM_VALOR):
+            i += 1
+        elif a in STATUS_COM_VALOR and resto[i + 1:i + 2] and not resto[i + 1].startswith("-"):
+            i += 2
+        else:
+            return True
+    return False
+
+
+def decidir(decisao, motivo):
+    json.dump({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": decisao,
+        "permissionDecisionReason": motivo,
+    }}, sys.stdout)
+    return 0
+
+
+def scripts_do_shell(ps):
+    """Os textos que o shell `ps[0]` roda pelo -c; vazia se não há -c.
+
+    Nos de SHELLS_C_SOLTO, o -c é uma opção como as outras (bash -lc, bash
+    -c -x, bash -o pipefail -c, tcsh -cf) e o script é a primeira palavra
+    que não é opção nem argumento de uma opção que o leva (-o, -O, o -R do
+    ksh, --rcfile, --init-file, o --emulate do zsh); o - sozinho, como o --,
+    encerra as opções. Nos outros (fish, nu...), o -c leva o script como
+    argumento, colado ou na palavra seguinte, e há também o --command
+    (--commands no nu) e o -C (--init-command) do fish, que podem se
+    repetir. Uma palavra solta antes do -c não encerra as opções (bash x.sh
+    -c '...' se confere também): o guarda não arrisca.
+    """
+    if programa(ps[0]) not in SHELLS_C_SOLTO:
+        scripts, i = [], 1
+        while i < len(ps) and ps[i] != "--":
+            a = ps[i]
+            nome, igual, valor = a.partition("=")
+            if len(nome) > 2 and any(o.startswith(nome) for o in (
+                    "--command", "--commands", "--init-command")):
+                scripts += [valor] if igual else ps[i + 1:i + 2]
+                i += 1 if igual else 2
+            elif re.match(r"-[^-]*[cC]", a):
+                resto = a[re.search("[cC]", a).end():]
+                scripts += [resto] if resto else ps[i + 1:i + 2]
+                i += 1 if resto else 2
+            else:
+                i += 1
+        return scripts
+    com_c, i = False, 1
+    while i < len(ps):
+        a = ps[i]
+        if a in ("--", "-"):
+            return ps[i + 1:i + 2] if com_c else []
+        if a in ("--rcfile", "--init-file", "--emulate"):
+            i += 2
+        elif a.startswith("--"):
+            i += 1
+        elif len(a) > 1 and a[0] in "-+":
+            com_c = com_c or (a[0] == "-" and "c" in a)
+            i += 1 + sum(letra in "oOR" for letra in a[1:])
+        elif com_c:
+            return [a]
+        else:
+            i += 1
+    return []
+
+
+def trocas_do_set(args):
+    """As trocas de ambiente do set do fish e do csh, como NOME=valor.
+
+    No fish, set NOME valor troca também a variável que já vem exportada
+    (HOME), set -x a exporta, e set -e e set -u a tiram dos filhos; set -q,
+    -S e -n só leem. No csh, set home=/x troca o HOME, que o tcsh mantém
+    igual ao home. O set do bash não troca o ambiente, mas a forma dele que
+    traz um nome depois das opções (set -e HOME) se lê como a do fish: o
+    guarda não sabe qual shell roda o texto.
+    """
+    longas = {"--erase": "e", "--unexport": "u", "--query": "q", "--show": "S",
+              "--names": "n"}
+    opcoes, i = "", 0
+    while i < len(args) and args[i].startswith("-") and args[i] != "--":
+        a = args[i]
+        if a.startswith("--"):
+            # Também abreviada; a ambígua (--e) conta como todas as possíveis.
+            opcoes += "".join(v for o, v in longas.items() if len(a) > 2 and o.startswith(a))
+        else:
+            opcoes += a[1:]
+        i += 1
+    if args[i:i + 1] == ["--"]:
+        i += 1
+    if i >= len(args) or any(letra in opcoes for letra in "qSn"):
+        return []
+    nome, _, valor = args[i].partition("=")
+    nome = nome.split("[", 1)[0]  # o índice do fish: set -e CLAUDECODE[1]
+    nome = "HOME" if nome == "home" else nome
+    if "e" in opcoes or "u" in opcoes:
+        return [nome + "="]
+    return [f"{nome}={' '.join([valor] + args[i + 1:]).strip()}"]
+
+
+def nomes_gravados(args, com_argumento, do_nome=""):
+    """As variáveis em que o read ou o mapfile grava: as palavras depois das
+    opções e o argumento da opção `do_nome` (o -a do read). As letras de
+    `com_argumento` levam argumento, colado ou não."""
+    nomes, i = [], 0
+    while i < len(args):
+        a = args[i]
+        if a.startswith("-") and len(a) > 1 and a != "--":
+            for k, letra in enumerate(a[1:]):
+                if letra in com_argumento + do_nome:
+                    colado = a[k + 2:]
+                    argumento = colado or (args[i + 1] if i + 1 < len(args) else "")
+                    i += 0 if colado else 1
+                    if letra == do_nome:
+                        nomes.append(argumento)
+                    break
+        elif a != "--":
+            nomes.append(a)
+        i += 1
+    return nomes
+
+
+# Os comandos que só trocam o ambiente dos comandos seguintes: no shell do
+# POSIX, também os que gravam numa variável (printf -v, read, mapfile,
+# readarray, getopts, let), que, se já vem exportada, como HOME, segue
+# exportada; no fish, o set; no csh, o set, o setenv e o unsetenv.
+MUDAM_AMBIENTE = DECLARA | {"unset", "set", "setenv", "unsetenv", "printf", "read", "mapfile",
+                            "readarray", "getopts", "let"}
+# A variável em que uma expressão do let grava: HOME=0, HOME+=1, HOME++.
+GRAVA_NO_LET = re.compile(r"\s*(?:\+\+|--)?\s*(\w+)\s*(?:\+\+|--|(?:[-+*/%&|^]|<<|>>)?=)")
+
+
+def trocas_de_ambiente(nome, args):
+    """As trocas de ambiente (NOME=valor; vazio quando tira ou não se sabe o
+    valor) que o comando `nome` com estes `args` faz, se é de MUDAM_AMBIENTE."""
+    if nome in DECLARA:
+        trocas = [atribuicao(a) for a in args if ATRIBUI.fullmatch(a)]
+        nomes = [a.split("=", 1)[0] for a in args if not a.startswith(("-", "+"))]
+        if "CLAUDECODE" in nomes and any(a in ("-n", "+x") for a in args):
+            trocas.append("CLAUDECODE=")  # export -n tira a variável dos filhos
+        return trocas
+    if nome in ("unset", "unsetenv"):
+        return [a + "=" for a in args if not a.startswith("-")]
+    if nome == "set":
+        return trocas_do_set(args)
+    if nome == "setenv":
+        return [f"{args[0]}={' '.join(args[1:])}"] if args else []
+    if nome == "printf":
+        variavel = args[1] if args[:1] == ["-v"] and len(args) > 1 else (
+            args[0][2:] if args and args[0].startswith("-v") else "")
+        return [variavel + "="] if variavel else []
+    if nome == "read":
+        return [n + "=" for n in nomes_gravados(args, "dinNptu", "a")]
+    if nome in ("mapfile", "readarray"):
+        return [n + "=" for n in nomes_gravados(args, "dnOsuCc")]
+    if nome == "getopts":
+        return [args[1] + "="] if len(args) > 1 else []
+    if nome == "let":
+        return [m[1] + "=" for a in args if (m := GRAVA_NO_LET.match(a))]
+    return []
+
+
+# O checkout principal de um repositório, o de git rev-parse --git-dir igual
+# ao --git-common-dir, fica no ramo principal: as outras sessões e o editor
+# commitam ali, e um ramo nele desvia os commits delas (em 2026-10-17, um ADR
+# do TCC caiu num ramo assim; em 2026-11-12, dois commits).
+
+# Na lista do ambiente, o diretório que um cd, o env -C ou o sudo -D dá aos
+# comandos seguintes, como <cd>=caminho: o nome não é de variável, e
+# nenhuma atribuição do shell o escreve. O valor vazio é o diretório que o
+# guarda não sabe (cd -, popd).
+DIRETORIO = "<cd>"
+MUDAM_DIRETORIO = {"cd", "pushd", "popd"}
+MUDA_DIRETORIO_DO = {"env": re.compile(r"(?:-C|--chdir=?)(.*)", re.S),
+                     "sudo": re.compile(r"(?:-D|--chdir=?)(.*)", re.S)}
+# Onde um git roda: o diretório (None se o guarda não sabe), as opções da
+# linha que dizem o repositório (--git-dir, --work-tree) e as variáveis do
+# ambiente que o dizem.
+Lugar = namedtuple("Lugar", "diretorio opcoes ambiente")
+LUGAR_NA_LINHA = ("--git-dir", "--work-tree")
+LUGAR_NO_AMBIENTE = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
+
+RAMO = ("Recusado: {comando} tiraria do {principal} o HEAD do checkout principal "
+        "({diretorio}), onde as outras sessões e o editor commitam, e um ramo ali "
+        "desvia os commits delas. Trabalhe numa worktree: git worktree add -b "
+        "<tarefa> .claude/worktrees/<tarefa> {principal}. A volta ao ramo principal "
+        "(git switch {principal}) passa.")
+
+
+def destino_do_cd(nome, args):
+    """O diretório para onde o cd ou o pushd vai, como veio (cd sozinho vai
+    ao ~), "." quando fica onde está (o pushd -n só mexe na pilha), ou ""
+    quando o guarda não sabe (cd -, pushd +1, popd)."""
+    if nome == "popd":
+        return ""
+    if nome == "pushd":
+        # O bash lê o -n só entre as opções: antes do -- e da primeira
+        # palavra solta (pushd -- -nome vai ao diretório -nome).
+        for a in args:
+            if a == "-n":
+                return "."
+            if a == "--" or not re.fullmatch(r"-[LPe@n]+", a):
+                break
+    soltos = [a for a in args if not re.fullmatch(r"-[LPe@n]+", a)]
+    if soltos[:1] == ["--"]:
+        soltos = soltos[1:]
+    if not soltos:
+        return "" if nome == "pushd" else "~"
+    return "" if re.fullmatch(r"-|[+-]\d+", soltos[0]) else soltos[0]
+
+
+def expandir(caminho):
+    """O caminho com o ~ e o $HOME do começo expandidos, ou None quando ele
+    é vazio ou ainda tem uma variável ou uma substituição."""
+    if not caminho:
+        return None
+    caminho = re.sub(r"^\$(?:\{HOME\}|HOME(?!\w))", lambda _: os.path.expanduser("~"), caminho)
+    caminho = os.path.expanduser(caminho)
+    return None if re.search(r"[$`]", caminho) else caminho
+
+
+def juntar(atual, destino):
+    """O diretório `destino` (já expandido, ou None) a partir de `atual`."""
+    if destino is None or (atual is None and not os.path.isabs(destino)):
+        return None
+    return os.path.join(atual or "", destino)
+
+
+def diretorio(ambiente):
+    """O diretório em que um comando roda, pelas entradas <cd>= do
+    `ambiente`, na ordem: o último caminho absoluto, com os relativos de
+    depois juntados a ele; None se o guarda não sabe."""
+    atual = None
+    for v in ambiente:
+        chave, _, valor = v.partition("=")
+        if chave == DIRETORIO:
+            atual = juntar(atual, expandir(valor))
+    return atual
+
+
+def lugar_do_git(ps, ambiente):
+    """O Lugar de um git, com as palavras `ps` que vêm depois dele: o
+    diretório do comando com cada -C juntado a ele, como o git faz (o -C
+    vazio não muda nada), o --git-dir e o --work-tree da linha, e o GIT_DIR,
+    o GIT_WORK_TREE e o GIT_COMMON_DIR trocados no ambiente."""
+    atual, opcoes, i = diretorio(ambiente), [], 0
+    while i < len(ps) and ps[i].startswith("-"):
+        p = ps[i]
+        separado = p in GIT_OPCAO_COM_ARGUMENTO and i + 1 < len(ps)
+        if p == "-C" and separado:
+            atual = juntar(atual, expandir(ps[i + 1]) if ps[i + 1] else ".")
+        elif p in LUGAR_NA_LINHA and separado:
+            opcoes += [p, ps[i + 1]]
+        elif p.split("=", 1)[0] in LUGAR_NA_LINHA:
+            opcoes.append(p)
+        i += 2 if separado else 1
+    trocas = {n: v for n in LUGAR_NO_AMBIENTE if (v := valor_no_ambiente(ambiente, n)) is not None}
+    return Lugar(atual, opcoes, trocas)
+
+
+# Quantos segundos o guarda espera cada git que ele roda: o hook tem dez
+# para tudo, e o rev-parse e o for-each-ref levam milissegundos.
+PRAZO_DO_GIT = 3
+
+
+def git_no_lugar(lugar, *args):
+    """As linhas da saída do git no `lugar`, ou None se ele falha ou demora;
+    o guarda então não sabe se o lugar é o checkout principal e deixa
+    passar."""
+    try:
+        feito = subprocess.run(["git", *lugar.opcoes, *args], cwd=lugar.diretorio,
+                               env=dict(os.environ, **lugar.ambiente), capture_output=True,
+                               text=True, timeout=PRAZO_DO_GIT)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return feito.stdout.splitlines() if feito.returncode == 0 else None
+
+
+def ramo_principal(lugar):
+    """O nome do ramo principal, se o `lugar` é o checkout principal de um
+    repositório: o do origin/HEAD, se o clone tem esse ramo; senão, o main
+    ou o master. None numa worktree, num repositório nu, fora de um
+    repositório, no repositório sem ramo principal e no diretório que o
+    guarda não sabe."""
+    if lugar.diretorio is None:
+        return None
+    saida = git_no_lugar(lugar, "rev-parse", "--path-format=absolute", "--git-dir",
+                         "--git-common-dir", "--is-bare-repository")
+    if (not saida or len(saida) < 3 or saida[2] == "true"
+            or os.path.realpath(saida[0]) != os.path.realpath(saida[1])):
+        return None
+    ramos, origem = set(), ""
+    for linha in git_no_lugar(lugar, "for-each-ref", "--format=%(refname) %(symref)",
+                              "refs/heads/", "refs/remotes/origin/HEAD") or []:
+        ref, _, alvo = linha.partition(" ")
+        if ref == "refs/remotes/origin/HEAD":
+            origem = alvo.removeprefix("refs/remotes/origin/")
+        else:
+            ramos.add(ref.removeprefix("refs/heads/"))
+    return next((r for r in (origem, "main", "master") if r and r in ramos), None)
+
+
+def longas(com_valor, sem_valor):
+    """As opções longas de um subcomando, cada uma com se leva valor, mais a
+    negação (--no-...) de cada uma, que não leva."""
+    todas = dict.fromkeys(sem_valor, False) | dict.fromkeys(com_valor, True)
+    return todas | {f"no-{o}": False for o in todas if not o.startswith("no-")}
+
+
+# As opções do git switch, checkout e rebase (2.56): as curtas que levam
+# valor e as longas, para ler o valor e a abreviação como o parse-options lê.
+SWITCH = ("cC", longas(
+    ("create", "force-create", "orphan", "conflict"),
+    ("guess", "discard-changes", "quiet", "recurse-submodules", "progress", "merge", "detach",
+     "track", "ignore-other-worktrees", "force", "overwrite-ignore")))
+CHECKOUT = ("bBU", longas(
+    ("orphan", "conflict", "pathspec-from-file", "unified", "inter-hunk-context"),
+    ("guess", "overlay", "auto-advance", "quiet", "recurse-submodules", "progress", "merge",
+     "detach", "track", "ignore-other-worktrees", "ours", "theirs", "patch",
+     "ignore-skip-worktree-bits", "pathspec-file-nul", "force", "overwrite-ignore")))
+REBASE = ("sXxC", longas(
+    ("onto", "trailer", "whitespace", "empty", "exec", "strategy", "strategy-option"),
+    ("keep-base", "no-verify", "quiet", "verbose", "no-stat", "signoff",
+     "committer-date-is-author-date", "reset-author-date", "ignore-whitespace",
+     "force-rebase", "no-ff", "continue", "skip", "abort", "quit", "edit-todo",
+     "show-current-patch", "apply", "merge", "interactive", "rerere-autoupdate", "autosquash",
+     "update-refs", "gpg-sign", "autostash", "rebase-merges", "fork-point", "root",
+     "reschedule-failed-exec", "reapply-cherry-picks", "verify", "stat", "ff")))
+# As ações que continuam ou param o rebase em curso, sem levar a outro ramo.
+ACOES_DO_REBASE = {"continue", "skip", "abort", "quit", "edit-todo", "show-current-patch"}
+
+
+def ler_opcoes(args, curtas_com_valor, longas_do_sub):
+    """([(opção, valor)], soltas, palavras depois do --, ou None sem ele) das
+    palavras de um subcomando do git, como o parse-options as lê: o grupo
+    curto (-qc x), o valor colado (-cx, --create=x) ou na palavra seguinte,
+    e a longa abreviada que só uma das longas começa (--det é --detach)."""
+    opcoes, soltas, i = [], [], 0
+    while i < len(args):
+        a = args[i]
+        if a == "--":
+            return opcoes, soltas, args[i + 1:]
+        if a.startswith("--"):
+            nome, igual, valor = a[2:].partition("=")
+            casam = [o for o in longas_do_sub if o.startswith(nome)]
+            if nome not in longas_do_sub and len(casam) == 1:
+                nome = casam[0]
+            if longas_do_sub.get(nome) and not igual and i + 1 < len(args):
+                i += 1
+                valor = args[i]
+            opcoes.append((nome, valor))
+        elif a.startswith("-") and a != "-":
+            for k, letra in enumerate(a[1:], 2):
+                if letra in curtas_com_valor:
+                    valor = a[k:]
+                    if not valor and i + 1 < len(args):
+                        i += 1
+                        valor = args[i]
+                    opcoes.append((letra, valor))
+                    break
+                opcoes.append((letra, ""))
+        else:
+            soltas.append(a)
+        i += 1
+    return opcoes, soltas, None
+
+
+def parece_caminho(alvo, lugar):
+    """Se o git checkout <alvo> pode restaurar arquivos: o pathspec com
+    curinga ou com mágica (:), o caminho que existe no diretório, ou o que
+    o índice tem e a árvore perdeu (o arquivo apagado que se restaura)."""
+    if re.search(r"[*?[]", alvo) or alvo.startswith(":"):
+        return True
+    if lugar.diretorio is None:
+        return False
+    return (os.path.lexists(os.path.join(lugar.diretorio, alvo))
+            or bool(git_no_lugar(lugar, "ls-files", "--", alvo)))
+
+
+def e_revisao(alvo, lugar):
+    """Se o git lê o `alvo` como um commit, ou como o ramo de um remoto que o
+    checkout cria e para o qual vai (o --guess)."""
+    return bool(git_no_lugar(lugar, "rev-parse", "--verify", "--quiet", "--end-of-options",
+                             f"{alvo}^{{commit}}")
+                or git_no_lugar(lugar, "for-each-ref", "--count=1", "--format=x",
+                                f"refs/remotes/*/{alvo}"))
+
+
+def alvo_do_head(sub, args, lugar):
+    """Para onde o git `sub` leva o HEAD: o nome do ramo; "" quando o leva
+    para fora de um ramo cujo nome se saiba (o ramo órfão, o HEAD destacado,
+    o -); None quando o HEAD fica, como na ajuda, no checkout que restaura
+    arquivos e no rebase que continua."""
+    if sub == "switch":
+        # O switch não restaura arquivos: a palavra depois do -- ainda é o
+        # ramo (git switch -- outro vai ao outro).
+        opcoes, soltas, depois = ler_opcoes(args, *SWITCH)
+        soltas += depois or []
+        nomes = dict(opcoes)
+        if "h" in nomes:
+            return None
+        if novo := next((o for o in ("c", "C", "create", "force-create") if o in nomes), None):
+            return nomes[novo]
+        if {"orphan", "d", "detach"} & nomes.keys():
+            return ""
+        return (soltas[0] if soltas[0] != "-" else "") if soltas else None
+    if sub == "checkout":
+        opcoes, soltas, depois = ler_opcoes(args, *CHECKOUT)
+        nomes = dict(opcoes)
+        if "h" in nomes or {"p", "patch", "pathspec-from-file"} & nomes.keys():
+            return None
+        if novo := next((o for o in ("b", "B") if o in nomes), None):
+            return nomes[novo]
+        if {"orphan", "d", "detach"} & nomes.keys():
+            return ""
+        if depois or len(soltas) != 1 or soltas[0] in ("HEAD", "@"):
+            return None  # restaura arquivos, ou fica onde está
+        alvo = soltas[0]
+        if alvo == "-":
+            return ""
+        if depois is None and parece_caminho(alvo, lugar) and not e_revisao(alvo, lugar):
+            return None
+        return alvo
+    if sub == "rebase":
+        opcoes, soltas, depois = ler_opcoes(args, *REBASE)
+        soltas += depois or []
+        nomes = dict(opcoes)
+        if "h" in nomes or ACOES_DO_REBASE & nomes.keys():
+            return None
+        posicao = 0 if "root" in nomes else 1
+        return soltas[posicao] if len(soltas) > posicao else None
+    if sub == "stash" and args[:1] == ["branch"]:
+        # O git stash branch <ramo> cria o ramo e vai a ele.
+        soltas = [a for a in args[1:] if not a.startswith("-")]
+        return None if "-h" in args or not soltas else soltas[0]
+    return None
+
+
+def decisoes_do_ramo(comando, alvo, lugar):
+    """A recusa do `comando` que leva o HEAD ao `alvo` (alvo_do_head) fora
+    do ramo principal, no checkout principal."""
+    if alvo is None:
+        return
+    principal = ramo_principal(lugar)
+    if principal is not None and alvo != principal:
+        yield "deny", RAMO.format(comando=comando, principal=principal,
+                                  diretorio=lugar.diretorio)
+
+
+def decisoes_simples(comando, nivel, herdado):
+    """As decisões para um Comando: as do comando do começo e as de cada
+    comando que ele pode rodar (setsid git, find -exec git).
+
+    `herdado` é o ambiente trocado antes deste comando, como NOME=valor: no
+    shell que o roda (env HOME=/x bash -c '...') ou num comando anterior do
+    mesmo texto. O comando do começo que só atribui (HOME=/x), os de
+    MUDAM_AMBIENTE, o eval e o source o aumentam para os comandos seguintes;
+    o achado no meio das palavras pode nem rodar (echo env HOME=/x), e não o
+    muda.
+    """
+    for roda, proprio, no_meio in comandos_possiveis(comando.palavras, comando.citadas):
+        yield from decisoes_do_comando(roda, proprio, comando.entradas, nivel,
+                                       list(herdado) if no_meio else herdado, no_meio)
+
+
+def decisoes_do_comando(ps, proprio, entradas, nivel, herdado, no_meio):
+    """As decisões para o comando `ps`, já sem os prefixos, que recebe o
+    ambiente `herdado` com as trocas de `proprio`; `no_meio` diz que
+    comandos_possiveis o achou no meio das palavras de outro, e o git se lê
+    então estrito (chamadas_do_git)."""
+    nome = programa(ps[0]) if ps else ""
+    novos = list(proprio) + trocas_de_ambiente(nome, ps[1:])
+    if any(v.startswith("CLAUDECODE=") and v != "CLAUDECODE=1" for v in novos):
+        yield "deny", CLAUDECODE
+    if nome in MUDAM_DIRETORIO:
+        herdado.append(f"{DIRETORIO}={destino_do_cd(nome, ps[1:])}")
+        return
+    if not ps or nome in MUDAM_AMBIENTE:
+        herdado += novos
+        return
+    ambiente = herdado + proprio
+    if nome == "git-revisao" and ps[1:2] == ["excecao"]:
+        yield "ask", EXCECAO
+    if nome == "eval":
+        texto = " ".join(ps[2:] if ps[1:2] == ["--"] else ps[1:])
+        yield from decisoes_do_texto(texto, nivel + 1, herdado, proprio, True)
+        return
+    if nome in NO_MESMO_SHELL:
+        # O source /dev/stdin <<< '...' roda o here-string no shell de agora.
+        for texto in entradas:
+            yield from decisoes_do_texto(texto, nivel + 1, herdado, proprio, True)
+        return
+    if nome in SHELLS:
+        # Sem o -c, o here-string é o script (bash <<< '...'); com ele, só a
+        # entrada do script. Os scripts de um shell (fish -c x -c y) rodam no
+        # mesmo processo filho, um depois do outro, com o mesmo ambiente.
+        do_shell = list(herdado) + list(proprio)
+        for script in scripts_do_shell(ps) or entradas:
+            yield from decisoes(script, nivel + 1, do_shell)
+        return
+    if nome in GH:
+        if gh_mescla(ps[1:]):
+            yield "deny", GH_MERGE
+        if gh_auth(ps[1:]):
+            yield "deny", GH_AUTH
+        # O alias do gh roda depois, quando chamado, com os argumentos da
+        # chamada no fim da expansão (gh alias set p 'pr ', depois gh p merge
+        # 3), ou vem da entrada padrão ou de um arquivo, que o guarda não lê.
+        # Conferir a expansão não basta: criar alias é do autor.
+        if gh_pode(ps[1:], "alias", "set") or gh_pode(ps[1:], "alias", "import"):
+            yield "deny", GH_ALIAS
+        if gh_pode(ps[1:], "pr", "checkout") and not {"-h", "--help"} & set(ps):
+            yield from decisoes_do_ramo("gh pr checkout", "",
+                                        Lugar(diretorio(ambiente), [], {}))
+        return
+    if nome == "git":
+        lugar = lugar_do_git(ps[1:], ambiente)
+        for pares, sub, args in chamadas_do_git(ps[1:], ambiente, estrita=no_meio):
+            yield from decisoes_do_git(pares, sub, args, nivel, ambiente)
+            yield from decisoes_do_ramo(f"git {sub}", alvo_do_head(sub, args, lugar), lugar)
+
+
+def decisoes_do_git(pares, sub, args, nivel, ambiente):
+    """As decisões para uma leitura do git (chamadas_do_git) que recebe o
+    `ambiente` trocado."""
+    # O alias definido por -c roda o valor dele quando é o subcomando.
+    for chave, valor in pares:
+        if chave.lower() == f"alias.{sub}".lower() and valor:
+            texto = valor[1:] if valor.startswith("!") else "git " + valor
+            yield from decisoes_do_texto(" ".join([texto] + [shlex.quote(a) for a in args]),
+                                         nivel + 1, ambiente)
+    # O git copia, no commit --amend e no rebase, as notas das refs que o
+    # notes.rewriteRef (ou o GIT_NOTES_REWRITE_REF) lista: a marca da revisão
+    # iria para um commit que ninguém revisou. O core.notesRef gravado faria o
+    # git notes seguinte escrever nelas. O git config não reescreve nada: o -c
+    # dele só vale para ele.
+    gravado = par_gravado(args) if sub == "config" else None
+    reescreve = [v for c, v in pares if c.lower() == "notes.rewriteref"]
+    if (v := valor_no_ambiente(ambiente, "GIT_NOTES_REWRITE_REF")) is not None:
+        reescreve.append(v)
+    chave_gravada = gravado[0].lower() if gravado else ""
+    if ((sub != "config" and any(pega_a_revisao(v) for v in reescreve))
+            or (chave_gravada == "notes.rewriteref" and pega_a_revisao(gravado[1]))
+            or (chave_gravada == "core.notesref" and gravado[1] == REF_DA_REVISAO)):
+        yield "deny", REF_DAS_NOTAS
+    nomes = [(chave, False) for chave, _ in pares]
+    if sub == "config":
+        gravados = config_grava(args)
+        if ("", False) in gravados:
+            yield "deny", ("Recusado: editar a configuração do git no editor pode "
+                           "mexer em hook.* e core.hooksPath; use git config com a chave.")
+            return
+        nomes += gravados
+    for nome_config, secao in nomes:
+        if motivo := protegida(nome_config, secao):
+            yield "deny", f"Recusado: {motivo}."
+            return
+    if gravado and gravado[0].lower().startswith("alias."):
+        # O alias gravado roda depois, quando chamado: confere-se já.
+        alias = gravado[1]
+        yield from decisoes_do_texto(alias[1:] if alias.startswith("!") else "git " + alias,
+                                     nivel + 1, ambiente)
+    if sub in GRAVA_SUBS and any(CONFIG_DO_GIT.match(v) for v in ambiente):
+        yield "deny", ENV_CONFIG
+    if sub == "commit" and pula_hooks(sub, args):
+        yield "deny", ("Recusado: git commit com --no-verify ou -n pula o "
+                       "pre-commit, que guarda o main do commit de agente.")
+    if sub in ("push", "merge", "pull") and pula_hooks(sub, args):
+        yield "deny", (f"Recusado: git {sub} com --no-verify pula os hooks do "
+                       "git-revisao e do git-assunto-merge.")
+    if sub == "notes" and notas_da_revisao(args, pares, ambiente):
+        yield "deny", f"Recusado: {NOTAS}."
+    if sub == "update-ref" and any(a.endswith("notes/revisao") for a in args):
+        yield "deny", f"Recusado: {NOTAS}."
+    if sub == "revisao" and args[:1] == ["excecao"]:
+        yield "ask", EXCECAO
+
+
+def decisoes_do_texto(texto, nivel, ambiente, proprio=(), mesmo_shell=False):
+    """As decisões para um texto que roda com o `ambiente` e as trocas de
+    `proprio`. O que ele troca no ambiente vale para os comandos seguintes de
+    fora só quando roda no mesmo shell (eval, source); num processo filho
+    (sh -c, $(...), alias), fica nele."""
+    local = list(ambiente) + list(proprio)
+    antes = len(local)
+    yield from decisoes(texto, nivel, local)
+    if mesmo_shell:
+        ambiente += local[antes:]  # o que o texto acrescentou
+
+
+def decisoes(cmd, nivel=0, ambiente=None):
+    """As decisões ("deny" ou "ask", motivo) para um comando e, um nível por
+    vez, para cada texto que ele roda (sh -c, eval, source, substituição de
+    comando, heredoc lido por um shell, alias), com o ambiente trocado que
+    cada um recebe. O que o comando troca no ambiente fica em `ambiente`."""
+    if nivel > PROFUNDIDADE:
+        # Mais fundo que isso, o guarda não confere: recusa, em vez de calar.
+        yield "deny", ("Recusado: comando aninhado demais (eval, sh -c, $(...)) para "
+                       "o guarda conferir; rode-o mais raso.")
+        return
+    ambiente = [] if ambiente is None else ambiente
+    for item in analisar(cmd):
+        if isinstance(item, Comando):
+            yield from decisoes_simples(item, nivel, ambiente)
+        else:
+            yield from decisoes_do_texto(item.texto, nivel + 1, ambiente, item.ambiente,
+                                         item.mesmo_shell)
+
+
+TERMINAL = "mcp__terminal__run_in_terminal"
+
+
+def diretorio_do_comando(dados):
+    """Onde o comando começa: o cwd do Bash, que segue os cd de antes, ou a
+    aba que o terminal do app abre, no cwd que receber (absoluto, com ~ ou
+    relativo ao diretório da sessão) ou no diretório da sessão."""
+    cwd = dados.get("cwd") if isinstance(dados.get("cwd"), str) else os.getcwd()
+    if dados.get("tool_name") != TERMINAL:
+        return cwd
+    base = os.environ.get("CLAUDE_PROJECT_DIR") or cwd
+    aba = (dados.get("tool_input") or {}).get("cwd")
+    if isinstance(aba, str) and aba:
+        return os.path.join(base, os.path.expanduser(aba))
+    return base
+
+
+def main():
+    dados = json.load(sys.stdin)
+    if dados.get("tool_name") not in ("Bash", TERMINAL):
+        return 0
+    comando = (dados.get("tool_input") or {}).get("command", "")
+    if not isinstance(comando, str):
+        return 0
+    todas = list(decisoes(comando, 0, [f"{DIRETORIO}={diretorio_do_comando(dados)}"]))
+    if not todas:
+        return 0
+    # Recusa vence pergunta, venha de que nível vier.
+    return decidir(*min(todas, key=lambda d: d[0] != "deny"))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

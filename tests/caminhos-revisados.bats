@@ -25,10 +25,10 @@ coberto() {
 	git -C "$RAIZ" ls-files -- "${specs[@]}" | grep -Fxq "$1"
 }
 
-@test "o git/.gitconfig, que liga os hooks do ciclo, é caminho revisado" {
-	coberto git/.gitconfig
+@test "o pacotes/git/.gitconfig, que liga os hooks do ciclo, é caminho revisado" {
+	coberto pacotes/git/.gitconfig
 }
 
 @test "o settings.json do pacote claude, que registra o guarda, é caminho revisado" {
-	coberto claude/.claude/settings.json
+	coberto pacotes/claude/.claude/settings.json
 }

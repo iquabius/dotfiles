@@ -1,0 +1,272 @@
+{
+	"remote.SSH.showLoginTerminal": true,
+	"remote.SSH.useLocalServer": false,
+	"remote.SSH.remotePlatform": {
+		"sogni-dev": "linux"
+	},
+	"liveshare.launcherClient": "visualStudioCode",
+	// https://github.com/este/este/wiki/Recommended-VSCode-Settings
+	"explorer.confirmDelete": false,
+	"explorer.confirmDragAndDrop": false,
+	"explorer.openEditors.visible": 0,
+	"explorer.fileNesting.enabled": true,
+	"explorer.fileNesting.patterns": {
+		"*": "${basename}.*.${extname}"
+	},
+	"editor.minimap.enabled": false,
+	"window.restoreFullscreen": true,
+	"window.titleBarStyle": "native",
+	"editor.suggestSelection": "first",
+	"vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+	// Code formatting
+	//*
+	// "prettier.useTabs": true,
+	// "editor.tabSize": 2,
+	// "prettier.semi": false,
+	"eslint.validate": [],
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[markdown]": {
+		"editor.wordWrap": "bounded"
+	},
+	"[org]": {
+		// Not detecting indentation when opening file :/
+		"editor.detectIndentation": true,
+		"editor.wordWrap": "bounded",
+		"editor.wordWrapColumn": 80,
+		"editor.wrappingIndent": "none"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"javascript.autoClosingTags": false,
+	"typescript.autoClosingTags": false,
+	/**/
+	"javascript.updateImportsOnFileMove.enabled": "always",
+	"typescript.experimental.useSeparateSyntaxServer": true,
+	"workbench.iconTheme": "vscode-icons",
+	"aws.profile": "profile:vscode-aws-toolkit",
+	"cSpell.language": "en,pt,pt_PT",
+	"editor.renderWhitespace": "selection",
+	"editor.fontFamily": "'DejaVu Sans Mono', 'FiraCode Nerd Font', Monoid, 'Dank Mono', Hasklig, 'Source Code Pro', Menlo, Hack",
+	// "editor.fontSize": 14,
+	"editor.padding.top": 24,
+	"editor.rulers": [
+		{ "column": 80, "color": "#ff00ff" },
+		{ "column": 100, "color": "#ff0000" }
+	],
+	// "editor.wordWrap": "bounded",
+	"window.enableMenuBarMnemonics": false,
+	"diffEditor.ignoreTrimWhitespace": false,
+	"todo-tree.tree.showScanModeButton": false,
+	"workbench.productIconTheme": "icons-carbon",
+	"githubPullRequests.fileListLayout": "tree",
+	"githubPullRequests.pullBranch": "never",
+	"git.confirmSync": false,
+	"spellright.language": ["Portuguese (Brazilian)", "en_US"],
+	"spellright.documentTypes": [
+		"markdown",
+		"plaintext",
+		"typescript",
+		"typescriptreact"
+	],
+	"[jsonc]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"todo-tree.general.tags": [
+		"BUG",
+		"HACK",
+		"FIXME",
+		"TODO",
+		"XXX",
+		"[ ]",
+		"[x]"
+	],
+	"todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+	//* Recommended settings from Modern Purple Theme
+	"editor.cursorBlinking": "smooth",
+	"editor.cursorStyle": "line",
+	"editor.cursorWidth": 2,
+	// "editor.fontFamily": "Cascadia Code",
+	"editor.fontLigatures": true,
+	"editor.fontSize": 13,
+	"editor.fontWeight": "450",
+	"editor.letterSpacing": 0.7,
+	"editor.lineHeight": 22,
+	"editor.linkedEditing": true,
+	"explorer.compactFolders": false,
+	"files.trimTrailingWhitespace": true,
+	"files.exclude": {
+		"**/.classpath": true,
+		"**/.project": true,
+		"**/.settings": true,
+		"**/.factorypath": true
+	},
+	"typescript.updateImportsOnFileMove.enabled": "always",
+	"[html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"window.menuBarVisibility": "hidden",
+	"workbench.editor.tabSizing": "shrink",
+	"editor.suggest.preview": true,
+	"blockman.n01LineHeight": 0,
+	"blockman.n04ColorComboPreset": "Classic Light (Gradients)",
+	"workbench.colorCustomizations": {},
+	"editor.wordWrap": "off",
+	"diffEditor.wordWrap": "off",
+	// "editor.guides.indentation": false,
+	"editor.guides.bracketPairs": true,
+	"editor.inlayHints.enabled": "offUnlessPressed",
+	// smooth-scroll-margin in Emacs with smooth-scrolling package
+	"editor.cursorSurroundingLines": 9,
+	/**/
+	"gitlens.mode.active": "zen",
+	"window.zoomLevel": 2,
+	"editor.suggest.matchOnWordStartOnly": false,
+	"terminal.integrated.profiles.linux": {
+		"bash": {
+			"path": "bash",
+			"icon": "terminal-bash"
+		},
+		"zsh": {
+			"path": "zsh"
+		},
+		"fish": {
+			"path": "fish",
+			"args": ["--init-command", "nvm use"]
+		},
+		"tmux": {
+			"path": "tmux",
+			"icon": "terminal-tmux"
+		},
+		"pwsh": {
+			"path": "pwsh",
+			"icon": "terminal-powershell"
+		}
+	},
+	"totalTypeScript.hideAllTips": false,
+	"totalTypeScript.hiddenTips": [
+		"passing-generics-to-types",
+		"type-alias-declaration",
+		"typing-function-parameters",
+		"literal-type",
+		"variable-type-annotation",
+		"generic-slots-in-functions",
+		"typeof",
+		"pick-utility-type",
+		"partial-utility-type",
+		"nonnullable-utility-type",
+		"record-utility-type",
+		"as-const",
+		"as-const-on-object",
+		"non-null-expression",
+		"returntype-utility-type",
+		"lowercase-utility-type",
+		"extract-utility-type",
+		"interface-with-generics",
+		"interface-with-multiple-generics",
+		"type-alias-with-generics",
+		"type-alias-with-multiple-generics",
+		"omit-utility-type",
+		"tuple-type",
+		"awaited-utility-type",
+		"in-operator-narrowing",
+		"parameters-utility-type",
+		"keyof"
+	],
+	"totalTypeScript.hideBasicTips": true,
+	"editor.accessibilitySupport": "off",
+	"autoDayNightThemeSwitcher.dayTheme": "Default Light Modern",
+	"autoDayNightThemeSwitcher.nightTheme": "Modern Purple Theme Dark",
+	"workbench.colorTheme": "Default Light Modern",
+	"window.customTitleBarVisibility": "never",
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"workbench.editorAssociations": {
+		"git-rebase-todo": "gitlens.rebase"
+	},
+	"tailwind-fold.autoFold": false,
+	"tabnine.experimentalAutoImports": true,
+	"supermaven.enable": {
+		"*": true
+	},
+	"better-comments.tags": [
+		{
+			"tag": "!",
+			"color": "#FF2D00",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "?",
+			"color": "#3498DB",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "//",
+			"color": "#474747",
+			"strikethrough": true,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "todo",
+			"color": "#FF8C00",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		},
+		{
+			"tag": "*",
+			"color": "#98C379",
+			"strikethrough": false,
+			"underline": false,
+			"backgroundColor": "transparent",
+			"bold": false,
+			"italic": false
+		}
+	],
+	"extensions.autoUpdate": false,
+	"update.mode": "none",
+	"update.showReleaseNotes": false,
+	// Merged from Cursor's own settings.json when Cursor joined this file.
+	"window.autoDetectColorScheme": true,
+	"workbench.preferredDarkColorTheme": "Default Dark Modern",
+	"workbench.preferredLightColorTheme": "GitHub Light High Contrast",
+	"audioCues.enabled": false,
+	"diffEditor.renderSideBySide": false,
+	"git.blame.editorDecoration.enabled": true,
+	"git.inputValidation": true,
+	"git.openRepositoryInParentFolders": "never",
+	"gitlens.currentLine.enabled": false,
+	"markdown-preview-enhanced.previewTheme": "one-light.css",
+	"markdown-preview-enhanced.codeBlockTheme": "one-light.css",
+	"[tsv]": {
+		"editor.inlayHints.maximumLength": 0
+	},
+	"editor.foldingImportsByDefault": true
+}

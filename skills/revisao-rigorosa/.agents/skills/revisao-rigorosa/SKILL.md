@@ -121,16 +121,30 @@ limitam:
 
 - **O repositório prevalece.** Uma norma documentada do repositório vence;
   onde ela endossa algo que a base apontaria, retire você mesmo o item da
-  base antes de colá-la no prompt de Normas e no brief do Codex.
+  base antes de colá-la no pedido de Normas e no pedido ao Codex.
 - **Os itens da base são questões de julgamento.** Rotule-os como tais
   ("possível insanidade de caso especial"), nunca como violações duras. Só
   a quebra de uma norma documentada pode ser dura.
 
 ### 4. Rode os eixos em paralelo
 
-Abra um subagente por eixo, todos de uma vez, para que os contextos fiquem
-separados. Cada prompt tem de se bastar: o subagente não vê mais nada.
-Todo eixo é só de leitura, e cada prompt o diz: o subagente não edita
+Cada vez que os eixos rodam sobre uma ponta do ramo (todos, ou só os que
+o passo 7 manda rodar de novo), com o veredito que sai dela, é uma
+**rodada**, e as rodadas se contam ("a terceira rodada"). O **ciclo de
+revisão** é o processo inteiro que as repete: a primeira rodada, os
+consertos dos achados bloqueantes, a rodada seguinte sobre a ponta nova,
+até o "Pronto para o merge" ou a exceção que o autor decide (passo 6).
+Diz-se "o ciclo de revisão está na terceira rodada", e não "no terceiro
+ciclo".
+
+Abra os subagentes de todos os eixos de uma vez, um por eixo (no Fatos,
+os das mensagens e os da documentação), para que os contextos fiquem
+separados. Cada pedido tem de se bastar: o subagente não vê mais nada.
+Por isso o pedido leva as decisões do autor que mudam o que se revisa, e
+cada fonte fora do diff vem pela versão no git (`<sha>:<caminho>`), e
+não pelo checkout nem pela skill instalada, que podem estar noutro ramo.
+Antes de lançar, confira que cada fonte indicada está ao alcance do eixo.
+Todo eixo é só de leitura, e cada pedido o diz: o subagente não edita
 arquivos, não troca de commit nem de ramo e lê os commits com `git show`.
 O "compila e passa nos próprios testes" da História é julgamento a partir
 do diff, não execução.
@@ -146,21 +160,22 @@ provedor, escolha o mesmo nível pelo nome; com modelos locais, o mais
 forte que responda em velocidade interativa. O subagente que herda o
 modelo herda o carro-chefe quando a sessão roda nele, o que custa mais e
 roda mais devagar do que uma revisão precisa. O menor nível não dá conta.
-Na medição de 2026-10-24, sobre quatro ramos já juntados de um
+Na medição de 2026-10-24, sobre quatro ramos já mesclados de um
 repositório (código de aplicação, ferramentas em Python, instruções para
-agentes, ferramentas de LaTeX), foram 48 rodadas dos quatro eixos contra
+agentes, ferramentas de LaTeX), foram 48 execuções dos quatro eixos contra
 os defeitos que a revisão original tinha consertado. O Claude Haiku 4.5
 achou 3 de 39, com evidência inventada e checagens que impunham o próprio
 nome no trailer de atribuição. Somados os achados dos quatro eixos, o
 Claude Sonnet 5.5 chegou a 25 e o Claude Opus 5.5 a 32,5; nessa soma, um
 defeito achado por dois eixos conta duas vezes, e em defeitos distintos
 são cerca de 18 e 26,5 de 39. O Opus ficou à frente nos quatro eixos,
-com a maior vantagem em Especificação e História, ao custo de no máximo
-11% mais tokens.
+com a maior vantagem em Especificação (11 contra 7,5) e, em proporção, em
+História (3 contra 1,5), ao custo de no máximo 11% mais tokens do
+subagente, sem contar o preço por token, que muda com o modelo.
 
 **Normas.** Dê a ele o comando do diff, a lista de commits, a lista dos
 arquivos de normas e o texto da base Linus colado, sem os itens que o
-passo 3 retirou. Brief: "Aponte
+passo 3 retirou. Pedido: "Aponte
 cada lugar em que o diff viola uma norma documentada, citando o arquivo e
 a regra, e cada item da base que você notar, nomeando-o e citando o hunk.
 Marque as quebras de norma documentada como duras e os itens da base como
@@ -168,7 +183,7 @@ questões de julgamento. Pule o que as ferramentas impõem. Cite
 `caminho:linha` em cada achado. Menos de 400 palavras."
 
 **Especificação.** Dê a ele o comando do diff, a lista de commits e a
-especificação (o caminho ou o texto buscado). Brief: "Aponte (a) os
+especificação (o caminho ou o texto buscado). Pedido: "Aponte (a) os
 requisitos que a especificação pede e que faltam ou estão pela metade,
 (b) o comportamento no diff que ninguém pediu e (c) os requisitos que
 parecem implementados, mas cuja implementação parece errada. Cite a linha
@@ -176,14 +191,18 @@ da especificação e `caminho:linha` em cada achado. Menos de 400 palavras."
 
 **História.** Só quando o intervalo tem commits. Dê a ele a lista de
 commits, as regras sobre commits que os arquivos de normas trazem, e
-mande-o ler cada commit com `git show`. Brief: "Para cada commit,
+mande-o ler cada commit com `git show`. Pedido: "Para cada commit,
 aponte (a) mais de uma mudança lógica num commit, quando as partes se
 separam de forma limpa: cada commit da divisão é o seu pai mais linhas do
 diff final, e compila e passa nos próprios testes. Nomeie os commits em
 que você o dividiria. Podem ficar num commit só as partes que
 compartilham uma mesma reestruturação (um commit intermediário precisaria
 de código que não está nem no pai nem na ponta), quando a mensagem diz
-por que vão juntas. (b) Movimentação, renomeação ou reformatação que
+por que vão juntas. Em texto e documentação, a unidade é a decisão do
+autor: aponte a carona (um termo, uma página ou uma frase de outra
+seção junto de um movimento) e a mensagem que precisa de uma lista com
+itens de partes diferentes, de "na mesma passada" ou de um assunto com
+dois objetos. (b) Movimentação, renomeação ou reformatação que
 esconde a lógica: mesmo com as opções do diff que olham através dela
 (`-w`, `--color-moved`, `--word-diff`), o leitor tem de ler as linhas
 mecânicas para achar a mudança; ou uma reformatação ampla feita por uma
@@ -203,39 +222,56 @@ fornece numa linha sozinha, logo acima do bloco de trailers; essa linha
 não é achado, nem um trailer de atribuição (`Co-Authored-By:`) no bloco
 de trailers. Cite o sha curto do commit. Menos de 300 palavras."
 
-Ao brief da História, acrescente duas coisas que só você sabe. Quando a
-skill `mensagem-de-commit` estiver instalada, o caminho do `SKILL.md`
-dela, como a norma de (d). E se o ramo é rascunho (passo 7), com o
-remédio para (c) que vale para ele: num rascunho, o remédio é dobrar o
-commit posterior no que ele conserta, não manter os dois, e o achado o
-diz; num ramo em que outros se apoiam, o commit posterior fica, e a
-mensagem dele nomeia o commit que ele conserta.
+Ao pedido da História, acrescente duas coisas que só você sabe.
+Quando a skill `mensagem-de-commit` estiver instalada, o caminho do
+`SKILL.md` dela, como a norma de (d). E se o ramo é rascunho (passo 7),
+com o remédio para (c) que vale para ele: num rascunho, o remédio é
+dobrar o commit posterior no que ele conserta, não manter os dois, e o
+achado o diz; num ramo em que outros se apoiam, o commit posterior fica,
+e o próximo commit que tocar o assunto nomeia o que ele conserta.
 
 **Fatos.** Só quando o intervalo tem commits e as skills
 `checagem-de-fatos` e `mensagem-de-commit` estão instaladas; quando não
-roda, `## Fatos` diz isso e por quê. Dê a ele o brief do cartucho de
-mensagem de commit, com o intervalo e o repositório preenchidos. O brief
+roda, `## Fatos` diz isso e por quê. Dê a ele o pedido do cartucho
+de mensagem de commit, com o intervalo e o repositório preenchidos. Ele
 mora na skill `mensagem-de-commit`
-(`cartuchos-de-fatos/mensagem-de-commit.md`, "O brief do subagente").
+(`cartuchos-de-fatos/mensagem-de-commit.md`, "O pedido ao
+subagente").
 Ele confere contra a árvore cada fato que as mensagens afirmam: um sha
 citado e o que ele fez, um caminho e o que ele diz, uma regra citada de
 um arquivo de instruções e o verbo dela, uma contagem, uma data, "só
 comentário". A História fica com (a)–(e) e não confere os fatos de novo.
-Uma mensagem no ramo principal nunca se reescreve, então este eixo é a
-última chance de consertar um fato errado com um amend ou um fixup. Ao
+Por padrão, uma mensagem no ramo principal não se reescreve, e o
+repositório que abre exceção para a mensagem ainda não enviada a faz
+depender do aprovo do autor (seção 6 do cartucho de mensagem de commit,
+"Correções e quem aprova"); então este eixo é a última chance de
+consertar um fato errado de graça, com um amend ou um fixup. Ao
 lado do subagente, lance a chamada do Codex que o cartucho manda (a seção
 "Lotes e modelo" dele, com o preâmbulo da seção "O segundo provedor:
 Codex" da `checagem-de-fatos`), à parte do eixo Codex desta revisão. Os
 achados das duas entram em `## Fatos`, passam pelo passo 5 e rodam de
 novo no passo 7.
 
+No mesmo eixo, em paralelo com o par das mensagens, um segundo par
+confere a documentação que o intervalo toca ou torna falsa: o subagente
+do cartucho de documentação, que mora na skill `arquitetura-de-docs`
+(`cartuchos-de-fatos/documentacao.md`, "O pedido ao subagente"), e o
+Codex ao lado dele, com o mesmo pedido. Ele roda sempre que o eixo
+Fatos roda, também no intervalo que muda só código, porque um README
+envelhece pelo código que descreve. Antes de lançar, monte o escopo
+como o cartucho manda (a seção 1 dele). Os achados entram em
+`## Fatos`, num bloco "Documentação", passam pelo passo 5 e bloqueiam pela régua do cartucho
+(a seção 6 dele); no passo 7, com a árvore igual à revisada, este par
+não roda de novo. Sem a skill `arquitetura-de-docs` instalada,
+`## Fatos` diz que a documentação não foi conferida.
+
 **Codex.** Um segundo provedor de modelo, para que a revisão não dependa
 de um modelo só. Siga [references/codex.md](references/codex.md): confira
-que o `codex` está instalado e logado, escreva o brief dele (as três
-perguntas, a lista de caminhos das normas, a especificação, a base Linus,
-o intervalo) num arquivo e rode `codex exec --sandbox read-only` sobre
-ele em segundo plano, junto com os subagentes. Ele é cego: não lhe diga
-nada do que os outros eixos acham. Se o `codex` faltar, não estiver
+que o `codex` está instalado e logado, escreva o pedido a ele (as
+três perguntas, a lista de caminhos das normas, a especificação, a base
+Linus, o intervalo) num arquivo e rode `codex exec --sandbox read-only`
+sobre ele em segundo plano, junto com os subagentes. Ele é cego: não lhe
+diga nada do que os outros eixos acham. Se o `codex` faltar, não estiver
 logado ou a chamada falhar, a revisão segue com um provedor e o diz;
 nunca escreva um resultado que o Codex não devolveu.
 
@@ -271,6 +307,7 @@ impedem que um esconda o outro.
 ## Veredito
 Pronto para o merge | Não está pronto: <os consertos exigidos, o mais importante primeiro>
 Provedores: Claude (<modelo>) + Codex (<modelo>, <esforço>, codex-cli <versão>)
+Versões lidas: <base e ponta do intervalo; sha:caminho de cada fonte fora do diff>
 Divergência: os achados bloqueantes que só um provedor levantou; o
 veredito do Codex quando ele difere; ou "nenhuma"
 
@@ -283,20 +320,40 @@ Simplificação: a direção que elimina código ou casos especiais.
 Bloqueia o merge todo achado conferido que seja a quebra de uma norma
 documentada (dura); um requisito da especificação que falta, está pela
 metade ou foi implementado errado; um defeito (bug, regressão, chamador
-deixado para trás); um fato errado numa mensagem de commit; ou, num ramo
+deixado para trás); um fato errado numa mensagem de commit; um fato
+errado na documentação, pela régua do cartucho de documentação; ou, num ramo
 rascunho, um achado da História, cujo conserto é o passo 7. Os itens da
 base Linus (questões de julgamento) e o comportamento que ninguém pediu
 não bloqueiam: ficam no eixo deles, para o autor decidir. Num ramo em
 que outros se apoiam, os achados da História também não bloqueiam, porque
-a história dele não se reescreve; ficam como nota para os próximos
-commits. O brief do Codex define "bloqueante" pela mesma régua, nos
-tipos de achado que ele faz.
+a história dele não se reescreve; vão ao autor como os outros não
+bloqueantes (abaixo), sem o conserto no ramo, que a reescreveria. O
+pedido ao Codex define "bloqueante" pela mesma régua,
+nos tipos de achado que ele faz.
 
 Um achado do Codex que sobreviveu ao passo 5 conta como qualquer outro: um
 achado bloqueante conferido bloqueia o merge, seja qual for o provedor que
 o levantou. A linha Divergência mostra onde os dois modelos discordam; ela
 não anula o veredito. Quando o Codex não rodou, a linha Provedores diz
 "só Claude (<modelo>)" e por quê, e não há linha Divergência.
+
+Cada achado bloqueante vira um conserto no ramo. O não bloqueante vai
+ao autor no relatório, e ele decide se o achado vira um conserto no
+ramo, numa sessão em paralelo, numa sessão em seguida, uma tarefa ou
+nada. Todo conserto, do agente ou do
+Codex, segue as regras de força e de "nada novo" e a conferência pelo
+`forca-no-patch` da seção "O Codex que escreve o conserto" de
+`references/codex.md`.
+
+O ciclo de revisão tem fim à vista. Depois de umas três rodadas sem
+"Pronto para o merge", e antes de abrir a próxima, diga ao autor em que
+rodada está, o padrão dos achados e as opções: fechar o resto com `git
+revisao excecao`, que é decisão dele, ou seguir. O autor pode pôr um
+teto de rodadas. O sinal é cada rodada achar um caso mais
+raro do mesmo filtro heurístico, que não converge (num parse de TeX,
+em 2026-10-29, o ciclo passou de cinco rodadas e de umas cinco horas,
+e o autor limitou a nove): ali, prefira uma garantia estrutural, como
+validar a saída inteira, a uma regra por achado.
 
 ### 7. Condense antes do merge
 
@@ -317,9 +374,9 @@ pedir:
   --fixup=<sha>` durante as rodadas da revisão, depois
   `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`; ou refaça a
   série à mão. O autosquash só junta os commits `fixup!`, `squash!` e
-  `amend!`: um conserto commitado sem `--fixup` pede a série refeita à
-  mão, e o `git log --oneline <base>..HEAD` da série nova tem de mostrar
-  menos commits.
+  `amend!`: um conserto commitado sem um desses prefixos pede a série
+  refeita à mão, e no `git log <base>..HEAD` da série nova nenhum commit
+  é só o conserto de uma rodada.
 - Deixe uma mudança lógica por commit e reescreva cada mensagem a partir
   da árvore que ela agora descreve (a skill `mensagem-de-commit`): as
   rodadas da revisão, os achados que elas responderam e os shas da série
@@ -342,7 +399,8 @@ pedir:
   ponta menos o que sai, e leia cada commit atrás de linhas em branco
   acrescentadas ou removidas:
   `git show --format= <sha> -- <arquivo> | grep '^[-+]$'`.
-- O git passa a mensagem reescrita pelo editor (`git commit --amend` sem
+- Com o `commit.cleanup` padrão, o git passa a mensagem reescrita pelo
+  editor (`git commit --amend` sem
   `-F`, o `reword` do `git rebase -i`, mesmo com `GIT_EDITOR` apontando
   para um script que copia um arquivo) pela limpeza `strip`, que descarta
   toda linha que começa com o `core.commentChar` (`#`): um título de
@@ -357,8 +415,10 @@ relate outra vez com o bloco do passo 6, com o veredito novo, e pare: o
 merge e o push ficam com o usuário ou com o fluxo do repositório.
 
 Pule este passo quando o repositório proibir reescrever um ramo não
-juntado, ou quando o ramo já tiver sido enviado por push para outros se
-apoiarem nele. Nunca reescreva o que já está no ramo principal.
+mesclado, ou quando o ramo já tiver sido enviado por push para outros se
+apoiarem nele. A condensação não toca o que já está no ramo principal;
+a mensagem que já está lá segue a seção 6 do cartucho de mensagem de
+commit.
 
 ## Revisão de plano
 
@@ -374,10 +434,10 @@ interfaces tocadas e o caminho de volta. Depois julgue:
 - **Compatibilidade e implantação.** Que comportamento, dado ou interface
   existente muda? Como se migra, e como se volta atrás?
 
-Rode o eixo Codex sobre o plano também, com a variante de plano do brief
-em [references/codex.md](references/codex.md), antes de escrever o seu
-próprio julgamento, e confira os pontos dele contra o texto do plano do
-mesmo jeito. Relate com o mesmo bloco de Veredito, linhas Provedores e
-Divergência incluídas, mas com a linha de veredito de plano: "Se
-sustenta | Não se sustenta: <o que tem de mudar no plano, o mais
-importante primeiro>", que diz se vale a pena fazer e por quê.
+Rode o eixo Codex sobre o plano também, com a variante de plano do
+pedido em [references/codex.md](references/codex.md), antes de
+escrever o seu próprio julgamento, e confira os pontos dele contra o
+texto do plano do mesmo jeito. Relate com o mesmo bloco de Veredito,
+linhas Provedores e Divergência incluídas, mas com a linha de veredito
+de plano: "Se sustenta | Não se sustenta: <o que tem de mudar no plano,
+o mais importante primeiro>", que diz se vale a pena fazer e por quê.
