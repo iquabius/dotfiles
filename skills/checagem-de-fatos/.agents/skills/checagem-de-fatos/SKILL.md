@@ -170,7 +170,9 @@ agente novo, noutro modelo quando houver; o agente principal nunca
 completa o que um lote deixou de fora.
 
 Todo lote devolve um objeto por afirmação, os corretos incluídos,
-cada um com a citação que o decide: um relatório só com os achados
+cada um com a citação que o decide, salvo o correto da saída enxuta
+do Codex, que vem só com a âncora e a citação da afirmação ("O
+segundo provedor: Codex"): um relatório só com os achados
 com problema está fora do formato, porque um correto ausente não se
 casa com o veredito do outro provedor. Antes da etapa 4, o agente
 principal confere que cada arquivo de relatório existe, não está vazio
@@ -195,7 +197,9 @@ Claude vazio, e o Codex que o escreveu só tinha o próprio.
   transcrição de uma sessão, um arquivo fora do que o verificador
   pode ler, uma página que não abriu) e o verificador não a leu. Diz
   qual fonte faltou e por quê. Uma evidência de memória, ou com a
-  citação vazia, é **sem acesso**. Não é **sem fonte**: não pede
+  citação vazia, é **sem acesso**; o correto da saída enxuta do Codex,
+  que vem sem evidência, não é, porque o que ele leu está no log ("O
+  segundo provedor: Codex"). Não é **sem fonte**: não pede
   correção, não entra em "Correções" e, numa divergência, não conta
   como veredito.
 - **correto**: conferido na primária, ou na corroboração onde o cartucho
@@ -205,10 +209,11 @@ Claude vazio, e o Codex que o escreveu só tinha o próprio.
 
 Todo veredito cita a evidência que o decide, com página, caminho ou URL,
 e diz o degrau dela na escada. Um veredito sem citação só vale para
-**fora do escopo**. Cada afirmação diz também se o argumento cai sem ela
-(`supports_conclusion`) e dá a correção mínima: só o fato, na voz do
-autor, ou "DISCUTIR COM O AUTOR" quando o fato correto derruba uma
-premissa.
+**fora do escopo** e para o correto da saída enxuta do Codex, cuja
+leitura está no log ("O segundo provedor: Codex"). Cada afirmação diz
+também se o argumento cai sem ela (`supports_conclusion`) e dá a
+correção mínima: só o fato, na voz do autor, ou "DISCUTIR COM O AUTOR"
+quando o fato correto derruba uma premissa.
 
 Em **sem acesso**, a citação aponta a fonte não lida e diz por quê;
 não há evidência a simular nem correção mínima.
@@ -421,6 +426,44 @@ skills, ele abriu o SKILL.md instalado desta skill e o cartucho dela; um
 SKILL.md que manda chamar o Codex pode fazer um laço. Nenhuma opção
 testada desliga essa descoberta.
 
+**Saída enxuta.** Quando o cartucho a declara no item 8, o pedido do
+Codex leva, logo depois do preâmbulo, este parágrafo, com os campos de
+âncora que o cartucho nomeia no lugar de `{{CAMPOS}}`:
+
+~~~markdown
+Na afirmação cujo veredito é "correto", o objeto leva só {{CAMPOS}},
+sem os outros campos que o pedido abaixo pede; a de qualquer outro
+veredito leva o objeto inteiro. Confira na fonte também a afirmação que
+você der por correta, antes do veredito. A saída mais curta não muda a
+extração: liste as mesmas afirmações que listaria com o objeto inteiro,
+sem partir uma frase em várias.
+~~~
+
+A duração do Codex dos fatos acompanha o que ele escreve, e não o que
+ele lê: num levantamento de 2026-11-19 sobre 94 chamadas do Codex, 62
+dos fatos e 32 da revisão cega, a correlação da duração com o tamanho
+da saída foi 0,74, e com o número de chamadas de ferramenta, −0,15.
+Refeito no mesmo dia o pedido de uma rodada em
+que 61 das 81 afirmações das mensagens voltaram "correto", com 73% dos
+bytes do json nos objetos delas, a saída enxuta levou 5,9 min contra
+8,7 e escreveu 28 KB contra 60, com 53 afirmações. Sem a última frase
+do parágrafo, a lista foi a 111: com a correta barata, o Codex parte as
+frases. Na documentação da mesma rodada, mesmo com a frase, a lista foi
+de 78 a 246 afirmações e a chamada levou 14,6 min contra 12,1; por
+isso o cartucho da documentação não declara a saída enxuta. Uma chamada
+de cada, sem repetição.
+
+Sem `finding` nem `evidence` na correta, a lista ainda casa com a do
+subagente pela âncora e pela citação, e o correto do Codex ainda conta
+na divergência. O que mostra a leitura dele são as linhas `exec` do
+log, como em toda divergência (abaixo): o correto enxuto não é um
+veredito sem citação (etapa 2) nem uma evidência de citação vazia
+(etapa 3). O subagente do Claude continua
+com o objeto inteiro em todo veredito: no mesmo levantamento, ele levou
+5,4 min de mediana nos fatos das mensagens, contra 7,7 do Codex, e
+a citação que o agente principal reabre numa divergência com o correto
+enxuto é a dele.
+
 **Chamada.** O agente principal escreve o pedido de cada lote num
 arquivo no scratchpad da sessão (nunca na árvore do artefato) e, na
 mensagem que lança os subagentes, roda uma chamada por lote em segundo
@@ -464,9 +507,10 @@ portão:
   nenhuma chamada;
 - a chamada sai com código diferente de zero, o arquivo do `-o` falta ou
   está vazio, ou o bloco dele quebra as regras da etapa 2 (sem json, um
-  veredito sem citação, nenhuma linha `exec` no log): a mesma chamada uma
-  vez mais; uma segunda falha a encerra. Um nome de modelo que não existe
-  sai com 1, com `model_not_found` no log, e não escreve arquivo do `-o`.
+  veredito sem citação, que o correto da saída enxuta não é, nenhuma
+  linha `exec` no log): a mesma chamada uma vez mais; uma segunda
+  falha a encerra. Um nome de modelo que não existe sai com 1, com
+  `model_not_found` no log, e não escreve arquivo do `-o`.
 
 Em cada caso a passada segue só com o Claude, e o relatório o diz no
 cabeçalho ("só Claude; Codex não rodou: <motivo>") e em Pendências, com
@@ -489,11 +533,15 @@ conserto aprovado voltou no Fatos das mensagens.
 
 Case as duas listas pelo id ou, quando o verificador extrai por conta
 própria, pela âncora e pela citação.
-O mesmo veredito é um achado só, com as duas evidências. Um veredito
-diferente, ou uma afirmação que só um provedor listou, vai para a etapa 4:
-o agente principal reabre as duas evidências na fonte, byte a byte, e
-fica o veredito que a fonte sustenta; a citação de evidência que não se
-reencontra perde. Quando a fonte não decide (duas leituras de uma frase,
+O mesmo veredito é um achado só, com a evidência de cada um que a
+trouxer. Um veredito diferente, ou uma afirmação que só um provedor
+listou, vai para a etapa 4: o agente principal reabre as duas
+evidências na fonte, byte a byte, e fica o veredito que a fonte
+sustenta; a citação de evidência que não se reencontra perde. O correto
+da saída enxuta não traz evidência e não perde por isso: no lugar
+dela, o agente principal lê ele mesmo, na fonte que o log mostra lida,
+o trecho que decide a afirmação, também quando o Codex é o único que
+leu essa fonte. Quando a fonte não decide (duas leituras de uma frase,
 uma questão de julgamento de enquadramento), a afirmação vai para "Para
 o autor decidir" com os dois vereditos. Toda divergência se lista em
 "Divergências entre provedores": id, veredito do Claude, veredito do

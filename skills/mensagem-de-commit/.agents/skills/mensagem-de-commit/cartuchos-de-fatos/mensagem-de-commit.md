@@ -294,7 +294,10 @@ pedido abaixo depois do preâmbulo do motor (SKILL.md da
 `checagem-de-fatos`, "O segundo provedor:
 Codex"), e não no momento 1. Quando o verificador extrai por conta
 própria, as duas listas se casam por `sha:line` e pela citação da
-afirmação. Como eixo Fatos da `revisao-rigorosa` a regra é a mesma: quem
+afirmação. O Codex devolve a saída enxuta do motor (o mesmo trecho,
+"Saída enxuta"), com `{"sha", "line", "verdict", "claim_quote"}` no
+lugar de `{{CAMPOS}}`; o subagente devolve o objeto inteiro em todo
+veredito. Como eixo Fatos da `revisao-rigorosa` a regra é a mesma: quem
 lança o subagente de Fatos lança esta chamada do Codex ao lado dele, à
 parte de qualquer eixo Codex da própria revisão.
 
