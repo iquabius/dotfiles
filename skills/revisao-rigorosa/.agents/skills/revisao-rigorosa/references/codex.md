@@ -33,7 +33,7 @@ um caminho que o host também veja) e passe-o pelo stdin, para que o
 comando continue curto por mais longo que seja o pedido:
 
 ```bash
-codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
+codex exec -m gpt-6.2-sol -c model_reasoning_effort=high \
   --sandbox read-only --ephemeral --color never \
   -C "$(git rev-parse --show-toplevel)" \
   -o <dir>/codex-review.md - < <dir>/codex-pedido.md \
@@ -57,10 +57,16 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
 - Modelo: a mesma regra de nível dos outros eixos, o modelo mais forte
   abaixo do carro-chefe. Em 2026-10-26, pelas descrições em `codex debug
   models`, era o `gpt-6.1-sol` ("workhorse"), abaixo do `gpt-6-astra`
-  ("frontier"); a ordem da lista não os classifica. Quando ele sumir de
-  `codex debug models`, escolha o mesmo nível pela descrição e diga-o no
-  relatório. Antes, descarte a hipótese de um CLI desatualizado, cuja
-  lista não traz os modelos mais novos e cujas chamadas a eles falham com
+  ("frontier"); a ordem da lista não os classifica. Em 2026-11-19, a
+  lista dizia do `gpt-6.1-sol` "Previous generation model" e trazia o
+  `gpt-6.2-sol` ("Fast, go-to model for coding and everyday work")
+  abaixo do `gpt-6.2-astra` ("Our most capable model"), e a chamada
+  passou ao `gpt-6.2-sol`. Quando o modelo da chamada sumir de `codex
+  debug models` ou a descrição dele passar a dizer que é de uma geração
+  anterior, escolha o mesmo nível pela descrição e diga-o no relatório.
+  Antes, descarte a hipótese de um CLI
+  desatualizado, cuja lista não traz os modelos mais novos e cujas
+  chamadas a eles falham com
   "not supported when using Codex with a ChatGPT account": em 2026-10-28,
   o codex-cli 0.157.1 fez as duas coisas com o `gpt-6.1-sol`, e o 0.165.0
   o listou e respondeu. Comparar o `codex --version` com o

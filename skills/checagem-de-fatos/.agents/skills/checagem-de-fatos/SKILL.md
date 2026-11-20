@@ -472,7 +472,7 @@ plano:
 ```sh
 command -v codex && codex --version && codex login status
 codex exec --sandbox read-only --ephemeral --color never \
-    -m gpt-6.1-sol -c model_reasoning_effort=medium \
+    -m gpt-6.2-sol -c model_reasoning_effort=medium \
     -C <repository or sources dir> -o <dir>/codex-<batch>.md \
     - < <dir>/pedido-<batch>.md > <dir>/codex-<batch>.log 2>&1
 ```
