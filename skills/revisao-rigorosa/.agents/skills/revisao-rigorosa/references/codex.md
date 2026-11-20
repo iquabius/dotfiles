@@ -70,7 +70,9 @@ codex exec -m gpt-6.1-sol -c model_reasoning_effort=high \
   `model_reasoning_effort=high`: o padrão do modelo é `low`, raso demais
   para uma revisão. Confira a linha `reasoning effort: high` do
   cabeçalho; com outro esforço, a chamada não conta, e `## Codex` diz por
-  quê.
+  quê. O `high` não vale para o eixo Fatos: as chamadas do Codex dele
+  (as das mensagens e as da documentação) seguem a linha de comando da
+  `checagem-de-fatos`, com `medium`, e o porquê está lá.
 - O Codex acha sozinho as skills instaladas em `~/.agents/skills`: em
   2026-10-26, com um pedido sem a linha que proíbe abrir skills, ele
   abriu o `SKILL.md` desta skill e disse que a aplicaria, embora o

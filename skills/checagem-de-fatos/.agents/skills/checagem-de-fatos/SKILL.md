@@ -495,6 +495,17 @@ codex exec --sandbox read-only --ephemeral --color never \
   o `codex` roda dentro de um contêiner distrobox, o wrapper passa a
   chamada ao host com `distrobox-host-exec`, que mantém o diretório, a
   entrada padrão e o código de saída, não o ambiente.
+- `model_reasoning_effort=medium`, também quando esta checagem roda como
+  o eixo Fatos da `revisao-rigorosa`: o `high` daquela skill não vale
+  para estas chamadas. No levantamento de 2026-11-19, as chamadas dos
+  fatos com `high` escreveram mais e demoraram mais: os fatos da
+  documentação levaram 23,8 min de mediana com `high` (5 chamadas)
+  contra 11,8 com `medium` (24), com a mediana de 200 afirmações
+  julgadas por chamada contra 80, e os das mensagens, 11,9 min (8)
+  contra 7,7 (25).
+  Confira a linha `reasoning effort: medium` do cabeçalho do log (`head
+  -11`): a chamada com outro esforço, ou sem a linha, falha como as de
+  "Quando o Codex não está lá", abaixo.
 - Fora de um repositório git (uma pasta de PDFs), acrescente
   `--skip-git-repo-check`.
 - O login é do autor: o agente nunca roda `codex login` nem digita uma
@@ -506,15 +517,18 @@ portão:
 - `command -v codex` falha, ou `codex login status` não diz que há login:
   nenhuma chamada;
 - a chamada sai com código diferente de zero, o arquivo do `-o` falta ou
-  está vazio, ou o bloco dele quebra as regras da etapa 2 (sem json, um
+  está vazio, o cabeçalho do log não traz `reasoning effort: medium`, ou
+  o bloco dele quebra as regras da etapa 2 (sem json, um
   veredito sem citação, que o correto da saída enxuta não é, nenhuma
-  linha `exec` no log): a mesma chamada uma vez mais; uma segunda
-  falha a encerra. Um nome de modelo que não existe sai com 1, com
+  linha `exec` no log): a mesma chamada uma vez mais, e no esforço a
+  linha de comando acima, com `medium`; uma segunda falha a encerra. Um
+  nome de modelo que não existe sai com 1, com
   `model_not_found` no log, e não escreve arquivo do `-o`.
 
 Em cada caso a passada segue só com o Claude, e o relatório o diz no
 cabeçalho ("só Claude; Codex não rodou: <motivo>") e em Pendências, com
-o comando que falhou, o código de saída e a linha de erro do log. Um
+o comando que falhou, o código de saída e a linha de erro do log (no
+esforço, a linha do cabeçalho, ou que ela falta). Um
 veredito do Codex só existe no arquivo do `-o` dele: o agente principal
 nunca escreve um, nunca diz que os provedores concordam sem os dois
 arquivos e nunca manda um lote do Codex que falhou ao Claude para

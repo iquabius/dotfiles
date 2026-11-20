@@ -248,7 +248,9 @@ depender do aprovo do autor (seção 6 do cartucho de mensagem de commit,
 consertar um fato errado de graça, com um amend ou um fixup. Ao
 lado do subagente, lance a chamada do Codex que o cartucho manda (a seção
 "Lotes e modelo" dele, com o preâmbulo da seção "O segundo provedor:
-Codex" da `checagem-de-fatos`), à parte do eixo Codex desta revisão. Os
+Codex" da `checagem-de-fatos`), à parte do eixo Codex desta revisão. A
+linha de comando também é a da `checagem-de-fatos`, com o esforço
+`medium` dela, e não o `high` do eixo Codex (o porquê está lá). Os
 achados das duas entram em `## Fatos`, passam pelo passo 5 e rodam de
 novo no passo 7.
 
@@ -256,8 +258,9 @@ No mesmo eixo, em paralelo com o par das mensagens, um segundo par
 confere a documentação que o intervalo toca ou torna falsa: o subagente
 do cartucho de documentação, que mora na skill `arquitetura-de-docs`
 (`cartuchos-de-fatos/documentacao.md`, "O pedido ao subagente"), e o
-Codex ao lado dele, com o mesmo pedido. Ele roda sempre que o eixo
-Fatos roda e o escopo não sai vazio, também no intervalo que muda só
+Codex ao lado dele, com o mesmo pedido e o mesmo esforço `medium`. Ele
+roda sempre que o eixo Fatos roda e o escopo não sai vazio, também no
+intervalo que muda só
 código, porque um README envelhece pelo código que descreve. Antes de
 lançar, monte o escopo como o cartucho manda (a seção 1 dele): na
 primeira rodada, o escopo inteiro; da segunda em diante, só o que a
