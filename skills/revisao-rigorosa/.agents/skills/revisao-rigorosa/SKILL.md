@@ -257,10 +257,16 @@ confere a documentação que o intervalo toca ou torna falsa: o subagente
 do cartucho de documentação, que mora na skill `arquitetura-de-docs`
 (`cartuchos-de-fatos/documentacao.md`, "O pedido ao subagente"), e o
 Codex ao lado dele, com o mesmo pedido. Ele roda sempre que o eixo
-Fatos roda, também no intervalo que muda só código, porque um README
-envelhece pelo código que descreve. Antes de lançar, monte o escopo
-como o cartucho manda (a seção 1 dele). Os achados entram em
-`## Fatos`, num bloco "Documentação", passam pelo passo 5 e bloqueiam pela régua do cartucho
+Fatos roda e o escopo não sai vazio, também no intervalo que muda só
+código, porque um README envelhece pelo código que descreve. Antes de
+lançar, monte o escopo como o cartucho manda (a seção 1 dele): na
+primeira rodada, o escopo inteiro; da segunda em diante, só o que a
+mudança desde a ponta da última rodada em que o par rodou até o fim
+alcança, mais os documentos dos achados bloqueantes dela; a ponta de
+cada rodada é a da linha "Versões lidas" do relatório dela. Os achados
+entram em `## Fatos`, num bloco "Documentação", que diz também se o par
+rodou até o fim e desde que ponta o escopo se montou; passam pelo passo
+5 e bloqueiam pela régua do cartucho
 (a seção 6 dele); no passo 7, com a árvore igual à revisada, este par
 não roda de novo. Sem a skill `arquitetura-de-docs` instalada,
 `## Fatos` diz que a documentação não foi conferida.
